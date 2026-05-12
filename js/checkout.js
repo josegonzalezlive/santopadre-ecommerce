@@ -391,7 +391,7 @@ function sendToWhatsApp(order) {
   if (bonusDiscount > 0) message += `\n🎁 *Bonus:* -$${bonusDiscount.toFixed(2)} aplicado`;
 
   message += `\n\n💰 *Subtotal:* $${subtotal.toFixed(2)}`;
-  message += `\n💵 *TOTAL A PAGAR:* $${total.toFixed(2)}\n\n`;
+  message += `\n💵 *TOTAL BCV:* $${total.toFixed(2)}\n\n`;
   message += `¡Bendiciones! 🙏`;
 
   // Use the phone number from catalog if available

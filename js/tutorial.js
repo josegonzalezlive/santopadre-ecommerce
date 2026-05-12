@@ -1,6 +1,5 @@
 /**
- * SantoPadre® Interactive Tutorial System
- * Designed for premium e-commerce experience.
+ * SantoPadre® Minimal Tutorial System
  */
 
 const tutorialStyles = `
@@ -10,141 +9,92 @@ const tutorialStyles = `
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(4, 28, 20, 0.85);
+    background: rgba(0, 0, 0, 0.4);
     z-index: 9999;
     display: none;
-    backdrop-filter: blur(4px);
-    transition: opacity 0.4s ease;
 }
 
 .tutorial-step-box {
     position: fixed;
     z-index: 10001;
-    background: #0a3325;
-    border: 1px solid rgba(255, 107, 0, 0.3);
-    border-radius: 12px;
-    padding: 24px;
-    width: 320px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    background: #06241a;
+    border: 2px solid #ff6b00;
+    border-radius: 8px;
+    padding: 15px;
+    width: 260px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     display: none;
     color: #f4f4f2;
-    font-family: 'Archivo', sans-serif;
 }
 
 .tutorial-step-box h4 {
     color: #ff6b00;
-    margin-bottom: 8px;
-    font-size: 16px;
+    margin-bottom: 5px;
+    font-size: 14px;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
 }
 
 .tutorial-step-box p {
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 20px;
-    opacity: 0.9;
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 15px;
 }
 
 .tutorial-buttons {
     display: flex;
-    justify-content: space-between;
-    gap: 10px;
+    justify-content: flex-end;
+    gap: 8px;
 }
 
 .tutorial-btn {
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 5px 12px;
+    border-radius: 4px;
     border: none;
     cursor: pointer;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
-    transition: all 0.3s ease;
 }
 
 .tutorial-btn.next {
     background: #ff6b00;
     color: #000;
-    flex: 1;
 }
 
 .tutorial-btn.skip {
-    background: transparent;
-    border: 1px solid rgba(255, 107, 0, 0.5);
-    color: #ff6b00;
+    background: #124032;
+    color: #f4f4f2;
 }
 
 .tutorial-highlight {
     position: relative;
     z-index: 10000 !important;
-    pointer-events: none;
-    box-shadow: 0 0 0 1000vmax rgba(4, 28, 20, 0.85), 0 0 20px rgba(255, 107, 0, 0.5);
-    border-radius: 8px;
+    box-shadow: 0 0 0 1000vmax rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
 }
 
-/* Modal inicial */
-.tutorial-modal-bg {
+/* Notificación inicial pequeña */
+.tutorial-start-toast {
     position: fixed;
-    top:0; left:0; width:100%; height:100%;
-    background: rgba(0,0,0,0.8);
-    backdrop-filter: blur(8px);
+    bottom: 30px;
+    right: 30px;
+    background: #0a3325;
+    border: 1px solid #ff6b00;
+    padding: 20px;
+    border-radius: 12px;
     z-index: 10002;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 280px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+    animation: slideInRight 0.5s ease;
 }
 
-.tutorial-welcome {
-    background: #06241a;
-    border: 1px solid #124032;
-    padding: 40px;
-    border-radius: 20px;
-    max-width: 450px;
-    text-align: center;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-}
+.tutorial-start-toast h3 { font-size: 16px; color: #ff6b00; margin-bottom: 8px; }
+.tutorial-start-toast p { font-size: 12px; margin-bottom: 15px; opacity: 0.9; }
 
-.tutorial-welcome h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: 28px;
-    margin-bottom: 15px;
-    color: #ff6b00;
-}
-
-.tutorial-welcome p {
-    color: #f4f4f2;
-    margin-bottom: 30px;
-    opacity: 0.8;
-    line-height: 1.6;
-}
-
-.welcome-btns {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.btn-start {
-    background: #ff6b00;
-    color: #000;
-    padding: 15px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 800;
-    text-transform: uppercase;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.btn-skip-init {
-    background: transparent;
-    color: #9a9a97;
-    border: none;
-    cursor: pointer;
-    font-size: 12px;
-    text-decoration: underline;
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
 `;
 
@@ -153,27 +103,15 @@ class ShopTutorial {
         this.currentStep = 0;
         this.steps = [
             {
-                title: "Explora el Menú",
-                text: "Desliza y encuentra tus platos favoritos. Tenemos opciones para todos los gustos.",
-                selector: ".categories-slider",
-                position: "bottom"
-            },
-            {
-                title: "Personaliza tu pedido",
-                text: "Haz clic en 'Añadir' para ver las opciones de cada producto.",
-                selector: ".btn-add:first-of-type",
-                position: "top"
-            },
-            {
                 title: "Tu Carrito",
-                text: "Aquí podrás ver todo lo que has seleccionado y ajustar cantidades.",
+                text: "Aquí podrás ver todo lo que has seleccionado.",
                 selector: ".cart-trigger",
                 position: "bottom"
             },
             {
                 title: "Finalizar Pedido",
-                text: "¡Ya casi estás! Haz clic en confirmar y envíanos tu pedido por WhatsApp para concretar el pago.",
-                selector: ".cart-trigger", // We'll open the cart for this step
+                text: "Haz clic aquí para confirmar y enviarnos tu pedido por WhatsApp.",
+                selector: ".cart-trigger",
                 position: "left",
                 action: () => {
                    if (typeof openCart === 'function') openCart();
@@ -185,40 +123,34 @@ class ShopTutorial {
     }
 
     init() {
-        // Inject Styles
         const styleSheet = document.createElement("style");
         styleSheet.innerText = tutorialStyles;
         document.head.appendChild(styleSheet);
 
-        // Check if already seen
         if (localStorage.getItem('santopadre_tutorial_seen')) return;
-
-        // Create Welcome Modal
-        this.showWelcome();
+        this.showStartToast();
     }
 
-    showWelcome() {
-        const modal = document.createElement("div");
-        modal.className = "tutorial-modal-bg";
-        modal.innerHTML = `
-            <div class="tutorial-welcome">
-                <h2>¿Nuevo en SantoPadre?</h2>
-                <p>Te enseñamos a pedir tus favoritos en menos de 30 segundos. ¡Es muy fácil!</p>
-                <div class="welcome-btns">
-                    <button class="btn-start">🚀 Empezar Tutorial</button>
-                    <button class="btn-skip-init">Quizás luego</button>
-                </div>
+    showStartToast() {
+        const toast = document.createElement("div");
+        toast.className = "tutorial-start-toast";
+        toast.innerHTML = `
+            <h3>¿Ayuda con tu pedido?</h3>
+            <p>Te enseñamos rápidamente cómo comprar.</p>
+            <div class="tutorial-buttons">
+                <button class="tutorial-btn skip">Omitir</button>
+                <button class="tutorial-btn next">Empezar</button>
             </div>
         `;
-        document.body.appendChild(modal);
+        document.body.appendChild(toast);
 
-        modal.querySelector('.btn-start').onclick = () => {
-            modal.remove();
+        toast.querySelector('.next').onclick = () => {
+            toast.remove();
             this.startTutorial();
         };
 
-        modal.querySelector('.btn-skip-init').onclick = () => {
-            modal.remove();
+        toast.querySelector('.skip').onclick = () => {
+            toast.remove();
             localStorage.setItem('santopadre_tutorial_seen', 'true');
         };
     }
@@ -245,20 +177,16 @@ class ShopTutorial {
             return;
         }
 
-        // Action if any
         if (step.action) step.action();
 
-        // Highlight
         this.clearHighlights();
         target.classList.add('tutorial-highlight');
         
-        // Scroll to target
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-        // Update Box
         this.stepBox.style.display = "block";
         this.stepBox.innerHTML = `
-            <h4>Paso ${this.currentStep + 1}: ${step.title}</h4>
+            <h4>${step.title}</h4>
             <p>${step.text}</p>
             <div class="tutorial-buttons">
                 <button class="tutorial-btn skip">Omitir</button>
@@ -274,25 +202,18 @@ class ShopTutorial {
 
     positionBox(target, position) {
         const rect = target.getBoundingClientRect();
-        const boxRect = this.stepBox.getBoundingClientRect();
         let top, left;
 
-        const margin = 20;
-
         if (position === 'bottom') {
-            top = rect.bottom + window.scrollY + margin;
-            left = rect.left + (rect.width / 2) - (320 / 2);
-        } else if (position === 'top') {
-            top = rect.top + window.scrollY - 200; // Rough estimate
-            left = rect.left + (rect.width / 2) - (320 / 2);
+            top = rect.bottom + window.scrollY + 15;
+            left = rect.left + (rect.width / 2) - 130;
         } else if (position === 'left') {
             top = rect.top + window.scrollY;
-            left = rect.left - 340;
+            left = rect.left - 280;
         }
 
-        // Bounds check
         if (left < 10) left = 10;
-        if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
+        if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
 
         this.stepBox.style.top = `${top}px`;
         this.stepBox.style.left = `${left}px`;
@@ -315,22 +236,12 @@ class ShopTutorial {
 
     finish() {
         this.clearHighlights();
-        this.overlay.remove();
-        this.stepBox.remove();
+        if (this.overlay) this.overlay.remove();
+        if (this.stepBox) this.stepBox.remove();
         localStorage.setItem('santopadre_tutorial_seen', 'true');
-        
-        // Final Toast
-        const toast = document.createElement("div");
-        toast.style = "position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#ff6b00; color:#000; padding:12px 24px; border-radius:30px; font-weight:800; z-index:10000; animation: fadeInUp 0.5s ease;";
-        toast.innerText = "¡Tutorial completado! ¡Feliz pedido!";
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
     }
 }
 
-// Start Tutorial when DOM is ready
 window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        new ShopTutorial();
-    }, 1500); // Small delay for premium feel
+    setTimeout(() => new ShopTutorial(), 1000);
 });

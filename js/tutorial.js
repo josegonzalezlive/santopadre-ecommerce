@@ -1,19 +1,8 @@
 /**
- * SantoPadre® Minimal Tutorial System
+ * SantoPadre® Minimal Floating Tutorial
  */
 
 const tutorialStyles = `
-.tutorial-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 9999;
-    display: none;
-}
-
 .tutorial-step-box {
     position: fixed;
     z-index: 10001;
@@ -21,24 +10,46 @@ const tutorialStyles = `
     border: 2px solid #ff6b00;
     border-radius: 8px;
     padding: 15px;
-    width: 260px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    width: 240px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     display: none;
     color: #f4f4f2;
+    animation: fadeIn 0.3s ease;
+}
+
+.tutorial-step-box::after {
+    content: '';
+    position: absolute;
+    width: 0; height: 0;
+    border: 10px solid transparent;
+}
+
+/* Arrow positions */
+.tutorial-step-box.pos-bottom::after {
+    border-bottom-color: #ff6b00;
+    top: -20px; left: 50%; transform: translateX(-50%);
+}
+.tutorial-step-box.pos-top::after {
+    border-top-color: #ff6b00;
+    bottom: -20px; left: 50%; transform: translateX(-50%);
+}
+.tutorial-step-box.pos-left::after {
+    border-left-color: #ff6b00;
+    right: -20px; top: 50%; transform: translateY(-50%);
 }
 
 .tutorial-step-box h4 {
     color: #ff6b00;
     margin-bottom: 5px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 800;
     text-transform: uppercase;
 }
 
 .tutorial-step-box p {
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1.4;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 .tutorial-buttons {
@@ -48,12 +59,12 @@ const tutorialStyles = `
 }
 
 .tutorial-btn {
-    padding: 5px 12px;
+    padding: 4px 10px;
     border-radius: 4px;
     border: none;
     cursor: pointer;
     font-weight: 700;
-    font-size: 11px;
+    font-size: 10px;
     text-transform: uppercase;
 }
 
@@ -67,13 +78,6 @@ const tutorialStyles = `
     color: #f4f4f2;
 }
 
-.tutorial-highlight {
-    position: relative;
-    z-index: 10000 !important;
-    box-shadow: 0 0 0 1000vmax rgba(0, 0, 0, 0.4);
-    border-radius: 4px;
-}
-
 /* Notificación inicial pequeña */
 .tutorial-start-toast {
     position: fixed;
@@ -81,21 +85,22 @@ const tutorialStyles = `
     right: 30px;
     background: #0a3325;
     border: 1px solid #ff6b00;
-    padding: 20px;
+    padding: 18px;
     border-radius: 12px;
     z-index: 10002;
-    width: 280px;
+    width: 260px;
     box-shadow: 0 15px 40px rgba(0,0,0,0.6);
     animation: slideInRight 0.5s ease;
 }
 
-.tutorial-start-toast h3 { font-size: 16px; color: #ff6b00; margin-bottom: 8px; }
-.tutorial-start-toast p { font-size: 12px; margin-bottom: 15px; opacity: 0.9; }
+.tutorial-start-toast h3 { font-size: 15px; color: #ff6b00; margin-bottom: 6px; }
+.tutorial-start-toast p { font-size: 12px; margin-bottom: 12px; opacity: 0.9; }
 
 @keyframes slideInRight {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
 }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 `;
 
 class ShopTutorial {
@@ -103,14 +108,26 @@ class ShopTutorial {
         this.currentStep = 0;
         this.steps = [
             {
-                title: "Tu Carrito",
-                text: "Aquí podrás ver todo lo que has seleccionado.",
+                title: "1. Agrega un producto",
+                text: "Elige lo que más te guste y haz clic en Añadir.",
+                selector: ".btn-add:first-of-type",
+                position: "top"
+            },
+            {
+                title: "2. Selecciona Variantes",
+                text: "Elige el tamaño o sabor ideal para ti.",
+                selector: ".btn-add:first-of-type",
+                position: "bottom"
+            },
+            {
+                title: "3. Revisa tu pedido",
+                text: "Todo lo que elijas se guardará aquí en el carrito.",
                 selector: ".cart-trigger",
                 position: "bottom"
             },
             {
-                title: "Finalizar Pedido",
-                text: "Haz clic aquí para confirmar y enviarnos tu pedido por WhatsApp.",
+                title: "4. Finalizar Compra",
+                text: "Confirma tu pedido y envíalo por WhatsApp para el pago.",
                 selector: ".cart-trigger",
                 position: "left",
                 action: () => {
@@ -156,15 +173,9 @@ class ShopTutorial {
     }
 
     startTutorial() {
-        this.overlay = document.createElement("div");
-        this.overlay.className = "tutorial-overlay";
-        document.body.appendChild(this.overlay);
-
         this.stepBox = document.createElement("div");
         this.stepBox.className = "tutorial-step-box";
         document.body.appendChild(this.stepBox);
-
-        this.overlay.style.display = "block";
         this.renderStep();
     }
 
@@ -179,12 +190,10 @@ class ShopTutorial {
 
         if (step.action) step.action();
 
-        this.clearHighlights();
-        target.classList.add('tutorial-highlight');
-        
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
         this.stepBox.style.display = "block";
+        this.stepBox.className = `tutorial-step-box pos-${step.position}`;
         this.stepBox.innerHTML = `
             <h4>${step.title}</h4>
             <p>${step.text}</p>
@@ -205,15 +214,18 @@ class ShopTutorial {
         let top, left;
 
         if (position === 'bottom') {
-            top = rect.bottom + window.scrollY + 15;
-            left = rect.left + (rect.width / 2) - 130;
+            top = rect.bottom + window.scrollY + 25;
+            left = rect.left + (rect.width / 2) - 120;
+        } else if (position === 'top') {
+            top = rect.top + window.scrollY - 130;
+            left = rect.left + (rect.width / 2) - 120;
         } else if (position === 'left') {
             top = rect.top + window.scrollY;
-            left = rect.left - 280;
+            left = rect.left - 260;
         }
 
         if (left < 10) left = 10;
-        if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
+        if (left + 240 > window.innerWidth) left = window.innerWidth - 250;
 
         this.stepBox.style.top = `${top}px`;
         this.stepBox.style.left = `${left}px`;
@@ -228,15 +240,7 @@ class ShopTutorial {
         }
     }
 
-    clearHighlights() {
-        document.querySelectorAll('.tutorial-highlight').forEach(el => {
-            el.classList.remove('tutorial-highlight');
-        });
-    }
-
     finish() {
-        this.clearHighlights();
-        if (this.overlay) this.overlay.remove();
         if (this.stepBox) this.stepBox.remove();
         localStorage.setItem('santopadre_tutorial_seen', 'true');
     }

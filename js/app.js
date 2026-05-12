@@ -1208,6 +1208,12 @@ function toggleCart() {
   document.getElementById('overlay').classList.toggle('active');
 }
 
+function openCart() {
+  document.getElementById('cart-panel').classList.add('active');
+  document.getElementById('overlay').classList.add('active');
+}
+window.openCart = openCart;
+
 function closeAll() {
   document.getElementById('cart-panel').classList.remove('active');
   document.getElementById('variant-modal').classList.remove('open');

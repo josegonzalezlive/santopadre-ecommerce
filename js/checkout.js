@@ -290,6 +290,7 @@ function initFormHandler(checkoutData) {
       try {
         const txHash = await processPhantomPayment(totalAmount);
         orderDetails.txHash = txHash;
+        await syncToSheets(orderDetails);
         sendToWhatsApp(orderDetails);
       } catch (error) {
         console.error(error);
@@ -298,9 +299,41 @@ function initFormHandler(checkoutData) {
         submitBtn.innerText = originalText;
       }
     } else {
+      await syncToSheets(orderDetails);
       sendToWhatsApp(orderDetails);
     }
   });
+}
+
+async function syncToSheets(order) {
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbynJa91G-xQCCZ_Kh1yquB9ctvLMnxx_C7TnORcCASQa8tIJ8fWcUa7OYerZnJwWYNp/exec";
+  if (SCRIPT_URL.includes("TU_GOOGLE_SCRIPT_URL")) {
+    console.warn("Google Sheets Script URL no configurada.");
+    return;
+  }
+
+  const itemsDetail = order.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+  const total = document.getElementById('summary-total').innerText;
+
+  const data = {
+    type: "Pedido Web",
+    name: order.name,
+    email: order.email,
+    phone: order.phone,
+    details: itemsDetail,
+    total: total,
+    payment: order.payment.toUpperCase() + (order.txHash ? ` (${order.txHash.slice(0,8)}...)` : '')
+  };
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify(data)
+    });
+  } catch (err) {
+    console.error("Error syncing to sheets:", err);
+  }
 }
 
 function sendToWhatsApp(order) {

@@ -236,7 +236,7 @@ function initFormHandler(checkoutData) {
           
           // Feedback visual de éxito
           const originalHtml = googleBtn.innerHTML;
-          googleBtn.innerHTML = "✓ Vinculado con Google";
+          googleBtn.innerHTML = "✓ Datos Autorrellenados";
           googleBtn.style.background = "#34A853"; 
           googleBtn.style.color = "#ffffff";
           googleBtn.style.borderColor = "#34A853";

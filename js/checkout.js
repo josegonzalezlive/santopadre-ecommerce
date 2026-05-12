@@ -39,8 +39,9 @@ function renderCheckoutReviews() {
   
   container.innerHTML = `
     <style>
-    .zelle-details { display: none; margin-top: 10px; width: 100%; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; }
+    .zelle-details, .pm-details { display: none; margin-top: 10px; width: 100%; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; }
     input[value="zelle"]:checked ~ .card-content .zelle-details { display: block; }
+    input[value="pago-movil"]:checked ~ .card-content .pm-details { display: block; }
     .payment-card input:checked ~ .card-content { border-color: #ff6b00; background: rgba(255, 107, 0, 0.1); }
     </style>
     <h3 style="margin-top: 40px; margin-bottom: 20px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--bone);">Lo que dicen de nosotros</h3>

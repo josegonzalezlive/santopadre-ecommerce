@@ -224,7 +224,7 @@ function initFormHandler(checkoutData) {
       }
 
       // TODO: Reemplazar con tu Client ID real de Google Cloud Console
-      const GOOGLE_CLIENT_ID = "TU_CLIENT_ID_DE_GOOGLE.apps.googleusercontent.com";
+      const GOOGLE_CLIENT_ID = "878959693718-7n1jfp5urh5o1u6rvu8shjlldqne0jdu.apps.googleusercontent.com";
 
       google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,

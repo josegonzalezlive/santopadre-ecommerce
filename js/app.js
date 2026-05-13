@@ -188,7 +188,9 @@ function renderProductCard(item, catId = '') {
       </div></div>` 
     : '';
 
-  let mediaHtml = `<div class="thumb" style="background-image: url('${item.image || 'https://i.ibb.co/mrnbBWpw/IMG-7618.avif'}')"></div>`;
+  let mediaHtml = `<div class="thumb" style="background-image: url('${item.image || 'https://i.ibb.co/mrnbBWpw/IMG-7618.avif'}')">
+    <img src="${item.image || 'https://i.ibb.co/mrnbBWpw/IMG-7618.avif'}" alt="${item.name}" loading="lazy" decoding="async" style="display:none;">
+  </div>`;
 
   // ═══════════════════════════════════════════════════════════════
   // PASE CORPORATIVO — Embedded 3D Holographic Ticket Widget

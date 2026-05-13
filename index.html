@@ -5,6 +5,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SantoPadre® | Donde el buen gusto es tu única membresía.</title>
+  <link rel="canonical" href="https://santopadre.pages.dev/">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="theme-color" content="#041c14">
+  
+  <link rel="dns-prefetch" href="//fonts.googleapis.com">
+  <link rel="dns-prefetch" href="//fonts.gstatic.com">
+  <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+  <link rel="dns-prefetch" href="//www.clarity.ms">
+
   <meta name="description" content="SantoPadre® | Menú Premium, Servicio de Catering, Santo Merchant y Regalos Exclusivos. Descubre la excelencia gastronómica con atención personalizada y envíos directos.">
   <meta name="keywords" content="SantoPadre, Menú, Tacos Premium, Servicio de Catering, Santo Merchant, Regalos, Preguntas Frecuentes, Comida Mexicana, Delivery Gourmet">
   <meta name="author" content="SantoPadre®">
@@ -2160,14 +2169,14 @@
   </div>
 
   <header id="header">
-    <button class="menu-btn" onclick="toggleMenu()">
+    <button class="menu-btn" onclick="toggleMenu()" aria-label="Abrir menú de navegación">
       <span class="burger"><span></span><span></span><span></span></span>
     </button>
     <div class="logo">
-      <img src="assets/logo.webp" alt="SantoPadre®" style="height: 77px; width: auto; transition: height 0.3s ease;">
+      <img src="assets/logo.webp" alt="SantoPadre® Logo" style="height: 77px; width: auto; transition: height 0.3s ease;">
     </div>
     <div class="actions">
-      <button class="icon-btn cart-trigger" onclick="toggleCart()">
+      <button class="icon-btn cart-trigger" onclick="toggleCart()" aria-label="Ver carrito de compras">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
           <path d="M3 6h18" />
@@ -2355,6 +2364,7 @@
           de 60 clientes satisfechos</span>
       </div>
       <h1 class="reveal" style="font-size: clamp(45px, 7.5vw, 105px); margin-bottom: 25px;">
+        <span style="font-size: 0.3em; display: block; letter-spacing: 0.2em; opacity: 0.8; margin-bottom: 10px;">SANTOPADRE®</span>
         <span>DEJA DE COMER</span>
         <span class="accent">TACOS ABURRIDOS.</span>
       </h1>

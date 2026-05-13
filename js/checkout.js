@@ -340,6 +340,31 @@ async function syncToSheets(order) {
 }
 
 function sendToWhatsApp(order) {
+  // 📊 TRACKING ESPÍA: Disparar evento de Compra (Purchase)
+  try {
+    let trackingTotal = 0;
+    order.items.forEach(i => trackingTotal += (i.price * i.qty));
+    
+    // Google Analytics 4 Event
+    if (typeof gtag === 'function') {
+      gtag('event', 'purchase', {
+        transaction_id: 'SP-' + Date.now(),
+        currency: 'USD',
+        value: trackingTotal,
+        items: order.items.map(item => ({ item_id: item.uniqueId || item.id, item_name: item.name, price: item.price, quantity: item.qty }))
+      });
+    }
+    // Meta Pixel Event
+    if (typeof fbq === 'function') {
+      fbq('track', 'Purchase', {
+        value: trackingTotal,
+        currency: 'USD',
+        content_type: 'product',
+        contents: order.items.map(item => ({ id: item.uniqueId || item.id, quantity: item.qty }))
+      });
+    }
+  } catch (e) { console.warn("Tracking block error:", e); }
+
   let subtotal = 0;
   let bonusDiscount = 0;
   let discountedItemUid = null;

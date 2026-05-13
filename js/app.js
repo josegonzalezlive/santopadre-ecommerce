@@ -1028,6 +1028,31 @@ function addToCart(item) {
 
   updateCartUI();
   
+  // 📊 TRACKING ESPÍA: Disparar evento de Agregar al Carrito
+  try {
+    const itemName = item.variantName ? `${item.name} (${item.variantName})` : item.name;
+    const itemPrice = item.price || 0;
+    
+    // Google Analytics 4 Event
+    if (typeof gtag === 'function') {
+      gtag('event', 'add_to_cart', {
+        currency: 'USD',
+        value: itemPrice,
+        items: [{ item_id: uniqueId, item_name: itemName, price: itemPrice, quantity: 1 }]
+      });
+    }
+    // Meta Pixel Event
+    if (typeof fbq === 'function') {
+      fbq('track', 'AddToCart', {
+        content_name: itemName,
+        content_ids: [uniqueId],
+        content_type: 'product',
+        value: itemPrice,
+        currency: 'USD'
+      });
+    }
+  } catch (e) { console.warn("Tracking block error:", e); }
+
   // Open cart automatically when an item is added
   document.getElementById('cart-panel').classList.add('active');
   document.getElementById('overlay').classList.add('active');
@@ -1257,6 +1282,29 @@ function goToCheckout() {
     alert("Tu carrito está vacío.");
     return;
   }
+  
+  // 📊 TRACKING ESPÍA: Disparar evento de Iniciar Checkout
+  try {
+    const totalValue = parseFloat(document.getElementById('cart-total').innerText.replace('$', '')) || 0;
+    
+    // Google Analytics 4 Event
+    if (typeof gtag === 'function') {
+      gtag('event', 'begin_checkout', {
+        currency: 'USD',
+        value: totalValue,
+        items: cart.map(item => ({ item_id: item.uniqueId || item.id, item_name: item.name, quantity: item.qty }))
+      });
+    }
+    // Meta Pixel Event
+    if (typeof fbq === 'function') {
+      fbq('track', 'InitiateCheckout', {
+        value: totalValue,
+        currency: 'USD',
+        num_items: cart.length
+      });
+    }
+  } catch (e) { console.warn("Tracking block error:", e); }
+
   // Guardar carrito y estado VIP para el checkout
   const checkoutData = {
     items: cart,

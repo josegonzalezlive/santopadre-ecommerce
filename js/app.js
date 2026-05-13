@@ -188,8 +188,11 @@ function renderProductCard(item, catId = '') {
       </div></div>` 
     : '';
 
+  // SEO Alt Text Generation
+  const seoAltText = `SantoPadre - ${item.name} en Acarigua/Araure`;
+
   let mediaHtml = `<div class="thumb" style="background-image: url('${item.image || 'https://i.ibb.co/mrnbBWpw/IMG-7618.avif'}')">
-    <img src="${item.image || 'https://i.ibb.co/mrnbBWpw/IMG-7618.avif'}" alt="${item.name}" loading="lazy" decoding="async" style="display:none;">
+    <img src="${item.image || 'https://i.ibb.co/mrnbBWpw/IMG-7618.avif'}" alt="${seoAltText}" loading="lazy" decoding="async" style="display:none;">
   </div>`;
 
   // ═══════════════════════════════════════════════════════════════

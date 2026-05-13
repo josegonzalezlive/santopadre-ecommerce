@@ -178,8 +178,8 @@ const CATALOG = {
           image: "assets/menu/agua.webp",
           hasVariants: true,
           variants: [
-            { id: "v1", name: "Botella 600ML", price: 2.00, image: "https://i.ibb.co/d0yGp6mD/Screenshot-2026-04-15-at-1-48-05-pm.png" },
-            { id: "v2", name: "Botella 1.5L", price: 3.50, image: "https://i.ibb.co/Y7f9z6jr/unnamed.jpg" }
+            { id: "v1", name: "Botella 600ML", price: 2.00, image: "assets/menu/agua.webp" },
+            { id: "v2", name: "Botella 1.5L", price: 3.50, image: "assets/menu/agua.webp" }
           ],
           tags: ["💧 HIDRATACIÓN", "👪 TAMAÑO FAMILIAR", "💰 AHORRA MÁS"]
         },
@@ -273,11 +273,11 @@ const CATALOG = {
     }
   },
   upsellProducts: [
-    { id: "agua", label: "¿Un agua mineral?", price: 2.00, image: "https://i.ibb.co/d0yGp6mD/Screenshot-2026-04-15-at-1-48-05-pm.png" },
-    { id: "coca-cola", label: "¿Le añades una Coca Cola?", price: 1.50, image: "https://i.ibb.co/5W3JJJ9B/60c25c9e9158837168ad837f003da8ae.jpg" },
-    { id: "lipton", label: "¿Un Lipton frío?", price: 3.00, image: "https://i.ibb.co/BHvvwkfF/Screenshot-2026-04-15-at-1-38-59-pm.png" },
-    { id: "gatorade", label: "¿Gatorade para reponer?", price: 3.20, image: "https://i.ibb.co/F41Th9rK/310491d548acf71992220243cc0dccec.jpg" },
-    { id: "nachos", label: "¿Y unos Nachos para acompañar?", price: 7.25, image: "https://i.ibb.co/1CM7g26/IMG-7103.jpg" }
+    { id: "agua", label: "¿Un agua mineral?", price: 2.00, image: "assets/menu/agua.webp" },
+    { id: "coca-cola", label: "¿Le añades una Coca Cola?", price: 1.50, image: "assets/menu/coca-cola.webp" },
+    { id: "lipton", label: "¿Un Lipton frío?", price: 3.00, image: "assets/menu/lipton.webp" },
+    { id: "gatorade", label: "¿Gatorade para reponer?", price: 3.20, image: "assets/menu/gatorade.webp" },
+    { id: "nachos", label: "¿Y unos Nachos para acompañar?", price: 7.25, image: "assets/menu/nachos.webp" }
   ],
   reviews: [
     { quote: "Me reí con el FAQ de la web y tuve que ir. Es tal cual dicen: comida que mancha y que no te miente.", author: "Daniela", productId: "flauta-cochinita", rating: 5 },

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 | Te perdiste - SantoPadre®</title>
+  <meta name="theme-color" content="#041c14">
+  <link rel="icon" type="image/webp" href="/assets/logo-sm.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@50..125,300..900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #041c14;
+      --bone: #f4f4f2;
+      --accent: #e55d27;
+      --line: #124032;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--ink);
+      color: var(--bone);
+      font-family: 'Archivo', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      overflow: hidden;
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 80px 80px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .content {
+      position: relative;
+      z-index: 10;
+      padding: 20px;
+      max-width: 600px;
+    }
+    .logo {
+      width: 150px;
+      margin-bottom: 40px;
+      filter: drop-shadow(0 0 15px rgba(229, 93, 39, 0.3));
+    }
+    h1 {
+      font-size: clamp(80px, 15vw, 150px);
+      margin: 0;
+      line-height: 0.8;
+      font-variation-settings: "wdth" 60, "wght" 900;
+      color: transparent;
+      -webkit-text-stroke: 2px var(--bone);
+    }
+    h2 {
+      font-size: clamp(24px, 4vw, 40px);
+      text-transform: uppercase;
+      font-variation-settings: "wdth" 60, "wght" 800;
+      margin: 20px 0;
+      color: var(--accent);
+    }
+    p {
+      font-size: 18px;
+      line-height: 1.6;
+      color: rgba(244, 244, 242, 0.8);
+      margin-bottom: 30px;
+    }
+    .discount-box {
+      background: rgba(229, 93, 39, 0.1);
+      border: 1px dashed var(--accent);
+      padding: 15px 30px;
+      display: inline-block;
+      margin-bottom: 40px;
+      border-radius: 4px;
+    }
+    .discount-box span {
+      display: block;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 5px;
+      color: var(--bone);
+    }
+    .discount-box strong {
+      font-size: 24px;
+      font-variation-settings: "wdth" 60, "wght" 900;
+      color: var(--accent);
+      letter-spacing: 2px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px 40px;
+      font-size: 14px;
+      font-variation-settings: "wdth" 50, "wght" 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border: 1px solid var(--accent);
+      color: var(--bone);
+      background: var(--accent);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    .btn:hover {
+      background: transparent;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <img src="/assets/logo.webp" alt="SantoPadre Logo" class="logo">
+    <h1>404</h1>
+    <h2>Te perdiste buscando el cielo</h2>
+    <p>Pero encontraste algo mejor. Parece que esta página no existe, pero para que el viaje no sea en vano, aquí tienes un regalo de la casa.</p>
+    
+    <div class="discount-box">
+      <span>CÓDIGO DE DESCUENTO (10% OFF)</span>
+      <strong>PERDIDO10</strong>
+    </div>
+    <br>
+    <a href="/" class="btn">VOLVER AL MENÚ</a>
+  </div>
+</body>
+</html>

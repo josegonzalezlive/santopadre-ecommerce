@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuestra Historia | SantoPadre® Araure</title>
+  <meta name="description" content="Conoce la historia detrás de SantoPadre®, el restaurante que revolucionó la comida mexicana gourmet en Araure y Acarigua. Honestidad radical y pasión culinaria.">
+  <link rel="canonical" href="https://santopadre.store/nuestra-historia.html">
+  <link rel="icon" type="image/webp" href="/assets/logo-sm.webp">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@50..125,300..900&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --ink: #041c14;
+      --bone: #f4f4f2;
+      --accent: #e55d27;
+      --line: #124032;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--ink);
+      color: var(--bone);
+      font-family: 'Archivo', system-ui, sans-serif;
+      line-height: 1.6;
+    }
+    header {
+      padding: 40px 20px;
+      text-align: center;
+      border-bottom: 1px solid var(--line);
+    }
+    .logo {
+      width: 120px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: clamp(40px, 8vw, 80px);
+      margin: 0;
+      font-variation-settings: "wdth" 60, "wght" 900;
+      text-transform: uppercase;
+      line-height: 0.9;
+    }
+    h2 {
+      color: var(--accent);
+      font-variation-settings: "wdth" 60, "wght" 800;
+      text-transform: uppercase;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 60px 20px;
+    }
+    .btn {
+      display: inline-block;
+      padding: 15px 30px;
+      background: var(--accent);
+      color: var(--bone);
+      text-decoration: none;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 40px;
+      border-radius: 4px;
+      transition: opacity 0.3s;
+    }
+    .btn:hover {
+      opacity: 0.8;
+    }
+    .values-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      margin-top: 50px;
+    }
+    .value-card {
+      background: rgba(255,255,255,0.03);
+      padding: 30px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+  </style>
+
+  <!-- Schema E-E-A-T -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "mainEntity": {
+      "@type": "Restaurant",
+      "name": "SantoPadre®",
+      "foundingLocation": {
+        "@type": "City",
+        "name": "Araure"
+      },
+      "knowsAbout": ["Auténtica comida mexicana", "Tacos al Pastor", "Catering corporativo", "Experiencia gourmet"],
+      "brand": {
+        "@type": "Brand",
+        "name": "SantoPadre",
+        "slogan": "Honestidad radical en cada plato."
+      }
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <header>
+    <a href="/"><img src="/assets/logo.webp" alt="SantoPadre Logo" class="logo"></a>
+    <h1>Honestidad<br>Radical</h1>
+  </header>
+
+  <div class="container">
+    <h2>Nuestra Misión</h2>
+    <p>Nacimos en Araure con un propósito claro: elevar la comida rápida mexicana a un nivel gourmet, sin perder la autenticidad de la calle. SantoPadre® no es solo un restaurante, es un culto a los sabores intensos, a los ingredientes frescos y a las recetas que toman horas de fuego lento para lograr la perfección.</p>
+
+    <p>Creemos en la <strong>Honestidad Radical</strong>. Lo que ves es lo que comes. Sin atajos, sin ingredientes de relleno. Nuestro pastor se marina pacientemente, nuestra birria hierve hasta desarmarse sola, y nuestras tortillas envuelven el verdadero espíritu de México.</p>
+
+    <div class="values-grid">
+      <div class="value-card">
+        <h3>🔥 Cocción Lenta</h3>
+        <p>No apresuramos el sabor. Nuestras carnes se cocinan por horas para garantizar una textura que se deshace en la boca.</p>
+      </div>
+      <div class="value-card">
+        <h3>🥑 Ingredientes Premium</h3>
+        <p>Seleccionamos a mano los vegetales más frescos de la región de Portuguesa para apoyar el comercio local y garantizar calidad top.</p>
+      </div>
+      <div class="value-card">
+        <h3>⚔️ Autenticidad</h3>
+        <p>Respetamos las raíces. Condimentos auténticos y recetas que honran la verdadera taquería mexicana, adaptadas al paladar más exigente.</p>
+      </div>
+    </div>
+
+    <div style="text-align: center;">
+      <a href="/" class="btn">Probar el Menú</a>
+    </div>
+  </div>
+
+</body>
+</html>

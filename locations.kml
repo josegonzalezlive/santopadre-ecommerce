@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document>
+    <name>Ubicación SantoPadre®</name>
+    <atom:author>
+      <atom:name>SantoPadre®</atom:name>
+    </atom:author>
+    <atom:link href="https://santopadre.store/" />
+    <Placemark>
+      <name>SantoPadre® | Comida Mexicana</name>
+      <description><![CDATA[Comida mexicana gourmet en Araure, Venezuela. Menú premium, servicio de catering, tacos al pastor, burritos y birria.]]></description>
+      <Point>
+        <coordinates>-69.2167,9.5667,0</coordinates>
+      </Point>
+    </Placemark>
+  </Document>
+</kml>

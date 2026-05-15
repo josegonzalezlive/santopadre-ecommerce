@@ -26,7 +26,7 @@ CATALOG.categories.forEach(cat => {
     if (price === 0) return; // Skip items with no price (like pase corporativo)
     
     // Determine image
-    let image = item.image || "assets/menu/tacos-pastor.webp"; // fallback
+    let image = item.image || "assets/menu/tacos-pastor.avif"; // fallback
     if (!image.startsWith('http')) {
       image = "https://santopadre.store/" + image;
     }

@@ -199,8 +199,8 @@ function renderProductCard(item, catId = '') {
   // SEO Alt Text Generation
   const seoAltText = `SantoPadre - ${item.name} en Acarigua/Araure`;
 
-  let mediaHtml = `<div class="thumb" style="background-image: url('${item.image || 'assets/menu/flauta-cochinita.webp'}')">
-    <img src="${item.image || 'assets/menu/flauta-cochinita.webp'}" alt="${seoAltText}" loading="lazy" decoding="async" style="display:none;">
+  let mediaHtml = `<div class="thumb" style="background-image: url('${item.image || 'assets/menu/flauta-cochinita.avif'}')">
+    <img src="${item.image || 'assets/menu/flauta-cochinita.avif'}" alt="${seoAltText}" loading="lazy" decoding="async" style="display:none;">
   </div>`;
 
   // ═══════════════════════════════════════════════════════════════
@@ -223,7 +223,7 @@ function renderProductCard(item, catId = '') {
     `;
   } else {
     mediaHtml = `
-      <div class="thumb" style="background-image: url('${item.image || 'assets/menu/flauta-cochinita.webp'}')">
+      <div class="thumb" style="background-image: url('${item.image || 'assets/menu/flauta-cochinita.avif'}')">
         ${badgeHtml}
       </div>
     `;
@@ -904,7 +904,7 @@ function renderReviews() {
           </div>
           ${product ? `
             <div class="review-product">
-              <div class="prod-thumb" style="background-image: url('${product.image || 'assets/menu/flauta-cochinita.webp'}')"></div>
+              <div class="prod-thumb" style="background-image: url('${product.image || 'assets/menu/flauta-cochinita.avif'}')"></div>
               <div class="prod-info">
                 <div class="prod-name">${product.name}</div>
                 <div class="prod-tags">
@@ -1137,7 +1137,7 @@ function updateCartUI() {
 
     return `
       <div class="cart-item ${isDiscounted ? 'bonus-applied' : ''}">
-        <img src="${item.image || 'assets/menu/flauta-cochinita.webp'}" alt="${item.name}">
+        <img src="${item.image || 'assets/menu/flauta-cochinita.avif'}" alt="${item.name}">
         <div class="item-info">
           <h4>${item.name} ${isDiscounted ? '<span class="bonus-tag">-15% BONUS</span>' : ''}</h4>
           
@@ -1199,7 +1199,7 @@ function updateCartUI() {
   if (upsellContainer) {
     upsellContainer.innerHTML = (CATALOG.upsellProducts || []).map(p => `
       <div class="upsell-card">
-        <img src="${p.image || 'assets/menu/coca-cola.webp'}" alt="${p.label}">
+        <img src="${p.image || 'assets/menu/coca-cola.avif'}" alt="${p.label}">
         <div class="upsell-item-label">${p.label}</div>
         <button onclick="handleAddToCart('${p.id}')">+$${p.price.toFixed(2)}</button>
       </div>

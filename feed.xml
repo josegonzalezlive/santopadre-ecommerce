@@ -10,7 +10,7 @@
       <g:title>Flauta de Cochinita (6U)</g:title>
       <g:description>Tortilla de maíz frita rellena de cochinita pibil al horno, queso fundido, crema y cilantro. Crujen tanto que tus vecinos de mesa sabrán exactamente qué estás comiendo.</g:description>
       <g:link>https://santopadre.store/#section-entrantes</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/flauta-cochinita.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/flauta-cochinita.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>12.00 USD</g:price>
       <g:condition>new</g:condition>
@@ -22,7 +22,7 @@
       <g:title>Flauta de Pollo</g:title>
       <g:description>Pollo desmechado sin dramas, queso amarillo, crema y cilantro sobre tortilla de maíz frita. El clásico infalible.</g:description>
       <g:link>https://santopadre.store/#section-entrantes</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/flauta-pollo.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/flauta-pollo.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>10.50 USD</g:price>
       <g:condition>new</g:condition>
@@ -34,7 +34,7 @@
       <g:title>Nachos</g:title>
       <g:description>Una montaña de totopos bajo carne chilli, cheddar, pico de gallo, guacamole y nata. Tienen alma y probablemente manchen tu camisa blanca.</g:description>
       <g:link>https://santopadre.store/#section-entrantes</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/nachos.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/nachos.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>7.25 USD</g:price>
       <g:condition>new</g:condition>
@@ -46,7 +46,7 @@
       <g:title>Tacos al Pastor (3U)</g:title>
       <g:description>Cerdo marinado al pastor, cebolla, cilantro y piña asada. El equilibrio sagrado.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>11.50 USD</g:price>
       <g:condition>new</g:condition>
@@ -58,7 +58,7 @@
       <g:title>Tacos de Carne (3U)</g:title>
       <g:description>Punta trasera marinada de la buena, cebolla y cilantro. Simple, directo, perfecto.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/tacos-carne.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/tacos-carne.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>12.50 USD</g:price>
       <g:condition>new</g:condition>
@@ -70,7 +70,7 @@
       <g:title>Tacos de Pollo (3U)</g:title>
       <g:description>Pollo marinado con nuestra receta secreta, cebolla y cilantro.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>11.00 USD</g:price>
       <g:condition>new</g:condition>
@@ -82,7 +82,7 @@
       <g:title>Tacos de Birria (3U)</g:title>
       <g:description>Queso fundido, carne de res adobada hecha a fuego lento, cebolla y cilantro. Incluye consomé.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/tacos-birria.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/tacos-birria.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>12.50 USD</g:price>
       <g:condition>new</g:condition>
@@ -94,7 +94,7 @@
       <g:title>Tacos de Cochinita (3U)</g:title>
       <g:description>Cerdo marinado hecho a fuego lento, cebollas moradas encurtidas y cilantro. Una oda a Yucatán.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>11.50 USD</g:price>
       <g:condition>new</g:condition>
@@ -106,7 +106,7 @@
       <g:title>Fajitas (6U)</g:title>
       <g:description>Un festín de lomito y pollo salteado con cebolla y pimentón, tortillas de harina de trigo, pico de gallo, guacamole y queso. Tú las montas.</g:description>
       <g:link>https://santopadre.store/#section-especialidades</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/fajitas.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/fajitas.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>38.00 USD</g:price>
       <g:condition>new</g:condition>
@@ -118,7 +118,7 @@
       <g:title>Burritos</g:title>
       <g:description>Tortilla de trigo de 1kg (aprox) rellena de arroz, pico, frijoles, guacamole y queso. Elige tu proteína.</g:description>
       <g:link>https://santopadre.store/#section-especialidades</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>17.00 USD</g:price>
       <g:condition>new</g:condition>
@@ -130,7 +130,7 @@
       <g:title>Birria Ramen</g:title>
       <g:description>Fideos ramen en consomé de res de cocción lenta, birria deshebrada, cebolla y cilantro. El abrazo que necesitas.</g:description>
       <g:link>https://santopadre.store/#section-especialidades</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/birria-ramen.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/birria-ramen.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>13.50 USD</g:price>
       <g:condition>new</g:condition>
@@ -142,7 +142,7 @@
       <g:title>Agua</g:title>
       <g:description>Hidratación pura y necesaria para seguir pecando sin dramas.</g:description>
       <g:link>https://santopadre.store/#section-bebidas</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/agua.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/agua.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>2.00 USD</g:price>
       <g:condition>new</g:condition>
@@ -154,7 +154,7 @@
       <g:title>Coca Cola</g:title>
       <g:description>El clásico carbonatado que no necesita presentación ni perdón.</g:description>
       <g:link>https://santopadre.store/#section-bebidas</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/coca-cola.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/coca-cola.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>1.50 USD</g:price>
       <g:condition>new</g:condition>
@@ -166,7 +166,7 @@
       <g:title>Cerveza</g:title>
       <g:description>Una rubia bien fría para apagar el fuego del chile y brindar por la vida.</g:description>
       <g:link>https://santopadre.store/#section-bebidas</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>2.20 USD</g:price>
       <g:condition>new</g:condition>
@@ -178,7 +178,7 @@
       <g:title>Lipton</g:title>
       <g:description>Té frío para los que buscan un poco de calma cítrica en medio del caos.</g:description>
       <g:link>https://santopadre.store/#section-bebidas</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/lipton.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/lipton.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>3.00 USD</g:price>
       <g:condition>new</g:condition>
@@ -190,7 +190,7 @@
       <g:title>Gatorade</g:title>
       <g:description>Electrolitos sagrados para recuperar el alma después de una buena tanda de tacos.</g:description>
       <g:link>https://santopadre.store/#section-bebidas</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/gatorade.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/gatorade.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>3.20 USD</g:price>
       <g:condition>new</g:condition>
@@ -226,7 +226,7 @@
       <g:title>Gift Card SantoPadre $25</g:title>
       <g:description>Regala $25 de crédito en SantoPadre a quien quieras. Un billete directo a la Parroquia.</g:description>
       <g:link>https://santopadre.store/#section-regalos</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/gift-card-25.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/gift-card-25.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>25.00 USD</g:price>
       <g:condition>new</g:condition>
@@ -238,7 +238,7 @@
       <g:title>Gift Card SantoPadre $50</g:title>
       <g:description>Regala $50 de crédito en SantoPadre a quien quieras. Un billete directo a la Parroquia.</g:description>
       <g:link>https://santopadre.store/#section-regalos</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/gift-card-50.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/gift-card-50.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>50.00 USD</g:price>
       <g:condition>new</g:condition>
@@ -250,7 +250,7 @@
       <g:title>Pase Corporativo</g:title>
       <g:description>Saldo prepago exclusivo para empresas. Alimenta a tu equipo con facturación consolidada y ahorra en cada bocado.</g:description>
       <g:link>https://santopadre.store/#section-regalos</g:link>
-      <g:image_link>https://santopadre.store/assets/menu/pase-corporativo.webp</g:image_link>
+      <g:image_link>https://santopadre.store/assets/menu/pase-corporativo.avif</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>150.00 USD</g:price>
       <g:condition>new</g:condition>

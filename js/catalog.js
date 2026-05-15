@@ -12,7 +12,7 @@ const CATALOG = {
           name: "Flauta de Cochinita (6U)",
           description: "Tortilla de maíz frita rellena de cochinita pibil al horno, queso fundido, crema y cilantro. Crujen tanto que tus vecinos de mesa sabrán exactamente qué estás comiendo.",
           allergens: "Lácteos, Glúten (trazas)",
-          image: "assets/menu/flauta-cochinita.webp",
+          image: "assets/menu/flauta-cochinita.avif",
           hasVariants: true,
           variants: [
             { id: "v1", name: "Ración 6 Unidades", price: 12.00 },
@@ -27,7 +27,7 @@ const CATALOG = {
           name: "Flauta de Pollo",
           description: "Pollo desmechado sin dramas, queso amarillo, crema y cilantro sobre tortilla de maíz frita. El clásico infalible.",
           allergens: "Lácteos, Glúten (trazas)",
-          image: "assets/menu/flauta-pollo.webp",
+          image: "assets/menu/flauta-pollo.avif",
           hasVariants: true,
           variants: [
             { id: "v1", name: "Ración 6 Unidades", price: 10.50 },
@@ -42,7 +42,7 @@ const CATALOG = {
           name: "Nachos",
           description: "Una montaña de totopos bajo carne chilli, cheddar, pico de gallo, guacamole y nata. Tienen alma y probablemente manchen tu camisa blanca.",
           allergens: "Lácteos",
-          image: "assets/menu/nachos.webp",
+          image: "assets/menu/nachos.avif",
           hasVariants: true,
           variants: [
             { id: "v1", name: "Tamaño Pequeño (PEQ)", price: 7.25 },
@@ -65,7 +65,7 @@ const CATALOG = {
           name: "Tacos al Pastor (3U)",
           description: "Cerdo marinado al pastor, cebolla, cilantro y piña asada. El equilibrio sagrado.",
           allergens: "Ninguno (100% Maíz)",
-          image: "assets/menu/tacos-pastor.webp",
+          image: "assets/menu/tacos-pastor.avif",
           price: 11.50,
           badges: ["EL MÁS VENDIDO"],
           tags: ["👑 EL REY", "🍍 TOQUE ASADO", "🌽 100% MAÍZ"],
@@ -76,7 +76,7 @@ const CATALOG = {
           name: "Tacos de Carne (3U)",
           description: "Punta trasera marinada de la buena, cebolla y cilantro. Simple, directo, perfecto.",
           allergens: "Ninguno",
-          image: "assets/menu/tacos-carne.webp",
+          image: "assets/menu/tacos-carne.avif",
           price: 12.50,
           badges: [],
           tags: ["🥩 CORTE PREMIUM", "💪 PROTEÍNA TOP", "🔥 SABOR A BRASA"],
@@ -98,7 +98,7 @@ const CATALOG = {
           name: "Tacos de Birria (3U)",
           description: "Queso fundido, carne de res adobada hecha a fuego lento, cebolla y cilantro. Incluye consomé.",
           allergens: "Lácteos",
-          image: "assets/menu/tacos-birria.webp",
+          image: "assets/menu/tacos-birria.avif",
           price: 12.50,
           badges: ["FAVORITO"],
           tags: ["🥘 ARTESANAL", "🧀 EXTRA QUESO", "✨ RECOMENDACIÓN DEL CHEF"],
@@ -128,7 +128,7 @@ const CATALOG = {
           name: "Fajitas (6U)",
           description: "Un festín de lomito y pollo salteado con cebolla y pimentón, tortillas de harina de trigo, pico de gallo, guacamole y queso. Tú las montas.",
           allergens: "Glúten (Trigo), Lácteos",
-          image: "assets/menu/fajitas.webp",
+          image: "assets/menu/fajitas.avif",
           price: 38.00,
           badges: ["NUEVO"],
           tags: ["🛠️ DIY: HAZLO TÚ MISMO", "🍱 BANQUETE COMPLETO", "🥩 LOMITO QUALITY"],
@@ -158,7 +158,7 @@ const CATALOG = {
           name: "Birria Ramen",
           description: "Fideos ramen en consomé de res de cocción lenta, birria deshebrada, cebolla y cilantro. El abrazo que necesitas.",
           allergens: "Glúten",
-          image: "assets/menu/birria-ramen.webp",
+          image: "assets/menu/birria-ramen.avif",
           price: 13.50,
           badges: ["TOP TEMPORADA LLUVIA"],
           tags: ["🍜 FUSION STYLE", "🥣 CALDO RECONFORTANTE", "🥄 CUCHARA Y TACO"]
@@ -175,18 +175,18 @@ const CATALOG = {
           id: "agua",
           name: "Agua",
           description: "Hidratación pura y necesaria para seguir pecando sin dramas.",
-          image: "assets/menu/agua.webp",
+          image: "assets/menu/agua.avif",
           hasVariants: true,
           variants: [
-            { id: "v1", name: "Botella 600ML", price: 2.00, image: "assets/menu/agua.webp" },
-            { id: "v2", name: "Botella 1.5L", price: 3.50, image: "assets/menu/agua.webp" }
+            { id: "v1", name: "Botella 600ML", price: 2.00, image: "assets/menu/agua.avif" },
+            { id: "v2", name: "Botella 1.5L", price: 3.50, image: "assets/menu/agua.avif" }
           ],
           tags: ["💧 HIDRATACIÓN", "👪 TAMAÑO FAMILIAR", "💰 AHORRA MÁS"]
         },
-        { id: "coca-cola", name: "Coca Cola", description: "El clásico carbonatado que no necesita presentación ni perdón.", price: 1.50, image: "assets/menu/coca-cola.webp", tags: ["🧊 BIEN FRÍA"] },
+        { id: "coca-cola", name: "Coca Cola", description: "El clásico carbonatado que no necesita presentación ni perdón.", price: 1.50, image: "assets/menu/coca-cola.avif", tags: ["🧊 BIEN FRÍA"] },
         { id: "cerveza", name: "Cerveza", description: "Una rubia bien fría para apagar el fuego del chile y brindar por la vida.", price: 2.20, video: "https://res.cloudinary.com/dxishpwhl/video/upload/Cerveza_gzoxky.mp4", tags: ["🍺 MARIDAJE PERFECTO"] },
-        { id: "lipton", name: "Lipton", description: "Té frío para los que buscan un poco de calma cítrica en medio del caos.", price: 3.00, image: "assets/menu/lipton.webp", tags: ["🍃 REFRESCANTE"] },
-        { id: "gatorade", name: "Gatorade", description: "Electrolitos sagrados para recuperar el alma después de una buena tanda de tacos.", price: 3.20, image: "assets/menu/gatorade.webp", tags: ["⚡ ELECTROLITOS"] }
+        { id: "lipton", name: "Lipton", description: "Té frío para los que buscan un poco de calma cítrica en medio del caos.", price: 3.00, image: "assets/menu/lipton.avif", tags: ["🍃 REFRESCANTE"] },
+        { id: "gatorade", name: "Gatorade", description: "Electrolitos sagrados para recuperar el alma después de una buena tanda de tacos.", price: 3.20, image: "assets/menu/gatorade.avif", tags: ["⚡ ELECTROLITOS"] }
       ]
     },
     {
@@ -230,7 +230,7 @@ const CATALOG = {
           id: "gift-card-25",
           name: "Gift Card SantoPadre $25",
           description: "Regala $25 de crédito en SantoPadre a quien quieras. Un billete directo a la Parroquia.",
-          image: "assets/menu/gift-card-25.webp",
+          image: "assets/menu/gift-card-25.avif",
           price: 25.00,
           tags: ["🎁 REGALO PERFECTO", "✉️ ENVÍO DIGITAL"]
         },
@@ -238,7 +238,7 @@ const CATALOG = {
           id: "gift-card-50",
           name: "Gift Card SantoPadre $50",
           description: "Regala $50 de crédito en SantoPadre a quien quieras. Un billete directo a la Parroquia.",
-          image: "assets/menu/gift-card-50.webp",
+          image: "assets/menu/gift-card-50.avif",
           price: 50.00,
           tags: ["🎁 REGALO PERFECTO", "✉️ ENVÍO DIGITAL"]
         },
@@ -246,7 +246,7 @@ const CATALOG = {
           id: "pase-corporativo",
           name: "Pase Corporativo",
           description: "Saldo prepago exclusivo para empresas. Alimenta a tu equipo con facturación consolidada y ahorra en cada bocado.",
-          image: "assets/menu/pase-corporativo.webp",
+          image: "assets/menu/pase-corporativo.avif",
           price: 150.00,
           tags: ["💼 B2B", "📈 AHORRO EMPRESARIAL"]
         }
@@ -273,11 +273,11 @@ const CATALOG = {
     }
   },
   upsellProducts: [
-    { id: "agua", label: "¿Un agua mineral?", price: 2.00, image: "assets/menu/agua.webp" },
-    { id: "coca-cola", label: "¿Le añades una Coca Cola?", price: 1.50, image: "assets/menu/coca-cola.webp" },
-    { id: "lipton", label: "¿Un Lipton frío?", price: 3.00, image: "assets/menu/lipton.webp" },
-    { id: "gatorade", label: "¿Gatorade para reponer?", price: 3.20, image: "assets/menu/gatorade.webp" },
-    { id: "nachos", label: "¿Y unos Nachos para acompañar?", price: 7.25, image: "assets/menu/nachos.webp" }
+    { id: "agua", label: "¿Un agua mineral?", price: 2.00, image: "assets/menu/agua.avif" },
+    { id: "coca-cola", label: "¿Le añades una Coca Cola?", price: 1.50, image: "assets/menu/coca-cola.avif" },
+    { id: "lipton", label: "¿Un Lipton frío?", price: 3.00, image: "assets/menu/lipton.avif" },
+    { id: "gatorade", label: "¿Gatorade para reponer?", price: 3.20, image: "assets/menu/gatorade.avif" },
+    { id: "nachos", label: "¿Y unos Nachos para acompañar?", price: 7.25, image: "assets/menu/nachos.avif" }
   ],
   reviews: [
     { quote: "Me reí con el FAQ de la web y tuve que ir. Es tal cual dicen: comida que mancha y que no te miente.", author: "Daniela", productId: "flauta-cochinita", rating: 5 },

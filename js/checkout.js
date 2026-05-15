@@ -128,7 +128,7 @@ function renderSummary(data) {
 
     return `
       <div class="summary-item cart-item ${isDiscounted ? 'bonus-applied' : ''}">
-        <img src="${item.image || 'assets/menu/flauta-cochinita.webp'}" alt="${item.name}">
+        <img src="${item.image || 'assets/menu/flauta-cochinita.avif'}" alt="${item.name}">
         <div class="item-info">
           <h4>${item.name} ${isDiscounted ? '<span class="bonus-tag">-15% BONUS</span>' : ''}</h4>
           
@@ -469,7 +469,7 @@ function initCartExtras(checkoutData) {
           name: `Gift Card $${amount}`,
           price: amount,
           qty: 1,
-          image: 'assets/menu/flauta-cochinita.webp'
+          image: 'assets/menu/flauta-cochinita.avif'
         };
         checkoutData.items.push(giftItem);
         localStorage.setItem('santopadre_checkout', JSON.stringify(checkoutData));

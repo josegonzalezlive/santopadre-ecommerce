@@ -1,6 +1,53 @@
 // app.js — SantoPadre® Logic Engine
 let cart = [];
 
+/**
+ * ELITE SEO TECHNIQUE 4: Dynamic SEO Manager (Edge SEO Simulation)
+ * Updates page metadata based on user scroll and section interaction.
+ */
+const DynamicSEOManager = {
+  config: {
+    baseTitle: "SantoPadre®",
+    sections: {
+      "section-taqueria": { title: "Los Mejores Tacos de Araure | Birria y Pastor", desc: "Prueba la auténtica taquería mexicana en Araure. Tacos de birria con consomé, al pastor y punta trasera." },
+      "section-entrantes": { title: "Entrantes Mexicanos Crujientes en Acarigua", desc: "Flautas de cochinita, nachos con guacamole real y entradas que manchan." },
+      "section-especialidades": { title: "Burritos XXL y Especialidades en Portuguesa", desc: "Burritos de 1kg, Birria Ramen y fajitas premium para los más atrevidos." },
+      "culture-hub": { title: "Cultura & Tradición Mexicana | El Manifiesto SantoPadre", desc: "Explora la historia detrás de nuestra birria y la técnica de nixtamalización." }
+    }
+  },
+  init() {
+    this.observeSections();
+    window.addEventListener('hashchange', () => this.updateByHash());
+    this.updateByHash();
+  },
+  observeSections() {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          this.updateMetadata(entry.target.id);
+        }
+      });
+    }, { threshold: 0.5 });
+    
+    Object.keys(this.config.sections).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+  },
+  updateByHash() {
+    const hash = window.location.hash.replace('#', '');
+    if (this.config.sections[hash]) this.updateMetadata(hash);
+  },
+  updateMetadata(sectionId) {
+    const data = this.config.sections[sectionId];
+    if (data) {
+      document.title = `${data.title} | ${this.config.baseTitle}`;
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.setAttribute('content', data.desc);
+    }
+  }
+};
+
 // 1. Initial Rendering
 document.addEventListener('DOMContentLoaded', () => {
   const storedCheckout = localStorage.getItem('santopadre_checkout');
@@ -25,8 +72,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initGSAP();
   initReveal();
   initRain();
+  
+  // Iniciar SEO Dinámico
+  DynamicSEOManager.init();
+
 
   const urlParams = new URLSearchParams(window.location.search);
+
   if (urlParams.get('cart') === 'open') {
     // Retrasar levemente para asegurar que todo haya cargado
     setTimeout(() => {
@@ -232,15 +284,30 @@ function renderProductCard(item, catId = '') {
   const clickAction = `onclick="handleAddToCart('${item.id}', '${catId}')" style="cursor:pointer"`;
   const isRegalo = catId === 'regalos';
 
+  const spicyHtml = item.spicyLevel > 0 
+    ? `<div class="spicy-rating" title="Nivel de picante: ${item.spicyLevel}">${'🌶️'.repeat(item.spicyLevel)}</div>` 
+    : '';
+
+  const chefNoteHtml = item.chefNote 
+    ? `<div class="chef-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 7.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="9" r="3"/></svg>
+        <span><strong>Chef:</strong> ${item.chefNote}</span>
+       </div>` 
+    : '';
+
   return `
     <div class="product-card reveal" id="product-${item.id}">
       <div class="media-container" ${!isRegalo ? clickAction : ''}>
         ${mediaHtml}
+        ${spicyHtml}
       </div>
-      <h3 ${clickAction}>${item.name}</h3>
-      ${item.tags ? `<div class="product-tags">${item.tags.map(tag => `<span>${tag}</span>`).join('')}</div>` : ''}
-      <p class="desc" ${clickAction}>${item.description || ''}</p>
-      ${item.allergens ? `<p class="allergens"><span>Alergenos:</span> ${item.allergens}</p>` : ''}
+      <div class="product-info">
+        <h3 ${clickAction}>${item.name}</h3>
+        ${item.tags ? `<div class="product-tags">${item.tags.map(tag => `<span>${tag}</span>`).join('')}</div>` : ''}
+        <p class="desc" ${clickAction}>${item.description || ''}</p>
+        ${chefNoteHtml}
+        ${item.allergens ? `<p class="allergens"><span>Alergenos:</span> ${item.allergens}</p>` : ''}
+      </div>
       <div class="footer">
         <div class="price">$${item.price ? item.price.toFixed(2) : '—'}</div>
         <button class="add-btn" onclick="handleAddToCart('${item.id}', '${catId}')">${btnText}</button>
@@ -248,6 +315,7 @@ function renderProductCard(item, catId = '') {
     </div>
   `;
 }
+
 
 // ═══════════════════════════════════════════════════════════════════
 // PASE CORPORATIVO WIDGET — Self-contained 3D Holographic Ticket

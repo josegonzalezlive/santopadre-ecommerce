@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery de Tacos y Comida Mexicana en Araure y Acarigua | SantoPadre®</title>
+    <meta name="description" content="Servicio de delivery premium en todos los sectores de Araure y Acarigua: El Pilar, Las Mesetas, Llano Alto, Rio Curpa y más. El sabor de México en tu puerta.">
+    <link rel="stylesheet" href="css/app.css">
+    <style>
+        :root {
+            --ink: #041c14;
+            --white: #ffffff;
+            --accent: #00ff88;
+            --mute: rgba(255,255,255,0.6);
+        }
+        body { background: var(--ink); color: var(--white); font-family: 'Archivo', sans-serif; margin:0; }
+        .hero { padding: 100px 20px; text-align: center; background: linear-gradient(to bottom, #06281a, var(--ink)); }
+        .hero h1 { font-family: 'Syne', sans-serif; font-size: 3rem; margin-bottom: 20px; }
+        
+        .zones-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto 100px;
+            padding: 0 20px;
+        }
+        .zone-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 30px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+        .zone-card:hover { border-color: var(--accent); background: rgba(0,255,136,0.05); }
+        .zone-card h3 { color: var(--accent); margin-bottom: 10px; font-size: 18px; }
+        .zone-card p { font-size: 14px; color: var(--mute); line-height: 1.6; }
+        
+        .breadcrumb { text-align: center; font-size: 12px; margin-bottom: 20px; opacity: 0.6; }
+        .breadcrumb a { color: var(--white); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <div class="breadcrumb"><a href="index.html">Home</a> / Delivery</div>
+        <h1>Cobertura Total SantoPadre®</h1>
+        <p>Llevamos la fe mexicana a cada rincón de Portuguesa.</p>
+    </section>
+
+    <div class="zones-grid">
+        <!-- ZONA: ARAURE -->
+        <div class="zone-card">
+            <h3>Urb. El Pilar</h3>
+            <p>Delivery rápido de Tacos y Burritos en El Pilar. Tiempo estimado: 20-30 min. Sabor 100% garantizado.</p>
+        </div>
+        <div class="zone-card">
+            <h3>Villas del Pilar</h3>
+            <p>Servicio exclusivo para Villas del Pilar. Disfruta de nuestra Birria sin salir de casa.</p>
+        </div>
+        <div class="zone-card">
+            <h3>Casco Central Araure</h3>
+            <p>En el corazón de la ciudad. Pedidos express de flautas y fajitas al momento.</p>
+        </div>
+        <div class="zone-card">
+            <h3>Rio Curpa</h3>
+            <p>Cobertura garantizada en Rio Curpa y zonas aledañas. Tacos al pastor con piña asada.</p>
+        </div>
+
+        <!-- ZONA: ACARIGUA -->
+        <div class="zone-card">
+            <h3>Las Mesetas</h3>
+            <p>Tacos de Birria y Burritos XXL directo a Las Mesetas. Calidad gourmet en tu mesa.</p>
+        </div>
+        <div class="zone-card">
+            <h3>La Goajira</h3>
+            <p>El mejor delivery de comida mexicana en La Goajira. Rapidez y sabor radical.</p>
+        </div>
+        <div class="zone-card">
+            <h3>Llano Alto</h3>
+            <p>Servicio premium para Llano Alto. Pack de tacos y catering para reuniones familiares.</p>
+        </div>
+        <div class="zone-card">
+            <h3>Urb. Agua Viva</h3>
+            <p>Llegamos a Agua Viva con lo mejor de nuestra carta. Pedidos calientes y frescos.</p>
+        </div>
+    </div>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "serviceType": "Food Delivery",
+      "provider": { "@type": "Restaurant", "name": "SantoPadre®" },
+      "areaServed": [
+        { "@type": "Place", "name": "El Pilar, Araure" },
+        { "@type": "Place", "name": "Las Mesetas, Acarigua" },
+        { "@type": "Place", "name": "Llano Alto, Acarigua" },
+        { "@type": "Place", "name": "Villas del Pilar, Araure" }
+      ],
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Servicio de Delivery",
+        "itemListElement": [
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Delivery Tacos Araure" } },
+          { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Delivery Burritos Acarigua" } }
+        ]
+      }
+    }
+    </script>
+</body>
+</html>

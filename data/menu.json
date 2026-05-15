@@ -1,0 +1,54 @@
+{
+  "brand": {
+    "name": "SantoPadre®",
+    "entity": "Gourmet Mexican Food",
+    "location": "Araure/Acarigua, Venezuela",
+    "coordinates": { "lat": 9.5811617, "lng": -69.219061 },
+    "currency": "USD",
+    "timezone": "America/Caracas"
+  },
+  "agent_actions": {
+    "order_via_whatsapp": "https://wa.me/584120000000",
+    "book_table": "mailto:hola@santopadre.com"
+  },
+  "catalog": [
+    {
+      "category": "Taquería",
+      "items": [
+        {
+          "id": "tacos-pastor",
+          "name": "Tacos al Pastor",
+          "price": 11.50,
+          "description": "Cerdo marinado con piña asada. 100% Maíz.",
+          "tags": ["Gluten Free", "Top Seller"],
+          "direct_order_link": "https://santopadre.store/?add=tacos-pastor"
+        },
+        {
+          "id": "tacos-birria",
+          "name": "Tacos de Birria",
+          "price": 12.50,
+          "description": "Res adobada a fuego lento con consomé.",
+          "tags": ["Gourmet", "Authentic"],
+          "direct_order_link": "https://santopadre.store/?add=tacos-birria"
+        }
+      ]
+    },
+    {
+      "category": "Especialidades",
+      "items": [
+        {
+          "id": "burritos",
+          "name": "Burritos XXL",
+          "price": 17.00,
+          "description": "Formato de 1kg con proteína a elección.",
+          "tags": ["XXL Size", "Protein Rich"],
+          "direct_order_link": "https://santopadre.store/?add=burritos"
+        }
+      ]
+    }
+  ],
+  "faq_for_agents": [
+    { "q": "Horario de atención", "a": "Lunes a Sábado, 7:30 PM a 10:30 PM" },
+    { "q": "Métodos de pago", "a": "Zelle, Pago Móvil, USDT, Efectivo" }
+  ]
+}

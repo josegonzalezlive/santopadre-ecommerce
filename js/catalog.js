@@ -20,6 +20,8 @@ const CATALOG = {
           ],
           badges: ["NUEVO"],
           tags: ["💎 PREMIUM", "🔥 CRUNCH EXTRA", "🐷 COCCIÓN LENTA"],
+          chefNote: "El secreto está en el reposo de la cochinita; la servimos justo cuando el colágeno se vuelve mantequilla.",
+          spicyLevel: 1,
           hasExtras: true
         },
         {
@@ -35,8 +37,11 @@ const CATALOG = {
           ],
           badges: [],
           tags: ["⭐ EL CLÁSICO", "✅ OPCIÓN SEGURA", "🧀 QUESO FUNDIDO"],
+          chefNote: "Ideal para paladares que buscan el crujido perfecto sin complicaciones de picante.",
+          spicyLevel: 0,
           hasExtras: true
         },
+
         {
           id: "nachos",
           name: "Nachos",
@@ -280,19 +285,15 @@ const CATALOG = {
     { id: "nachos", label: "¿Y unos Nachos para acompañar?", price: 7.25, image: "assets/menu/nachos.avif" }
   ],
   reviews: [
-    { quote: "Me reí con el FAQ de la web y tuve que ir. Es tal cual dicen: comida que mancha y que no te miente.", author: "Daniela", productId: "flauta-cochinita", rating: 5 },
-    { quote: "Los contratamos para un evento de oficina y superaron por mucho los típicos pasapalos de siempre.", author: "La manguera S.A.", productId: "fajitas", rating: 5 },
-    { quote: "La punta trasera de los tacos es mantequilla pura. El secreto mejor guardado de Araure.", author: "@Kerlis", productId: "tacos-carne", rating: 4.5 },
-    { quote: "Aceptan desde Zelle hasta USDT a tasa oficial. SantoPadre® ya es mi religión.", author: "Ricardo", productId: "tacos-birria", rating: 5 },
-    { quote: "Saber que parte de lo que pagas ayuda a fundaciones para niños hace que el taco sepa mejor.", author: "Luis (Padre de familia)", productId: "nachos", rating: 4.5 },
-    { quote: "El Birria Ramen es una locura. No sabía que necesitaba esta mezcla hasta que la probé. Caldo espeso y sabor real.", author: "Carlos", productId: "birria-ramen", rating: 5 },
-    { quote: "Los Burritos son literalmente un ladrillo de sabor. No pude terminármelo sola, formato XXL de verdad.", author: "Sofía", productId: "burritos", rating: 4.5 },
-    { quote: "Los Tacos al Pastor con la piña asada... el equilibrio es sagrado. Mi nuevo lugar favorito en Araure.", author: "Andrés", productId: "tacos-pastor", rating: 5 },
-    { quote: "Las Fajitas son perfectas para cuando venimos en grupo. El lomito es mantequilla.", author: "Elena", productId: "fajitas", rating: 5 },
-    { quote: "Vine por los Tacos de Cochinita y me quedé por la atención. El acidito de la cebolla morada es perfecto.", author: "Javier", productId: "tacos-cochinita", rating: 4.5 },
-    { quote: "Las Flautas de Pollo con el queso fundido... crujen hasta el alma. Repetiré seguro.", author: "Mónica", productId: "flauta-pollo", rating: 5 },
-    { quote: "Tacos de Birria con el consomé. Es como un abrazo por dentro. 10/10.", author: "Roberto", productId: "tacos-birria", rating: 5 }
+    { quote: "Es el mejor delivery de Araure. La comida llega caliente y las flautas de cochinita son increíblemente crujientes. Comida mexicana auténtica.", author: "Daniela", productId: "flauta-cochinita", rating: 5 },
+    { quote: "Atención rápida y aceptan múltiples métodos de pago como Zelle y USDT. Los mejores tacos de Acarigua sin duda.", author: "Ricardo", productId: "tacos-birria", rating: 5 },
+    { quote: "Los Burritos son formato XXL de verdad, un ladrillo de sabor. Excelente relación calidad-precio para eventos en Araure.", author: "Sofía", productId: "burritos", rating: 4.5 },
+    { quote: "El Birria Ramen es una locura gourmet. Caldo espeso y sabor real mexicano en Portuguesa.", author: "Carlos", productId: "birria-ramen", rating: 5 },
+    { quote: "Los contratamos para un evento de oficina y superaron por mucho los típicos pasapalos de siempre. El mejor catering corporativo.", author: "La manguera S.A.", productId: "fajitas", rating: 5 },
+    { quote: "La punta trasera de los tacos es mantequilla pura. El secreto mejor guardado de Araure y Acarigua.", author: "@Kerlis", productId: "tacos-carne", rating: 4.5 },
+    { quote: "Los Tacos al Pastor con la piña asada... el equilibrio es sagrado. Mi nuevo lugar favorito en Araure.", author: "Andrés", productId: "tacos-pastor", rating: 5 }
   ],
+
   faq: [
     { q: "¿QUÉ PASA SI MI PEDIDO NO LLEGA?", a: "Nosotros controlamos cada gramo hasta que sale. Una vez fuera, el destino (y el tráfico) manda. Rezamos por ti." },
     { q: "¿CÓMO PUEDO PAGAR MI PENITENCIA?", a: "Pago Móvil, Zelle, Bizum, USDT, BoA. Aceptamos casi todo menos promesas vacías. Tasa BCV siempre." },

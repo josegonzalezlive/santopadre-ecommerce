@@ -296,10 +296,11 @@ function renderProductCard(item, catId = '') {
     : '';
 
   let priceHtml = '—';
-  if (item.price) {
+  if (item.price && item.price > 0) {
     priceHtml = `$${item.price.toFixed(2)}`;
   } else if (item.variants && item.variants.length > 0) {
-    priceHtml = `Desde $${item.variants[0].price.toFixed(2)}`;
+    const basePrice = item.variants[0].price;
+    priceHtml = `Desde $${basePrice.toFixed(2)}`;
   }
 
   return `

@@ -295,6 +295,13 @@ function renderProductCard(item, catId = '') {
        </div>` 
     : '';
 
+  let priceHtml = '—';
+  if (item.price) {
+    priceHtml = `$${item.price.toFixed(2)}`;
+  } else if (item.variants && item.variants.length > 0) {
+    priceHtml = `Desde $${item.variants[0].price.toFixed(2)}`;
+  }
+
   return `
     <div class="product-card reveal" id="product-${item.id}">
       <div class="media-container" ${!isRegalo ? clickAction : ''}>
@@ -309,7 +316,7 @@ function renderProductCard(item, catId = '') {
         ${item.allergens ? `<p class="allergens"><span>Alergenos:</span> ${item.allergens}</p>` : ''}
       </div>
       <div class="footer">
-        <div class="price">$${item.price ? item.price.toFixed(2) : '—'}</div>
+        <div class="price">${priceHtml}</div>
         <button class="add-btn" onclick="handleAddToCart('${item.id}', '${catId}')">${btnText}</button>
       </div>
     </div>

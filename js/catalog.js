@@ -20,7 +20,7 @@ const CATALOG = {
           ],
           badges: ["NUEVO"],
           tags: ["💎 PREMIUM", "🔥 CRUNCH EXTRA", "🐷 COCCIÓN LENTA"],
-          chefNote: "El secreto está en el reposo de la cochinita; la servimos justo cuando el colágeno se vuelve mantequilla.",
+
           spicyLevel: 1,
           hasExtras: true
         },
@@ -37,7 +37,7 @@ const CATALOG = {
           ],
           badges: [],
           tags: ["⭐ EL CLÁSICO", "✅ OPCIÓN SEGURA", "🧀 QUESO FUNDIDO"],
-          chefNote: "Ideal para paladares que buscan el crujido perfecto sin complicaciones de picante.",
+
           spicyLevel: 0,
           hasExtras: true
         },

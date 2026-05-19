@@ -308,7 +308,7 @@ const CATALOG = {
     { q: "QUIERO HACER UN PEDIDO MUY GRANDE.", a: "Si quieres impresionar a tu empresa o equipo con un pedido masivo, completa nuestro formulario en https://form.typeform.com/to/bNVBTmFR y te ayudaremos a gestionar tu banquete." }
   ],
   info: {
-    whatsapp: "584120000000",
+    whatsapp: "584225540246",
     hours: "7:30 PM - 10:30 PM · Lunes a Sábado",
     location: "Araure, Venezuela",
     tagline: "Limpia tu conciencia, la mancha de grasa es permanente."

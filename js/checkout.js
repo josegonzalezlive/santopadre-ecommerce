@@ -420,7 +420,7 @@ function sendToWhatsApp(order) {
   message += `¡Bendiciones! 🙏`;
 
   // Use the phone number from catalog if available
-  const whatsappNum = (typeof CATALOG !== 'undefined' && CATALOG.info) ? CATALOG.info.whatsapp : "584120000000";
+  const whatsappNum = ((typeof CATALOG !== 'undefined' && CATALOG.info) ? CATALOG.info.whatsapp : "584225540246").replace(/\D/g, '');
   window.open(`https://wa.me/${whatsappNum}?text=${encodeURIComponent(message)}`, '_blank');
   
   // Optional: Clear cart after successful order

@@ -2858,6 +2858,15 @@
       background-position: center;
     }
 
+    .hub-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+
     .hub-content {
       position: absolute;
       left: 0;
@@ -3243,14 +3252,13 @@
     </div>
 
     <div class="hub-grid">
-      <!-- Card 1: Birria -->
+      <!-- Card 1: Apoyo al Deporte -->
       <div class="hub-card reveal">
-        <div class="hub-img" style="background-image: url('assets/menu/tacos-birria.avif')"></div>
+        <video class="hub-video" autoplay muted loop playsinline poster="assets/apoyo-deporte-poster.webp">
+          <source src="assets/video/apoyo-deporte.mp4" type="video/mp4">
+        </video>
         <div class="hub-content">
-          <span class="hub-tag">TRADICIÓN</span>
-          <h3>El Ritual de la Birria</h3>
-          <p>Descubre por qué nuestra birria de res tarda 12 horas en alcanzar la perfección semántica.</p>
-          <a href="blog/que-es-la-birria.html" class="hub-link">Leer Manifiesto →</a>
+          <span class="hub-tag">APOYO AL DEPORTE</span>
         </div>
       </div>
 

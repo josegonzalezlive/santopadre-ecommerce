@@ -2852,17 +2852,10 @@
 
     .hub-card {
       background: var(--ink-2);
-      border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 4px;
       overflow: hidden;
-      transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1);
       position: relative;
       aspect-ratio: 3 / 4;
-    }
-
-    .hub-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
     }
 
     .hub-img {
@@ -2870,11 +2863,6 @@
       inset: 0;
       background-size: cover;
       background-position: center;
-      transition: transform 0.8s ease;
-    }
-
-    .hub-card:hover .hub-img {
-      transform: scale(1.08);
     }
 
     .hub-content {
@@ -2900,7 +2888,6 @@
     }
 
     .hub-card h3 {
-      font-family: 'Space Grotesk', sans-serif;
       font-size: 26px;
       margin-bottom: 15px;
       color: var(--white);

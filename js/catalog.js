@@ -116,7 +116,7 @@ const CATALOG = {
           name: "Tacos de Cochinita (3U)",
           description: "Cerdo marinado hecho a fuego lento, cebollas moradas encurtidas y cilantro. Una oda a Yucatán.",
           allergens: "Sulfitos",
-          video: "https://res.cloudinary.com/dxishpwhl/video/upload/Tacos_de_cochinita_h7kdms.mp4",
+          video: "https://res.cloudinary.com/dxishpwhl/video/upload/w_720,q_auto,f_auto,ac_none/Tacos_de_cochinita_h7kdms.mp4",
           price: 11.50,
           badges: ["TOP DEL MES"],
           tags: ["🔥 TENDENCIA", "🧅 ACIDITO PERFECTO", "🧪 SABOR INTENSO"],
@@ -158,7 +158,7 @@ const CATALOG = {
           name: "Burritos",
           description: "Tortilla de trigo de 1kg (aprox) rellena de arroz, pico, frijoles, guacamole y queso. Elige tu proteína.",
           allergens: "Glúten, Lácteos",
-          video: "https://res.cloudinary.com/dxishpwhl/video/upload/Burritos_jnqglx.mp4",
+          video: "https://res.cloudinary.com/dxishpwhl/video/upload/w_720,q_auto,f_auto,ac_none/Burritos_jnqglx.mp4",
           price: 14.50,
           hasVariants: true,
           variants: [
@@ -203,7 +203,7 @@ const CATALOG = {
           tags: ["💧 HIDRATACIÓN", "👪 TAMAÑO FAMILIAR", "💰 AHORRA MÁS"]
         },
         { id: "coca-cola", name: "Coca Cola", description: "El clásico carbonatado que no necesita presentación ni perdón.", price: 2.50, image: "assets/menu/coca-cola.avif", tags: ["🧊 BIEN FRÍA"] },
-        { id: "cerveza", name: "Cerveza", description: "Una rubia bien fría para apagar el fuego del chile y brindar por la vida.", price: 2.20, video: "https://res.cloudinary.com/dxishpwhl/video/upload/Cerveza_gzoxky.mp4", tags: ["🍺 MARIDAJE PERFECTO"] },
+        { id: "cerveza", name: "Cerveza", description: "Una rubia bien fría para apagar el fuego del chile y brindar por la vida.", price: 2.20, video: "https://res.cloudinary.com/dxishpwhl/video/upload/w_720,q_auto,f_auto,ac_none/Cerveza_gzoxky.mp4", tags: ["🍺 MARIDAJE PERFECTO"] },
         { id: "lipton", name: "Lipton", description: "Té frío para los que buscan un poco de calma cítrica en medio del caos.", price: 3.00, image: "assets/menu/lipton.avif", tags: ["🍃 REFRESCANTE"] },
         { id: "gatorade", name: "Gatorade", description: "Electrolitos sagrados para recuperar el alma después de una buena tanda de tacos.", price: 3.20, image: "assets/menu/gatorade.avif", tags: ["⚡ ELECTROLITOS"] }
       ]

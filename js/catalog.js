@@ -234,6 +234,7 @@ const CATALOG = {
           name: "Camiseta de Cochinita Araurez",
           description: "Algodón premium de 200g. Ilustración de tacos de cochinita pintada a mano en la espalda, edición Santo Padre Araurez.",
           image: "assets/camisa-cochinita.webp",
+          images: ["assets/camisa-cochinita.webp", "assets/camisa-cochinita-2.webp"],
           price: 20.00,
           hasVariants: true,
           variants: [

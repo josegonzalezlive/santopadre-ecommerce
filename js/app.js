@@ -605,8 +605,9 @@ function renderGiftCardWidget(amount) {
         }
 
         .gc-card {
-            width: 200px; /* Scaled down for the grid */
-            height: 315px;
+            width: 62%; /* Scales with the grid card instead of staying fixed-size */
+            max-width: 260px;
+            aspect-ratio: 200 / 315;
             position: relative;
             transform-style: preserve-3d;
             transition: transform 0.5s ease-out;
@@ -705,7 +706,7 @@ function renderGiftCardWidget(amount) {
         }
 
         .gc-logo-img {
-            width: 55%; /* Slightly smaller to avoid overlap */
+            width: 40%;
             margin-top: 15px; /* More space from the header */
             margin-bottom: 10px;
             filter: drop-shadow(0 8px 12px rgba(0,0,0,0.15));

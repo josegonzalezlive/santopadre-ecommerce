@@ -706,7 +706,7 @@ function renderGiftCardWidget(amount) {
         }
 
         .gc-logo-img {
-            width: 40%;
+            width: 30%;
             margin-top: 15px; /* More space from the header */
             margin-bottom: 10px;
             filter: drop-shadow(0 8px 12px rgba(0,0,0,0.15));

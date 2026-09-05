@@ -710,6 +710,8 @@ function renderGiftCardWidget(amount) {
             margin-top: 15px; /* More space from the header */
             margin-bottom: 10px;
             filter: drop-shadow(0 8px 12px rgba(0,0,0,0.15));
+            transform: scaleY(0.7);
+            transform-origin: top center;
         }
 
         .gc-redeem-text {

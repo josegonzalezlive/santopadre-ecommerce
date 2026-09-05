@@ -21,7 +21,6 @@
   <link rel="preload" as="video" href="assets/video/hero-food-reel.mp4" type="video/mp4">
   <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
   <link rel="dns-prefetch" href="//www.clarity.ms">
-  <link rel="preconnect" href="https://assets.codepen.io" crossorigin>
 
   <meta name="description"
     content="SantoPadre® — Comida mexicana gourmet en Araure, Venezuela. Tacos al pastor, birria, burritos XXL, fajitas y más. Pide online o visítanos. Lun-Sáb 7:30PM-10:30PM.">
@@ -3133,7 +3132,7 @@
   <section class="hero" id="hero">
     <div class="hero-bg">
       <!-- VIDEO DE FONDO (O IMAGEN) -->
-      <video autoplay muted loop playsinline preload="metadata" poster="assets/hero-food-reel-poster.webp">
+      <video autoplay muted loop playsinline preload="metadata" poster="assets/hero-food-reel-poster.webp?v=2">
         <source src="assets/video/hero-food-reel.mp4" type="video/mp4">
       </video>
     </div>
@@ -3518,7 +3517,13 @@
   </noscript>
   <script src="js/catalog.min.js?v=1.52"></script>
   <script src="js/app.min.js?v=1.57"></script>
-  <script type="module" src="js/user-profile.js?v=1.47"></script>
+  <script>
+    // Firebase Auth/Firestore (via user-profile.js) is not needed for FCP/LCP,
+    // so it's imported after load instead of blocking the critical path.
+    window.addEventListener('load', function () {
+      import('./js/user-profile.js?v=1.48');
+    });
+  </script>
   <script>
     // Google Fonts: inject via JS to avoid render-blocking
     (function () {
@@ -3641,11 +3646,20 @@
     }
   </script>
 
-  <!-- Mapa Invisible para Autoridad Local SEO (CID) -->
-  <iframe
-    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3934.1245192509073!2d-69.2224774958138!3d9.58453373041975!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e7dc100197d6185%3A0x1b330b6d99029f1c!2sSantoPadre%C2%AE%20%7C%20Comida%20Mexicana!5e0!3m2!1ses!2sve!4v1778724477471!5m2!1ses!2sve"
-    style="display:none; width:0; height:0; border:0;" aria-hidden="true" tabindex="-1"
-    title="SantoPadre Location"></iframe>
+  <!-- Mapa Invisible para Autoridad Local SEO (CID) - inyectado tras load para no competir por ancho de banda -->
+  <script>
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        var mapFrame = document.createElement('iframe');
+        mapFrame.src = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3934.1245192509073!2d-69.2224774958138!3d9.58453373041975!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e7dc100197d6185%3A0x1b330b6d99029f1c!2sSantoPadre%C2%AE%20%7C%20Comida%20Mexicana!5e0!3m2!1ses!2sve!4v1778724477471!5m2!1ses!2sve";
+        mapFrame.style.cssText = "display:none; width:0; height:0; border:0;";
+        mapFrame.setAttribute('aria-hidden', 'true');
+        mapFrame.setAttribute('tabindex', '-1');
+        mapFrame.title = "SantoPadre Location";
+        document.body.appendChild(mapFrame);
+      }, 3500);
+    });
+  </script>
 
   <!-- POPUPS (Ubicación/Horario y WhatsApp) -->
   <style>
@@ -3821,7 +3835,7 @@
     <div class="info-modal-content">
       <span class="info-modal-close" id="infoModalClose">&times;</span>
       <div class="info-modal-icon">
-        <img src="assets/logo.webp?v=2" alt="SantoPadre Logo" width="320" height="320" loading="lazy">
+        <img src="assets/logo-150.webp?v=2" alt="SantoPadre Logo" width="150" height="150" fetchpriority="high">
       </div>
       <h3>¡Visítanos!</h3>
       <div class="info-modal-details">

@@ -248,6 +248,24 @@ function spawnIcon(container, xPos, iconName) {
   }, duration * 1000);
 }
 
+function setThumbSlide(e, index) {
+  e.stopPropagation();
+  const gallery = e.currentTarget.closest('.thumb-gallery');
+  if (!gallery) return;
+  gallery.querySelectorAll('.thumb-slide').forEach((s, i) => s.classList.toggle('active', i === index));
+  gallery.querySelectorAll('.thumb-dot').forEach((d, i) => d.classList.toggle('active', i === index));
+}
+
+function stepThumbSlide(e, dir) {
+  e.stopPropagation();
+  const gallery = e.currentTarget.closest('.thumb-gallery');
+  if (!gallery) return;
+  const slides = [...gallery.querySelectorAll('.thumb-slide')];
+  const current = slides.findIndex(s => s.classList.contains('active'));
+  const next = (current + dir + slides.length) % slides.length;
+  setThumbSlide(e, next);
+}
+
 function scrollToProduct(id) {
   const el = document.getElementById(`product-${id}`);
   if (el) {
@@ -301,6 +319,18 @@ function renderProductCard(item, catId = '') {
         <video muted loop playsinline class="product-video" style="width:100%; height:100%; object-fit:cover;" preload="metadata" poster="${item.image || ''}" onmouseover="this.play()" onmouseout="this.pause()">
           <source src="${item.video}" type="video/mp4">
         </video>
+        ${badgeHtml}
+      </div>
+    `;
+  } else if (item.images && item.images.length > 1) {
+    mediaHtml = `
+      <div class="thumb thumb-gallery">
+        ${item.images.map((img, i) => `<div class="thumb-slide${i === 0 ? ' active' : ''}" style="background-image: url('${img}')"></div>`).join('')}
+        <div class="thumb-dots">
+          ${item.images.map((_, i) => `<span class="thumb-dot${i === 0 ? ' active' : ''}" onclick="setThumbSlide(event, ${i})"></span>`).join('')}
+        </div>
+        <button class="thumb-arrow prev" onclick="stepThumbSlide(event, -1)" aria-label="Foto anterior">&#8249;</button>
+        <button class="thumb-arrow next" onclick="stepThumbSlide(event, 1)" aria-label="Foto siguiente">&#8250;</button>
         ${badgeHtml}
       </div>
     `;

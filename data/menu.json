@@ -37,20 +37,20 @@
       "category": "Especialidades",
       "items": [
         {
-          "id": "burritos",
-          "name": "Burritos XXL",
-          "price": 17.00,
-          "description": "Formato de 1kg con proteína a elección.",
-          "tags": ["XXL Size", "Protein Rich"],
-          "direct_order_link": "https://santopadre.store/?add=burritos"
-        },
-        {
           "id": "quesadilla-chistorra",
           "name": "Quesadilla de Chistorra",
           "price": 12.50,
           "description": "Tortilla de trigo dorada con queso fundido y chistorra jugosa.",
           "tags": ["Nuevo", "Queso fundido", "Chistorra"],
           "direct_order_link": "https://santopadre.store/?add=quesadilla-chistorra"
+        },
+        {
+          "id": "burritos",
+          "name": "Burritos XXL",
+          "price": 17.00,
+          "description": "Formato de 1kg con proteína a elección.",
+          "tags": ["XXL Size", "Protein Rich"],
+          "direct_order_link": "https://santopadre.store/?add=burritos"
         }
       ]
     }

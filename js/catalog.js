@@ -131,6 +131,18 @@ const CATALOG = {
       subtitle: "Para los que no temen ensuciarse las manos por una causa mayor.",
       items: [
         {
+          id: "quesadilla-chistorra",
+          name: "Quesadilla de Chistorra",
+          description: "Tortilla de trigo dorada con queso fundido y chistorra jugosa. Directa, intensa y hecha para compartir... o no.",
+          allergens: "Glúten (Trigo), Lácteos, Sulfitos",
+          image: "assets/menu/fajitas.avif",
+          video: "assets/video/quesadilla.mp4",
+          price: 12.50,
+          badges: ["NUEVO"],
+          tags: ["🧀 QUESO FUNDIDO", "🔥 CHISTORRA", "🌯 TORTILLA DORADA"],
+          hasExtras: true
+        },
+        {
           id: "fajitas",
           name: "Fajitas (6U)",
           description: "Un festín de lomito y pollo salteado con cebolla y pimentón, tortillas de harina de trigo, pico de gallo, guacamole y queso. Tú las montas.",
@@ -139,17 +151,6 @@ const CATALOG = {
           price: 38.00,
           badges: ["NUEVO"],
           tags: ["🛠️ DIY: HAZLO TÚ MISMO", "🍱 BANQUETE COMPLETO", "🥩 LOMITO QUALITY"],
-          hasExtras: true
-        },
-        {
-          id: "quesadilla-chistorra",
-          name: "Quesadilla de Chistorra",
-          description: "Tortilla de trigo dorada con queso fundido y chistorra jugosa. Directa, intensa y hecha para compartir... o no.",
-          allergens: "Glúten (Trigo), Lácteos, Sulfitos",
-          image: "assets/menu/fajitas.avif",
-          price: 12.50,
-          badges: ["NUEVO"],
-          tags: ["🧀 QUESO FUNDIDO", "🔥 CHISTORRA", "🌯 TORTILLA DORADA"],
           hasExtras: true
         },
         {

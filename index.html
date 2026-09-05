@@ -3857,13 +3857,13 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", function() {
-      // Show popup after 2 seconds
+      // Show popup shortly after load (kept short so it doesn't inflate LCP)
       setTimeout(function() {
         var modal = document.getElementById('infoModal');
         if (modal) {
           modal.classList.add('show');
         }
-      }, 2000);
+      }, 600);
 
       // Close button
       var closeBtn = document.getElementById('infoModalClose');

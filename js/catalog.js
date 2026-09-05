@@ -280,6 +280,27 @@ const CATALOG = {
       ]
     },
     {
+      id: "postres",
+      name: "Postres",
+      emoji: "🧁",
+      subtitle: "El cierre perfecto para tu penitencia. Horneados en casa, sin gluten.",
+      items: [
+        {
+          id: "cupcakes-sin-gluten",
+          name: "Cupcakes Sin Gluten",
+          description: "Cupcakes artesanales sin gluten, horneados en casa. Elige entre chocolate o nuez con arequipe.",
+          image: "assets/postres-cupcakes.webp",
+          video: "assets/video/cupcakes.mov",
+          hasVariants: true,
+          variants: [
+            { id: "v1", name: "Chocolate", price: 1.50 },
+            { id: "v2", name: "Nuez con Arequipe", price: 2.50 }
+          ],
+          tags: ["🧁 SIN GLUTEN", "🍫🥜 2 SABORES"]
+        }
+      ]
+    },
+    {
       id: "regalos",
       name: "Regalos",
       emoji: "🎁",

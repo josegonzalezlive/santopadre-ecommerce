@@ -37,6 +37,14 @@
       "category": "Especialidades",
       "items": [
         {
+          "id": "quesadilla-chistorra",
+          "name": "Quesadilla de Chistorra",
+          "price": 14.00,
+          "description": "Chistorra y queso fundido con mermelada casera de mango y jalapeño.",
+          "tags": ["New", "Sweet & Spicy"],
+          "direct_order_link": "https://santopadre.store/?add=quesadilla-chistorra"
+        },
+        {
           "id": "burritos",
           "name": "Burritos XXL",
           "price": 17.00,

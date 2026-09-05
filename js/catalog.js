@@ -131,6 +131,18 @@ const CATALOG = {
       subtitle: "Para los que no temen ensuciarse las manos por una causa mayor.",
       items: [
         {
+          id: "quesadilla-chistorra",
+          name: "Quesadilla de Chistorra",
+          description: "Tortilla de harina rellena de chistorra jugosa y queso fundido, bañada en mermelada casera de mango y jalapeño. El choque perfecto entre dulce, picante y pecaminoso.",
+          allergens: "Glúten, Lácteos",
+          video: "assets/video/quesadilla-de-chistorra.mp4",
+          price: 14.00,
+          badges: ["NUEVO"],
+          tags: ["🌶️ DULCE Y PICANTE", "🧀 QUESO FUNDIDO", "🇪🇸 CHISTORRA"],
+          spicyLevel: 1,
+          hasExtras: true
+        },
+        {
           id: "fajitas",
           name: "Fajitas (6U)",
           description: "Un festín de lomito y pollo salteado con cebolla y pimentón, tortillas de harina de trigo, pico de gallo, guacamole y queso. Tú las montas.",

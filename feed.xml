@@ -114,6 +114,18 @@
       <g:brand>SantoPadre</g:brand>
     </item>
     <item>
+      <g:id>quesadilla-chistorra</g:id>
+      <g:title>Quesadilla de Chistorra</g:title>
+      <g:description>Tortilla de trigo dorada con queso fundido y chistorra jugosa. Directa, intensa y hecha para compartir... o no.</g:description>
+      <g:link>https://santopadre.store/#section-especialidades</g:link>
+      <g:image_link>https://santopadre.store/assets/menu/fajitas.avif</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>12.50 USD</g:price>
+      <g:condition>new</g:condition>
+      <g:product_type>Alimentos y Bebidas &gt; Comidas Preparadas</g:product_type>
+      <g:brand>SantoPadre</g:brand>
+    </item>
+    <item>
       <g:id>burritos</g:id>
       <g:title>Burritos</g:title>
       <g:description>Tortilla de trigo de 1kg (aprox) rellena de arroz, pico, frijoles, guacamole y queso. Elige tu proteína.</g:description>

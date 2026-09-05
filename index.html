@@ -2089,12 +2089,32 @@
     .catering-banner {
       position: relative;
       padding: 120px 0;
-      background: linear-gradient(rgba(4, 28, 20, 0.3), rgba(4, 28, 20, 0.3)), url('assets/menu/fajitas.avif');
-      background-size: cover;
-      background-position: center;
       text-align: center;
       border-top: 1px solid var(--line);
       border-bottom: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .catering-bg-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      z-index: 0;
+    }
+
+    .catering-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(4, 28, 20, 0.45);
+      z-index: 1;
+    }
+
+    .catering-banner .container {
+      position: relative;
+      z-index: 2;
     }
 
     .catering-banner h2 {
@@ -2836,8 +2856,8 @@
       border-radius: 4px;
       overflow: hidden;
       transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1);
-      display: flex;
-      flex-direction: column;
+      position: relative;
+      aspect-ratio: 3 / 4;
     }
 
     .hub-card:hover {
@@ -2847,7 +2867,8 @@
     }
 
     .hub-img {
-      height: 280px;
+      position: absolute;
+      inset: 0;
       background-size: cover;
       background-position: center;
       transition: transform 0.8s ease;
@@ -2858,8 +2879,13 @@
     }
 
     .hub-content {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2;
       padding: 30px;
-      flex-grow: 1;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.7) 55%, transparent 100%);
       display: flex;
       flex-direction: column;
     }
@@ -3309,6 +3335,10 @@
 
   <!-- CATERING -->
   <section class="catering-banner reveal" id="catering">
+    <video class="catering-bg-video" autoplay muted loop playsinline poster="assets/catering-hero-poster.webp">
+      <source src="assets/video/catering-hero.mp4" type="video/mp4">
+    </video>
+    <div class="catering-overlay"></div>
     <div class="container">
       <div class="eyelet">— Eventos · B2B</div>
       <h2>SERVICIO DE CATERING:<br>EVANGELIZAMOS TU EVENTO.</h2>

@@ -2754,6 +2754,12 @@
         grid-template-columns: 1fr;
       }
 
+      /* Every product card is the same 9/10 portrait shape on mobile,
+         regardless of any wider aspect-ratio override used on desktop */
+      .product-card .thumb {
+        aspect-ratio: 9 / 10 !important;
+      }
+
       .hero h1 {
         font-size: 52px;
       }
@@ -3521,7 +3527,7 @@
     <link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@50..125,300..900&family=Space+Grotesk:wght@300..700&family=Gilda+Display&display=swap">
   </noscript>
-  <script src="js/catalog.min.js?v=1.55"></script>
+  <script src="js/catalog.min.js?v=1.56"></script>
   <script src="js/app.min.js?v=1.58"></script>
   <script>
     // Firebase Auth/Firestore (via user-profile.js) is only needed once the

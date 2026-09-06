@@ -3516,11 +3516,20 @@
   <script src="js/catalog.min.js?v=1.54"></script>
   <script src="js/app.min.js?v=1.57"></script>
   <script>
-    // Firebase Auth/Firestore (via user-profile.js) is not needed for FCP/LCP,
-    // so it's imported after load instead of blocking the critical path.
-    window.addEventListener('load', function () {
-      import('./js/user-profile.js?v=1.48');
-    });
+    // Firebase Auth/Firestore (via user-profile.js) is only needed once the
+    // visitor actually engages with the page, so it's imported on first real
+    // interaction rather than automatically on load.
+    (function () {
+      var loaded = false;
+      function loadUserProfile() {
+        if (loaded) return;
+        loaded = true;
+        import('./js/user-profile.js?v=1.48');
+      }
+      ['pointerdown', 'touchstart', 'keydown', 'scroll', 'mousemove'].forEach(function (ev) {
+        window.addEventListener(ev, loadUserProfile, { passive: true, once: true });
+      });
+    })();
   </script>
   <script>
     // Google Fonts: inject via JS to avoid render-blocking

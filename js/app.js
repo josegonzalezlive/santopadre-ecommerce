@@ -314,8 +314,9 @@ function renderProductCard(item, catId = '') {
   } else if (item.id === 'gift-card-50') {
     mediaHtml = renderGiftCardWidget(50);
   } else if (item.video) {
+    const thumbStyle = item.videoAspect ? ` style="aspect-ratio: ${item.videoAspect};"` : '';
     mediaHtml = `
-      <div class="thumb">
+      <div class="thumb"${thumbStyle}>
         <video muted loop playsinline class="product-video" style="width:100%; height:100%; object-fit:cover;" preload="metadata" poster="${item.image || ''}" onmouseover="this.play()" onmouseout="this.pause()">
           <source src="${item.video}" type="video/mp4">
         </video>

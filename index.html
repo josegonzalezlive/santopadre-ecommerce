@@ -742,6 +742,9 @@
     }
 
     header .logo {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
       font-size: 24px;
       letter-spacing: 0.2em;
       font-variation-settings: "wdth" 62, "wght" 800;
@@ -2739,6 +2742,12 @@
         display: none;
       }
 
+      /* Wishlist & profile move into the hamburger menu on mobile; only cart stays in the header */
+      header .actions #wishlist-trigger-btn,
+      header .actions #profile-trigger-btn {
+        display: none !important;
+      }
+
       .categories-grid,
       .products-grid,
       .reviews-grid {
@@ -2979,6 +2988,12 @@
     <button class="close-menu" onclick="toggleMenu()">✕</button>
     <div
       style="overflow-y: auto; height: 100%; display: flex; flex-direction: column; padding-top: 10px; padding-bottom: 30px;">
+      <a class="nav-link" href="signup.html"
+        onclick="closeAll(); if (window.isUserLoggedIn && window.isUserLoggedIn()) { event.preventDefault(); window.location.href = 'cuenta.html'; }">Mi
+        Perfil</a>
+      <a class="nav-link" href="#"
+        onclick="event.preventDefault(); closeAll(); if (window.toggleWishlistPanel) window.toggleWishlistPanel();">Lista
+        de Deseos</a>
       <a class="nav-link" href="#section-entrantes"
         onclick="event.preventDefault(); scrollToSection('section-entrantes')">Menú</a>
       <a class="nav-link" href="#section-merch" onclick="event.preventDefault(); scrollToSection('section-merch')">Santo

@@ -596,6 +596,13 @@
       padding: 0 clamp(20px, 3vw, 56px);
     }
 
+    /* Each category section under #menu re-uses .container for its rain-effect
+       stacking context, but it's already nested inside #menu's own .container --
+       cancel the redundant padding so it doesn't double up. */
+    .container .container {
+      padding: 0;
+    }
+
     .uppercase {
       text-transform: uppercase;
       font-variation-settings: "wdth" 50, "wght" 700;

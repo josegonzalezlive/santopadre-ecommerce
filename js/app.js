@@ -315,9 +315,10 @@ function renderProductCard(item, catId = '') {
     mediaHtml = renderGiftCardWidget(50);
   } else if (item.video) {
     const thumbStyle = item.videoAspect ? ` style="aspect-ratio: ${item.videoAspect};"` : '';
+    const videoFit = item.videoFit || 'cover';
     mediaHtml = `
       <div class="thumb"${thumbStyle}>
-        <video muted loop playsinline class="product-video" style="width:100%; height:100%; object-fit:cover;" preload="metadata" poster="${item.image || ''}" onmouseover="this.play()" onmouseout="this.pause()">
+        <video muted loop playsinline class="product-video" style="width:100%; height:100%; object-fit:${videoFit};" preload="metadata" poster="${item.image || ''}" onmouseover="this.play()" onmouseout="this.pause()">
           <source src="${item.video}" type="video/mp4">
         </video>
         ${badgeHtml}

@@ -91,6 +91,12 @@ Todas con Admin SDK — no están sujetas a `firestore.rules`, por eso son el ú
 seguro para mutar `stamps`/`activeRewards`/`claimedRewards`, o para decidir montos que
 el cliente no debe controlar.
 
+Runtime/dependencias actuales:
+
+- Node.js `22`.
+- `firebase-functions` `^7.3.2`.
+- `firebase-admin` `^14.3.0`.
+
 - **`rewards.js` → `redeemReward({ rewardId })`**: canjea una recompensa del catálogo
   de puntos. El costo y el nombre viven en `REWARD_CATALOG` **del servidor** — el
   cliente nunca envía el monto (antes sí lo hacía, era canjeable cualquier premio por
@@ -107,6 +113,9 @@ el cliente no debe controlar.
   función WhatsApp está disponible, dispara notificación de comprobante; si falta la
   configuración real, registra `notificationFailures` sin revertir el depósito
   verificado.
+- **`solana.js` → `verifySolanaTransfer({ signature, amountUsd, cluster })`**:
+  servicio aislado para validar firma, consultar RPC, detectar el transfer `system`
+  hacia la treasury y devolver metadata on-chain.
 - **`rewards.js` → `adminReconcileUserLoyalty({ userId, repair })`**:
   compara `users/{uid}.points` contra `loyaltyLedger`. Con `repair: true`, corrige el
   saldo cacheado sin crear un movimiento artificial de puntos.

@@ -1,5 +1,7 @@
 const functions = require("firebase-functions");
-const admin = require("firebase-admin");
+const { getApps, initializeApp } = require("firebase-admin/app");
+const { getAuth } = require("firebase-admin/auth");
+const { getFirestore } = require("firebase-admin/firestore");
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
 const cors = require("cors")({ origin: true });
@@ -7,8 +9,8 @@ const fs = require("fs");
 const path = require("path");
 
 // Inicializar Firebase Admin
-if (admin.apps.length === 0) {
-  admin.initializeApp();
+if (getApps().length === 0) {
+  initializeApp();
 }
 
 // ==========================================
@@ -24,11 +26,11 @@ exports.generateGooglePassUrl = functions.https.onRequest((req, res) => {
         return res.status(401).send("No autorizado: Falta token");
       }
       const idToken = authHeader.split("Bearer ")[1];
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const decodedToken = await getAuth().verifyIdToken(idToken);
       const userId = decodedToken.uid;
 
       // 2. Obtener datos de Firestore en tiempo real
-      const userDoc = await admin.firestore().collection("users").doc(userId).get();
+      const userDoc = await getFirestore().collection("users").doc(userId).get();
       if (!userDoc.exists) {
         return res.status(404).send("Usuario no encontrado");
       }
@@ -123,11 +125,11 @@ exports.generateApplePass = functions.https.onRequest((req, res) => {
         return res.status(401).send("No autorizado: Falta token");
       }
       const idToken = authHeader.split("Bearer ")[1];
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const decodedToken = await getAuth().verifyIdToken(idToken);
       const userId = decodedToken.uid;
 
       // 2. Obtener datos
-      const userDoc = await admin.firestore().collection("users").doc(userId).get();
+      const userDoc = await getFirestore().collection("users").doc(userId).get();
       if (!userDoc.exists) {
         return res.status(404).send("Usuario no encontrado");
       }

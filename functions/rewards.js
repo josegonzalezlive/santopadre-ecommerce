@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const functions = require('firebase-functions');
+const functionsV1 = require('firebase-functions/v1');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { getApps, initializeApp } = require('firebase-admin/app');
@@ -13,12 +14,9 @@ const {
   WELCOME_POINTS,
   REWARD_CATALOG,
   DEFAULT_TIER_REWARDS,
-  SOLANA_TREASURY_WALLET,
   transactionDocId,
   pointsForPurchase,
   pointsForDeposit,
-  requiredLamportsForUsd,
-  normalizeSolanaCluster,
   normalizeTierReward,
   mergeTierRewards,
   normalizeLoyaltyCampaign,
@@ -35,6 +33,7 @@ const {
 } = require('./ledger');
 const { assertKnownKeys } = require('./validation');
 const { dailyLimitDateKey, dailyLimitDocId } = require('./limits');
+const { verifySolanaTransfer } = require('./solana');
 
 if (!getApps().length) initializeApp();
 
@@ -252,62 +251,6 @@ async function creditUserPoints({ userId, pointsDelta, type, sourceId, reason, o
   });
 }
 
-function clusterRpcUrl(cluster) {
-  return cluster === 'devnet' ? 'https://api.devnet.solana.com' : (process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com');
-}
-
-async function verifySolanaTransfer({ signature, amountUsd, cluster }) {
-  const txSignature = typeof signature === 'string' ? signature.trim() : '';
-  if (!/^[1-9A-HJ-NP-Za-km-z]{64,128}$/.test(txSignature)) {
-    throw new HttpsError('invalid-argument', 'Signature de Solana invalida');
-  }
-
-  const normalizedCluster = normalizeSolanaCluster(cluster);
-  const requiredLamports = requiredLamportsForUsd(amountUsd);
-  const response = await fetch(clusterRpcUrl(normalizedCluster), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 'santopadre-rewards',
-      method: 'getTransaction',
-      params: [
-        txSignature,
-        {
-          commitment: 'confirmed',
-          encoding: 'jsonParsed',
-          maxSupportedTransactionVersion: 0
-        }
-      ]
-    })
-  });
-
-  if (!response.ok) throw new HttpsError('unavailable', 'No se pudo consultar Solana RPC');
-  const body = await response.json();
-  const tx = body.result;
-  if (!tx || tx.meta?.err) {
-    throw new HttpsError('failed-precondition', 'La transaccion Solana no esta confirmada correctamente');
-  }
-
-  const transfer = (tx.transaction?.message?.instructions || []).find((instruction) => {
-    const parsed = instruction.parsed;
-    if (instruction.program !== 'system' || parsed?.type !== 'transfer') return false;
-    const info = parsed.info || {};
-    return info.destination === SOLANA_TREASURY_WALLET && Number(info.lamports || 0) >= requiredLamports;
-  });
-  if (!transfer) {
-    throw new HttpsError('failed-precondition', 'La transaccion no paga el monto esperado a la wallet SantoPadre');
-  }
-
-  return {
-    signature: txSignature,
-    cluster: normalizedCluster,
-    lamports: Number(transfer.parsed.info.lamports || 0),
-    source: transfer.parsed.info.source || null,
-    destination: SOLANA_TREASURY_WALLET
-  };
-}
-
 function campaignIsActive(campaign, now = Date.now()) {
   if (!campaign.active) return false;
   const startsAt = campaign.startsAt ? Date.parse(campaign.startsAt) : null;
@@ -354,7 +297,7 @@ function auditPayload({ auth, role, userId, user, prevPoints, newPoints, prevSta
   };
 }
 
-exports.initializeUserRewards = functions.auth.user().onCreate(async (user) => {
+exports.initializeUserRewards = functionsV1.auth.user().onCreate(async (user) => {
   const userRef = db.collection('users').doc(user.uid);
   const txRef = userRef.collection('transactions').doc('welcome_bonus');
 

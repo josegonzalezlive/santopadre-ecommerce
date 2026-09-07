@@ -27,8 +27,9 @@ Rama: `feature-rewards-admin`
 - Las pruebas de reglas no corren localmente sin Java.
 - Falta cobertura de integración real con emuladores para Auth + Firestore + Functions.
 - El deploy de Functions está bloqueado por secrets reales de WhatsApp.
-- La versión de `firebase-functions` está vieja y Firebase advierte sobre compatibilidad futura.
-- Runtime Node.js 20 está marcado como deprecated por Firebase; hay que planificar upgrade.
+- La versión vieja de `firebase-functions` y el runtime Node.js 20 ya fueron mitigados
+  en código con `firebase-functions@7.3.2`, `firebase-admin@14.3.0` y runtime Node.js 22;
+  falta validación de deploy real antes de considerarlo cerrado en producción.
 - El flujo de Wallet passes Apple/Google todavía depende de credenciales/certificados y puede caer a mock.
 
 ### Oportunidades
@@ -50,7 +51,8 @@ Rama: `feature-rewards-admin`
 - Si el ledger y el saldo cacheado divergen, el cliente puede ver un balance incorrecto hasta reconciliar.
 - Si Solana RPC falla o cambia disponibilidad, confirmaciones de depósito pueden quedar bloqueadas.
 - Si los secrets de WhatsApp no se configuran, el deploy real de Functions queda detenido.
-- Node.js 20 decommission puede bloquear futuros deploys si no se actualiza runtime/SDK.
+- Cambios mayores futuros en SDK/runtime pueden bloquear deploys si no se validan en
+  staging antes de producción.
 - Firestore Rules demasiado permisivas para admins genéricos pueden ampliar el daño de una cuenta admin comprometida.
 - Falta de pruebas de integración puede permitir regresiones entre frontend, callables y reglas.
 - Si los checkpoints de scheduler se corrompen o quedan atascados, usuarios pueden tardar en reconciliar/expirar hasta que se repare `loyaltyJobState`.
@@ -102,9 +104,10 @@ Rama: `feature-rewards-admin`
 
 ### Fase 5 - Deuda técnica backend
 
-- [ ] Codex: actualizar `firebase-functions` a una versión compatible moderna y resolver breaking changes.
-- [ ] Codex: evaluar upgrade de runtime posterior a Node.js 20.
+- [x] Codex: actualizar `firebase-functions` a una versión compatible moderna y resolver breaking changes.
+- [x] Codex: evaluar upgrade de runtime posterior a Node.js 20.
 - [ ] Codex: separar `functions/rewards.js` en servicios pequeños: `ledgerService`, `solanaService`, `rateLimitService`, `adminService`, `campaignService`.
+- [x] Codex: extraer `solanaService` inicial (`functions/solana.js`) con tests unitarios y sin llamadas RPC reales en test.
 - [ ] Claude Code: revisar impacto del upgrade de SDK/runtime en deploy real.
 - [ ] Claude Code: validar compatibilidad de Wallet passes Apple/Google después del upgrade.
 

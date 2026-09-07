@@ -4,7 +4,7 @@
     "test": "npm run test:loyalty",
     "test:loyalty": "node --test test/loyalty.test.js",
     "test:rules": "firebase emulators:exec --only firestore \"node --test test/firestore.rules.test.mjs\"",
-    "check:functions": "node --check functions/authz.js && node --check functions/ledger.js && node --check functions/limits.js && node --check functions/loyalty.js && node --check functions/validation.js && node --check functions/referrals.js && node --check functions/notifications.js && node --check functions/rewards.js && node --check functions/index.js",
+    "check:functions": "node --check functions/authz.js && node --check functions/ledger.js && node --check functions/limits.js && node --check functions/loyalty.js && node --check functions/solana.js && node --check functions/validation.js && node --check functions/referrals.js && node --check functions/notifications.js && node --check functions/rewards.js && node --check functions/index.js",
     "test:flows": "firebase emulators:exec --only firestore,functions,auth --project demo-santopadre-flows \"node --test test/loyalty.flows.integration.test.mjs\"",
     "test:all": "npm run check:functions && npm run test:loyalty && npm run test:rules && npm run test:flows"
   },

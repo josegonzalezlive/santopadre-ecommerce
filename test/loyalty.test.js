@@ -4,6 +4,7 @@ const {
   WELCOME_POINTS,
   REWARD_CATALOG,
   DEFAULT_TIER_REWARDS,
+  SOLANA_TREASURY_WALLET,
   transactionDocId,
   pointsForPurchase,
   pointsForDeposit,
@@ -27,6 +28,12 @@ const {
 const { assertKnownKeys } = require('../functions/validation');
 const { roleFromToken } = require('../functions/authz');
 const { dailyLimitDateKey, dailyLimitDocId } = require('../functions/limits');
+const {
+  assertSolanaSignature,
+  clusterRpcUrl,
+  findTreasuryTransfer,
+  verifySolanaTransfer
+} = require('../functions/solana');
 
 describe('loyalty config', () => {
   test('uses the server-side welcome bonus required by the program', () => {
@@ -147,6 +154,76 @@ describe('solana helpers', () => {
   test('calculates required lamports from configured USD rate', () => {
     assert.equal(requiredLamportsForUsd(150), 1000000000);
     assert.equal(requiredLamportsForUsd(75), 500000000);
+  });
+
+  test('validates Solana signatures before RPC calls', () => {
+    assert.equal(assertSolanaSignature('1'.repeat(64)), '1'.repeat(64));
+    assert.throws(() => assertSolanaSignature('bad signature'), (err) => {
+      assert.equal(err.code, 'invalid-argument');
+      return true;
+    });
+  });
+
+  test('selects the expected RPC URL per cluster', () => {
+    assert.equal(clusterRpcUrl('devnet'), 'https://api.devnet.solana.com');
+    assert.match(clusterRpcUrl('mainnet-beta'), /solana\.com/);
+  });
+
+  test('finds a treasury transfer with enough lamports', () => {
+    const tx = {
+      transaction: {
+        message: {
+          instructions: [
+            { program: 'system', parsed: { type: 'transfer', info: { destination: 'other', lamports: 999999999 } } },
+            { program: 'system', parsed: { type: 'transfer', info: { destination: SOLANA_TREASURY_WALLET, lamports: 1000000000, source: 'payer' } } }
+          ]
+        }
+      }
+    };
+    const transfer = findTreasuryTransfer(tx, 1000000000);
+    assert.equal(transfer.parsed.info.destination, SOLANA_TREASURY_WALLET);
+  });
+
+  test('verifies a Solana transfer with an injected fetch implementation', async () => {
+    const signature = '1'.repeat(64);
+    let requestedUrl = '';
+    let requestedBody = null;
+    const fetchImpl = async (url, options) => {
+      requestedUrl = url;
+      requestedBody = JSON.parse(options.body);
+      return {
+        ok: true,
+        json: async () => ({
+          result: {
+            meta: { err: null },
+            transaction: {
+              message: {
+                instructions: [
+                  {
+                    program: 'system',
+                    parsed: {
+                      type: 'transfer',
+                      info: {
+                        destination: SOLANA_TREASURY_WALLET,
+                        lamports: 1000000000,
+                        source: 'payer'
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        })
+      };
+    };
+
+    const result = await verifySolanaTransfer({ signature, amountUsd: 150, cluster: 'devnet', fetchImpl });
+    assert.equal(requestedUrl, 'https://api.devnet.solana.com');
+    assert.equal(requestedBody.method, 'getTransaction');
+    assert.equal(result.signature, signature);
+    assert.equal(result.destination, SOLANA_TREASURY_WALLET);
+    assert.equal(result.lamports, 1000000000);
   });
 });
 

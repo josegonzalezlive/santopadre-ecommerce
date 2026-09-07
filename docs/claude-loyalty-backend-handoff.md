@@ -71,6 +71,13 @@ Después de `a3b9a69`, Codex continuó una cuarta pasada técnica basada en
   están disponibles.
 - `docs/loyalty-cloud-monitoring-metrics.md`: guía exacta de métricas basadas en logs
   para Cloud Monitoring.
+- Upgrade de Functions: `functions/package.json` usa Node.js `22`,
+  `firebase-functions@7.3.2` y `firebase-admin@14.3.0`. Se migró
+  `functions/index.js` a Admin SDK modular y el trigger Auth usa
+  `firebase-functions/v1` para compatibilidad.
+- Primer refactor de servicios: `functions/solana.js` extrae validación de firma,
+  selección de RPC y detección de transfer hacia la treasury. La división completa de
+  `functions/rewards.js` sigue pendiente.
 
 ## Validaciones corridas por Codex
 
@@ -87,7 +94,7 @@ npx firebase-tools deploy --only functions --dry-run
 Resultado actual de `npm test`:
 
 ```text
-26 tests, 26 pass, 0 fail
+30 tests, 30 pass, 0 fail
 ```
 
 No pasó por dependencia de entorno:
@@ -119,7 +126,8 @@ Unable to locate a Java Runtime.
    pequeños antes de crecer más.
 4. Validar que la UI admin respete la separación real entre `cashier`, `marketing`,
    `admin` y `superadmin`.
-5. Revisar upgrade de `firebase-functions >=5.1.0` y runtime posterior a Node.js 20.
+5. Revisar impacto del upgrade a Node.js 22 / `firebase-functions@7.3.2` en staging
+   antes de deploy real.
 
 ## Pendiente sin intervención humana
 

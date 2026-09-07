@@ -1,74 +1,169 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Función auxiliar para verificar si el usuario es un administrador autorizado
-    function isAdmin() {
-      return request.auth != null && 
-        (request.auth.token.email == 'josegonzalez.private@gmail.com' || 
-         request.auth.token.email == 'santopadrevzla@gmail.com' ||
-         exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
-    }
-    
-    // Reglas para la colección de usuarios
-    match /users/{userId} {
-      allow read: if (request.auth != null && request.auth.uid == userId) || isAdmin();
-      
-      // Impedir que un usuario común cree un perfil con puntos o sellos modificados arbitrariamente
-      allow create: if request.auth != null && request.auth.uid == userId &&
-        request.resource.data.points == 10 &&
-        (!request.resource.data.keys().hasAll(['stamps']) || request.resource.data.stamps == 0) &&
-        request.resource.data.isVip == false;
 
-      // Impedir que un usuario común se auto-acredite puntos o sellos de forma libre
-      allow update: if isAdmin() || (
+    function adminDocPath() {
+      return /databases/$(database)/documents/admins/$(request.auth.token.email);
+    }
+
+    function isHardcodedSuperadmin() {
+      return request.auth != null &&
+        (request.auth.token.email == 'josegonzalez.private@gmail.com' ||
+         request.auth.token.email == 'santopadrevzla@gmail.com');
+    }
+
+    function hasTokenRole(roles) {
+      return request.auth != null &&
+        ((request.auth.token.role in roles) ||
+         (request.auth.token.roles is list && request.auth.token.roles.hasAny(roles)));
+    }
+
+    function hasAdminDocRole(roles) {
+      return request.auth != null &&
+        exists(adminDocPath()) &&
+        (!('role' in get(adminDocPath()).data) || get(adminDocPath()).data.role in roles);
+    }
+
+    function hasAnyAdminRole(roles) {
+      return isHardcodedSuperadmin() || hasTokenRole(roles) || hasAdminDocRole(roles);
+    }
+
+    function isAdmin() {
+      return hasAnyAdminRole(['superadmin', 'admin', 'cashier', 'marketing']);
+    }
+
+    function canWriteAdminData() {
+      return hasAnyAdminRole(['superadmin', 'admin']);
+    }
+
+    // NOTA: la colección 'usuarios/{uid}' del feature de wallet no se usa en ningún
+    // lugar del código (js/modules/wallet.js, functions/rewards.js y functions/referrals.js
+    // leen y escriben todos en 'users/{uid}'). Se elimina para no dejar una colección
+    // abierta sin protección.
+    function protectedUserFields() {
+      return [
+        'points',
+        'stamps',
+        'isVip',
+        'referredBy',
+        'referralStatus',
+        'activeRewards',
+        'claimedRewards',
+        'usdcBalance',
+        'pointsExpiresAt',
+        'pointsLastActivityAt',
+        'reconciliationStatus',
+        'lastReconciledAt'
+      ];
+    }
+
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow read: if isAdmin();
+      allow write: if canWriteAdminData();
+
+      // El saldo inicial lo otorga Auth onCreate/syncUserProfile con Admin SDK.
+      allow create: if request.auth != null && request.auth.uid == userId &&
+        request.resource.data.uid == userId &&
+        !request.resource.data.keys().hasAny(protectedUserFields());
+
+      // El usuario solo puede editar perfil/evidencia; saldos y recompensas son server-side.
+      allow update: if canWriteAdminData() || (
         request.auth != null && request.auth.uid == userId &&
-        (
-          // Opción A: No se modifican los campos de saldo protegidos (puntos, sellos, estado VIP, estado de referido)
-          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['points', 'stamps', 'isVip', 'referralStatus'])) ||
-          
-          // Opción B: Si cambian, debe ser mediante transacciones con incrementos/decrementos validados
-          (
-            // 1. Sumar puntos por compra estándar (límite de 500 puntos por orden)
-            (request.resource.data.points > resource.data.points && request.resource.data.points - resource.data.points <= 500) ||
-            
-            // 2. Canjear recompensa (los puntos disminuyen, y la lista de premios activos aumenta en exactamente 1)
-            (request.resource.data.points < resource.data.points && 
-             request.resource.data.activeRewards.size() == resource.data.activeRewards.size() + 1) ||
-            
-            // 3. Completar misiones de redes sociales (+150 PTS cada una, validando transiciones de falsos/inexistentes a verdaderos)
-            (request.resource.data.points == resource.data.points + 150 && 
-             ((request.resource.data.instagramClaimed == true && (!('instagramClaimed' in resource.data) || resource.data.instagramClaimed == false)) ||
-              (request.resource.data.googleReviewClaimed == true && (!('googleReviewClaimed' in resource.data) || resource.data.googleReviewClaimed == false)) ||
-              (request.resource.data.tiktokClaimed == true && (!('tiktokClaimed' in resource.data) || resource.data.tiktokClaimed == false)))) ||
-            
-            // 4. Compartir por WhatsApp (+50 PTS)
-            (request.resource.data.points == resource.data.points + 50 && 
-             (request.resource.data.whatsappShared == true && (!('whatsappShared' in resource.data) || resource.data.whatsappShared == false))) ||
-            
-            // 5. Completar cumpleaños (+100 PTS)
-            (request.resource.data.points == resource.data.points + 100 && 
-             (request.resource.data.birthdayClaimed == true && (!('birthdayClaimed' in resource.data) || resource.data.birthdayClaimed == false)))
-          )
-        )
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedUserFields())
       );
 
-      // Los usuarios normales no pueden borrar sus cuentas arbitrariamente
-      allow delete: if isAdmin();
+      allow delete: if canWriteAdminData();
+
+      match /transactions/{txId} {
+        allow read: if (request.auth != null && request.auth.uid == userId) || isAdmin();
+        allow write: if false;
+      }
     }
-    
+
     // Reglas para la colección de órdenes (pedidos/canjes)
     match /orders/{orderId} {
-      // Un usuario puede crear una orden si le pertenece, y los administradores pueden hacer cualquier cambio
-      allow create: if (request.auth != null && request.resource.data.userId == request.auth.uid) || isAdmin();
+      allow create: if canWriteAdminData() || hasAnyAdminRole(['cashier']) || (
+        request.auth != null &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending_confirmation' &&
+        request.resource.data.pointsEarned == 0
+      );
       allow read: if (request.auth != null && resource.data.userId == request.auth.uid) || isAdmin();
-      allow update, delete: if isAdmin();
+      allow update: if canWriteAdminData() || hasAnyAdminRole(['cashier']);
+      allow delete: if canWriteAdminData();
     }
 
     // Reglas para la colección de auditoría
     match /audit_logs/{logId} {
-      // Solo los administradores autorizados pueden leer o escribir en el registro de auditoría
-      allow read, write: if isAdmin();
+      allow read: if canWriteAdminData();
+      allow write: if false;
+    }
+
+    match /referralClaims/{claimId} {
+      allow read: if canWriteAdminData();
+      allow write: if false;
+    }
+
+    match /rateLimits/{limitId} {
+      allow read: if canWriteAdminData();
+      allow write: if false;
+    }
+
+    match /tierRewards/{tierId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /loyaltyCampaigns/{campaignId} {
+      allow read: if hasAnyAdminRole(['superadmin', 'admin', 'marketing']);
+      allow write: if false;
+    }
+
+    match /loyalty_events/{eventId} {
+      allow read: if canWriteAdminData() || hasAnyAdminRole(['marketing']);
+      allow write: if false;
+    }
+
+    match /loyaltyLedger/{entryId} {
+      allow read: if canWriteAdminData();
+      allow write: if false;
+    }
+
+    match /loyaltyReconciliations/{entryId} {
+      allow read: if canWriteAdminData();
+      allow write: if false;
+    }
+
+    match /loyaltyJobState/{jobId} {
+      allow read: if canWriteAdminData();
+      allow write: if false;
+    }
+
+    match /loyaltyDailyLimits/{limitId} {
+      allow read: if canWriteAdminData();
+      allow write: if false;
+    }
+
+    match /notificationFailures/{failureId} {
+      allow read: if canWriteAdminData();
+      allow write: if false;
+    }
+
+    // Configuración pública de solo-lectura (ej. config/marketing: URL del webhook de
+    // n8n/Sheets que dashboard.js consulta). Solo un admin la edita desde admin.html.
+    match /config/{docId} {
+      allow read: if request.auth != null;
+      allow write: if canWriteAdminData() || hasAnyAdminRole(['marketing']);
+    }
+
+    // Lista extendida de administradores (admin.html -> checkIsAdmin lee esto para
+    // cualquier email que no esté hardcodeado en isAdmin()). Sin esta regla, esa
+    // lectura fallaba en silencio (capturada por un try/catch) para cualquier admin
+    // agregado solo por esta colección.
+    match /admins/{email} {
+      allow read: if request.auth != null && request.auth.token.email == email;
+      allow write: if canWriteAdminData();
     }
   }
 }

@@ -1,5 +1,12 @@
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
+// Fijado explicitamente a v1 (Gen 1): generateGooglePassUrl y generateApplePass ya estan
+// desplegadas en produccion como 1ra gen, y Firebase no soporta migrar una funcion
+// existente de 1ra a 2da gen con un deploy normal ("Upgrading from 1st Gen to 2nd Gen is
+// not yet supported"). El import "plano" de firebase-functions v7 apunta a 2da gen por
+// defecto, lo cual rompia el deploy real de estas dos funciones tras el upgrade de SDK.
+const functions = require("firebase-functions/v1");
+const { getApps, initializeApp } = require("firebase-admin/app");
+const { getAuth } = require("firebase-admin/auth");
+const { getFirestore } = require("firebase-admin/firestore");
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
 const cors = require("cors")({ origin: true });
@@ -7,8 +14,8 @@ const fs = require("fs");
 const path = require("path");
 
 // Inicializar Firebase Admin
-if (admin.apps.length === 0) {
-  admin.initializeApp();
+if (getApps().length === 0) {
+  initializeApp();
 }
 
 // ==========================================
@@ -24,11 +31,11 @@ exports.generateGooglePassUrl = functions.https.onRequest((req, res) => {
         return res.status(401).send("No autorizado: Falta token");
       }
       const idToken = authHeader.split("Bearer ")[1];
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const decodedToken = await getAuth().verifyIdToken(idToken);
       const userId = decodedToken.uid;
 
       // 2. Obtener datos de Firestore en tiempo real
-      const userDoc = await admin.firestore().collection("users").doc(userId).get();
+      const userDoc = await getFirestore().collection("users").doc(userId).get();
       if (!userDoc.exists) {
         return res.status(404).send("Usuario no encontrado");
       }
@@ -123,11 +130,11 @@ exports.generateApplePass = functions.https.onRequest((req, res) => {
         return res.status(401).send("No autorizado: Falta token");
       }
       const idToken = authHeader.split("Bearer ")[1];
-      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      const decodedToken = await getAuth().verifyIdToken(idToken);
       const userId = decodedToken.uid;
 
       // 2. Obtener datos
-      const userDoc = await admin.firestore().collection("users").doc(userId).get();
+      const userDoc = await getFirestore().collection("users").doc(userId).get();
       if (!userDoc.exists) {
         return res.status(404).send("Usuario no encontrado");
       }
@@ -218,4 +225,17 @@ exports.generateApplePass = functions.https.onRequest((req, res) => {
       res.status(500).send("Error de servidor: " + error.message);
     }
   });
+});
+
+// ==========================================
+// 🎯 SANTO PADRE CUSTOM FIREBASE FUNCTIONS
+// ==========================================
+
+Object.assign(exports, require('./rewards'));
+Object.assign(exports, {
+  generateReferralLink: require('./referrals').generateReferralLink,
+  claimReferral: require('./referrals').claimReferral
+  // TEMPORAL: ver notas de deploy en rewards.js - sendComprobanteNotification excluida
+  // hasta que WHATSAPP_TOKEN/WHATSAPP_PHONE_NUMBER_ID existan en Secret Manager.
+  // sendComprobanteNotification: require('./notifications').sendComprobanteNotification
 });

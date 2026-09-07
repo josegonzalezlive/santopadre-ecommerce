@@ -135,13 +135,13 @@ const CATALOG = {
         {
           id: "quesadilla-chistorra",
           name: "Quesadilla de Chistorra",
-          description: "Tortilla de harina rellena de chistorra jugosa y queso fundido, bañada en mermelada casera de mango y jalapeño. El choque perfecto entre dulce y picante.",
+          description: "Tortilla de harina rellena de chistorra jugosa y queso fundido, bañada en mermelada casera de mango y jalapeño. El choque perfecto entre dulce, picante y pecaminoso.",
           allergens: "Glúten, Lácteos",
-          image: "assets/menu/fajitas.avif",
-          video: "assets/video/quesadilla.mp4?v=2",
+          video: "assets/video/quesadilla-de-chistorra.mp4?v=2",
           price: 14.00,
           badges: ["NUEVO"],
           tags: ["🌶️ DULCE Y PICANTE", "🧀 QUESO FUNDIDO", "🇪🇸 CHISTORRA"],
+          spicyLevel: 1,
           hasExtras: true
         },
         {

@@ -27,6 +27,7 @@ if (savedConfigStr) {
 let app = null;
 let auth = null;
 let db = null;
+let functionsService = null;
 let googleProvider = null;
 let signInWithPopupFunc = null;
 let isMock = false;
@@ -42,10 +43,12 @@ try {
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
   const { getAuth, GoogleAuthProvider, signInWithPopup } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
   const { getFirestore } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+  const { getFunctions } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js");
 
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
+  functionsService = getFunctions(app);
   googleProvider = new GoogleAuthProvider();
   signInWithPopupFunc = signInWithPopup;
 } catch (error) {
@@ -57,6 +60,7 @@ export const getActiveServices = () => {
   return {
     auth,
     db,
+    functions: functionsService,
     googleProvider,
     signInWithPopup: signInWithPopupFunc,
     isMock: false

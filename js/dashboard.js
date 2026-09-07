@@ -1268,17 +1268,25 @@ window.showLoadingState = showLoadingState;
       });
     }
 
-    document.getElementById("nav-logout-btn").addEventListener("click", async () => {
-      try {
-        await authService.signOut();
-      } catch (err) {
-        console.error(err);
-      }
-    });
+    // Estos 3 elementos solo existen en el dashboard-container (cuenta.html); se
+    // guardan con "if (el)" para que dashboard.js no truene al cargar en una página
+    // que solo tenga el formulario de login (ver signup.html, sin dashboard-container).
+    const navLogoutBtn = document.getElementById("nav-logout-btn");
+    if (navLogoutBtn) {
+      navLogoutBtn.addEventListener("click", async () => {
+        try {
+          await authService.signOut();
+        } catch (err) {
+          console.error(err);
+        }
+      });
+    }
 
+    const saveBirthdayBtn = document.getElementById("save-birthday-btn");
+    if (saveBirthdayBtn) saveBirthdayBtn.addEventListener("click", saveBirthday);
 
-    document.getElementById("save-birthday-btn").addEventListener("click", saveBirthday);
-    document.getElementById("profile-details-form").addEventListener("submit", saveProfileChanges);
+    const profileDetailsForm = document.getElementById("profile-details-form");
+    if (profileDetailsForm) profileDetailsForm.addEventListener("submit", saveProfileChanges);
 
     // Inicializar selectores y sincronización de cumpleaños
     window.populateBirthdaySelects();

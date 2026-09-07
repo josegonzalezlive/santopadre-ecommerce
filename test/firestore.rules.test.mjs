@@ -34,8 +34,18 @@ after(async () => {
   await testEnv.cleanup();
 });
 
+// RulesTestContext.firestore() no es idempotente: la segunda vez que se llama para el
+// mismo contexto autenticado, el SDK lanza "Firestore has already been started and its
+// settings can no longer be changed" (visto al reutilizar el mismo uid/email en mas de
+// un test, ej. el admin 'josegonzalez.private@gmail.com'). Se cachea por uid+email para
+// llamar .firestore() una sola vez por contexto y reutilizar la instancia despues.
+const dbCache = new Map();
 function authedDb(uid, email = `${uid}@example.com`) {
-  return testEnv.authenticatedContext(uid, { email }).firestore();
+  const key = `${uid}::${email}`;
+  if (!dbCache.has(key)) {
+    dbCache.set(key, testEnv.authenticatedContext(uid, { email }).firestore());
+  }
+  return dbCache.get(key);
 }
 
 async function seedUser(uid, data = {}) {
@@ -142,8 +152,11 @@ describe('internal loyalty collections', () => {
 
   test('allows admins to read global ledger and reconciliation records', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'loyaltyLedger', 'entry1'), { userId: 'alice', pointsDelta: 100 });
-      await setDoc(doc(context.firestore(), 'loyaltyReconciliations', 'entry1'), { userId: 'alice', delta: 0 });
+      // OJO: context.firestore() tampoco es idempotente - llamarlo dos veces en el mismo
+      // callback lanza "Firestore has already been started...". Se llama una sola vez.
+      const seedDb = context.firestore();
+      await setDoc(doc(seedDb, 'loyaltyLedger', 'entry1'), { userId: 'alice', pointsDelta: 100 });
+      await setDoc(doc(seedDb, 'loyaltyReconciliations', 'entry1'), { userId: 'alice', delta: 0 });
     });
     const adminDb = authedDb('admin', 'josegonzalez.private@gmail.com');
     const userDb = authedDb('alice');

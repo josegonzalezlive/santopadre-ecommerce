@@ -1,4 +1,9 @@
-const functions = require("firebase-functions");
+// Fijado explicitamente a v1 (Gen 1): generateGooglePassUrl y generateApplePass ya estan
+// desplegadas en produccion como 1ra gen, y Firebase no soporta migrar una funcion
+// existente de 1ra a 2da gen con un deploy normal ("Upgrading from 1st Gen to 2nd Gen is
+// not yet supported"). El import "plano" de firebase-functions v7 apunta a 2da gen por
+// defecto, lo cual rompia el deploy real de estas dos funciones tras el upgrade de SDK.
+const functions = require("firebase-functions/v1");
 const { getApps, initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
 const { getFirestore } = require("firebase-admin/firestore");

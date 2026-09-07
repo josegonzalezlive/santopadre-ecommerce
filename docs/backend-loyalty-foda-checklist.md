@@ -1,10 +1,12 @@
 # FODA y Checklist - Backend Loyalty Rewards SantoPadre
 
 Fecha: 2026-09-07
-Rama: `feature-rewards-admin` (PR #1 hacia `main`, mergeable, CI verde)
+Rama: `main` (PR #1 mergeado en `ef361c0`; `feature-rewards-admin` borrada tras el merge)
 
-> Actualizado por Claude Code tras cerrar Fase 1/2/4/5 y ejecutar el deploy real de
-> Functions. Ver "Changelog de esta actualización" al final.
+> Actualizado por Claude Code tras cerrar Fase 1/2/4/5, ejecutar el deploy real de
+> Functions, mergear el PR #1 a `main`, y resolver las decisiones de negocio de Fase 6
+> (App Check, expiración de puntos, límites diarios). Ver "Changelog de esta
+> actualización" al final.
 
 ## FODA del backend
 
@@ -112,15 +114,15 @@ Rama: `feature-rewards-admin` (PR #1 hacia `main`, mergeable, CI verde)
 
 ### Fase 6 - Requiere intervención humana
 
-- [ ] Humano: proveer `WHATSAPP_TOKEN` real.
-- [ ] Humano: proveer `WHATSAPP_PHONE_NUMBER_ID` real.
-- [ ] Humano: confirmar plantilla WhatsApp aprobada para comprobantes.
-- [ ] Humano: decidir cuándo activar Firebase App Check.
-- [ ] Humano: configurar App Check en Firebase Console.
+- [ ] Humano: proveer `WHATSAPP_TOKEN` real. **Pospuesto a propósito — se hace de último.**
+- [ ] Humano: proveer `WHATSAPP_PHONE_NUMBER_ID` real. **Pospuesto a propósito — se hace de último.**
+- [ ] Humano: confirmar plantilla WhatsApp aprobada para comprobantes. **Pospuesto a propósito — se hace de último.**
+- [x] Humano: decidir cuándo activar Firebase App Check. **Decidido: activar registro ahora en modo solo-monitoreo (`enforceAppCheck` queda en `false`), observar 1-2 semanas de métricas reales, y recién ahí activar el bloqueo.**
+- [ ] Humano: configurar App Check en Firebase Console. **Único paso que falta: registrar la app web con reCAPTCHA v3 en [Firebase Console → App Check](https://console.firebase.google.com/project/sound-bee-495502-i0/appcheck) y pasarle a Claude Code el site key generado — con eso se completa la integración en el frontend.**
 - [x] Humano: autorizar deploy real de Functions. **Hecho — deploy completado y verificado en `sound-bee-495502-i0`.**
-- [ ] Humano: autorizar merge del PR #1 (`feature-rewards-admin` → `main`) — PR mergeable, CI verde, sin conflictos, listo para ejecutar en cuanto se autorice.
-- [ ] Humano: definir política final de expiración de puntos si cambia el default actual.
-- [ ] Humano: definir responsabilidad financiera del programa: valor estimado de PADRE, límites y liability máximo.
+- [x] Humano: autorizar merge del PR #1 (`feature-rewards-admin` → `main`) — **Hecho, mergeado (`ef361c0`).**
+- [x] Humano: definir política final de expiración de puntos. **Decidido: mantener el default actual de 365 días desde la última actividad — sin cambios de código.**
+- [x] Humano: definir responsabilidad financiera del programa. **Decidido: mantener los límites actuales — 1 PADRE = 1 USD gastado, $5,000/día en compras confirmadas y $1,000/día en depósitos Solana por usuario — sin cambios de código.**
 
 ## Reparto recomendado
 
@@ -142,3 +144,10 @@ consola, política de negocio y aprobación de deploy/merge.
 - Documentado el CI verificado corriendo en verde sobre un PR real (#1).
 - Actualizadas Fortalezas/Debilidades/Amenazas para reflejar el estado real post-deploy en vez del estado pre-deploy.
 - Fase 3 (panel de salud admin) permanece sin empezar — es el bloque de trabajo más grande que queda del lado de Claude Code.
+
+## Actualización 2 (2026-09-07, mismo día, Claude Code)
+
+- PR #1 mergeado a `main` (`ef361c0`) — autorizado por el humano. Rama `feature-rewards-admin` borrada local y remotamente tras el merge.
+- Decisiones de Fase 6 resueltas: App Check se activa ahora en modo solo-monitoreo (sin bloquear todavía), expiración de puntos se mantiene en 365 días, y los límites diarios financieros se mantienen en sus valores default ($5,000/día compras, $1,000/día depósitos, 1 PADRE = 1 USD). Ninguna requirió cambio de código porque ya eran el comportamiento vigente.
+- Único pendiente de Fase 6 fuera de WhatsApp: registrar la app en Firebase Console → App Check (reCAPTCHA v3) y compartir el site key para completar la integración del frontend.
+- WhatsApp (token, phone number ID, plantilla aprobada) queda pospuesto a propósito para el final, por decisión explícita del humano.

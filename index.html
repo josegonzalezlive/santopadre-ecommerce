@@ -1087,6 +1087,43 @@
       filter: saturate(1.1);
     }
 
+    .product-card .media-container {
+      position: relative;
+    }
+
+    .wishlist-btn {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 6;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(4, 28, 20, 0.55);
+      border: 1px solid rgba(244, 244, 242, 0.2);
+      color: var(--bone);
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+    }
+
+    .wishlist-btn:hover {
+      transform: scale(1.08);
+      background: rgba(4, 28, 20, 0.8);
+    }
+
+    .wishlist-btn.in-wishlist {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .wishlist-btn.in-wishlist svg {
+      fill: currentColor;
+    }
+
     .thumb-slide {
       position: absolute;
       inset: 0;
@@ -3544,7 +3581,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@50..125,300..900&family=Space+Grotesk:wght@300..700&family=Gilda+Display&display=swap">
   </noscript>
   <script src="js/catalog.min.js?v=1.73"></script>
-  <script src="js/app.min.js?v=1.59"></script>
+  <script src="js/app.min.js?v=1.60"></script>
   <script>
     // Firebase Auth/Firestore (via user-profile.js) is only needed once the
     // visitor actually engages with the page, so it's imported on first real

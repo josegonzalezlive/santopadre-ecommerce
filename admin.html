@@ -1891,25 +1891,51 @@
       if (!confirm("¿Seguro que deseas rechazar esta misión?")) return;
 
       const updateData = {};
+      let reasonLabel = "";
       if (questType === 'review') {
         updateData.reviewStatus = "rejected";
+        reasonLabel = "Rechazo de reseña en Google Maps";
       } else if (questType === 'igStory') {
         updateData.igStoryStatus = "rejected";
+        reasonLabel = "Rechazo de Historia de Instagram";
       } else if (questType === 'igPost') {
         updateData.igPostStatus = "rejected";
+        reasonLabel = "Rechazo de Publicación de Instagram (Fotos)";
       } else if (questType === 'tiktok') {
         updateData.tiktokStatus = "rejected";
+        reasonLabel = "Rechazo de Video de TikTok";
       }
+
+      const adminUser = auth.currentUser;
+      const adminEmail = adminUser ? adminUser.email : "admin@santopadre.store";
+      const auditLog = {
+        adminEmail: adminEmail,
+        userId: userId,
+        userName: u.name || "Cliente SantoPadre",
+        prevPoints: u.points || 0,
+        newPoints: u.points || 0,
+        prevStamps: u.stamps || 0,
+        newStamps: u.stamps || 0,
+        reason: reasonLabel,
+        timestamp: new Date().toISOString()
+      };
 
       try {
         if (isMock) {
           const userRef = { collection: "users", id: userId };
           const updatedUser = { ...u, ...updateData };
           await dbService.setDoc(userRef, updatedUser);
+
+          const auditLogs = JSON.parse(localStorage.getItem("santopadre_mock_audit_logs") || "[]");
+          auditLogs.push(auditLog);
+          localStorage.setItem("santopadre_mock_audit_logs", JSON.stringify(auditLogs));
         } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+          const { doc, setDoc, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const userDocRef = doc(db, "users", userId);
           await setDoc(userDocRef, updateData, { merge: true });
+
+          const auditCol = collection(db, "audit_logs");
+          await addDoc(auditCol, auditLog);
         }
 
         alert("Misión rechazada.");

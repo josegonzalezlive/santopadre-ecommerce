@@ -371,6 +371,7 @@ function initFormHandler(checkoutData) {
       try {
         const txHash = await processPhantomPayment(totalAmount);
         orderDetails.txHash = txHash;
+        orderDetails.solanaCluster = 'mainnet-beta';
         await executeOrderCompletion();
       } catch (error) {
         console.error(error);

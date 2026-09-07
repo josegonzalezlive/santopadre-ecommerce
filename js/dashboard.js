@@ -32,6 +32,25 @@ window.showLoadingState = showLoadingState;
     let currentProfile = null;
     let unsubscribeProfile = null;
 
+    async function callFunction(name, payload = {}) {
+      if (!functionsService) {
+        throw new Error("Cloud Functions no esta inicializado.");
+      }
+      const fn = httpsCallable(functionsService, name);
+      const result = await fn(payload);
+      return result.data;
+    }
+
+    async function trackLoyaltyEvent(event, metadata = {}) {
+      if (!currentUser || !functionsService) return;
+      try {
+        await callFunction("trackLoyaltyEvent", { event, surface: "dashboard", metadata });
+      } catch (err) {
+        console.warn("[Loyalty Analytics] No se pudo registrar el evento:", err.message || err);
+      }
+    }
+    window.trackLoyaltyEvent = trackLoyaltyEvent;
+
     // Configuración de Integración con n8n/Google Sheets (Fase de Marketing).
     // admin.html ya lee/escribe esto en el doc config/marketing de Firestore
     // (ver loadMarketingWebhook allá), pero dashboard.js nunca lo consultaba: solo
@@ -115,6 +134,15 @@ window.showLoadingState = showLoadingState;
     };
 
     window.switchTopTab = function(tabId) {
+      const funnelEvents = {
+        ganar: "earn_view",
+        canjear: "redeem_view",
+        referidos: "referral_view"
+      };
+      if (funnelEvents[tabId]) {
+        trackLoyaltyEvent(funnelEvents[tabId], { tabId });
+      }
+
       // Close mobile menu if open
       if (window.innerWidth <= 900) {
         const sidebar = document.querySelector('.sidebar');
@@ -320,12 +348,14 @@ window.showLoadingState = showLoadingState;
           await dbService.setDoc(userRef, updatedProfile);
           currentProfile = updatedProfile;
         } else {
-          const userDocRef = doc(dbService, "users", currentUser.uid);
-          await setDoc(userDocRef, { points: newPoints, isVip, birthday: dateVal, birthdayClaimed: true }, { merge: true });
+          const result = await callFunction("claimBirthdayBonus", { birthday: dateVal });
+          updatedProfile.points = result.newPoints || newPoints;
+          updatedProfile.isVip = updatedProfile.points >= 100;
           currentProfile = updatedProfile;
         }
         
-        await logPointsTransaction("Regalo de Cumpleaños", 100);
+        if (isMock) await logPointsTransaction("Regalo de Cumpleaños", 100);
+        trackLoyaltyEvent("birthday_claim_success", { pointsAwarded: 100 });
         alert("¡Feliz Cumpleaños! Recibiste 100 $PADRE de regalo.");
         updateDashboardUI();
       } catch (err) {
@@ -384,6 +414,7 @@ window.showLoadingState = showLoadingState;
           currentProfile = updatedProfile;
         }
         
+        trackLoyaltyEvent("earn_submit", { questType: "review" });
         alert("¡Enviado con éxito! Tu reseña está en verificación por el administrador. Los 150 $PADRE se sumarán al ser aprobada.");
         updateDashboardUI();
       } catch (err) {
@@ -437,16 +468,14 @@ window.showLoadingState = showLoadingState;
           await dbService.setDoc(userRef, updatedProfile);
           currentProfile = updatedProfile;
         } else {
-          const userDocRef = doc(dbService, "users", currentUser.uid);
-          await setDoc(userDocRef, { 
-            points: newPoints, 
-            isVip, 
-            instagramClaimed: true 
-          }, { merge: true });
+          const result = await callFunction("claimInstagramFollowBonus");
+          updatedProfile.points = result.newPoints || newPoints;
+          updatedProfile.isVip = updatedProfile.points >= 100;
           currentProfile = updatedProfile;
         }
         
-        await logPointsTransaction("Seguir en Instagram", 50);
+        if (isMock) await logPointsTransaction("Seguir en Instagram", 50);
+        trackLoyaltyEvent("earn_submit", { questType: "instagram_follow" });
         alert("¡Gracias por seguirnos en Instagram! Has recibido 50 $PADRE de regalo. 📸🎉");
         updateDashboardUI();
         _isClaimingInstagram = false;
@@ -496,6 +525,7 @@ window.showLoadingState = showLoadingState;
           currentProfile = updatedProfile;
         }
         
+        trackLoyaltyEvent("earn_submit", { questType: "igStory" });
         alert("¡Enviado con éxito! Tu historia está en verificación por el administrador. Los 100 $PADRE se sumarán al ser aprobada.");
         updateDashboardUI();
       } catch (err) {
@@ -546,6 +576,7 @@ window.showLoadingState = showLoadingState;
           currentProfile = updatedProfile;
         }
         
+        trackLoyaltyEvent("earn_submit", { questType: "igPost" });
         alert("¡Enviado con éxito! Tu publicación está en verificación por el administrador. Los 200 $PADRE se sumarán al ser aprobada.");
         updateDashboardUI();
       } catch (err) {
@@ -600,6 +631,7 @@ window.showLoadingState = showLoadingState;
           currentProfile = updatedProfile;
         }
         
+        trackLoyaltyEvent("earn_submit", { questType: "tiktok" });
         alert("¡Enviado con éxito! Tu video de TikTok está en verificación por el administrador. Los 300 $PADRE se sumarán al ser aprobada.");
         updateDashboardUI();
       } catch (err) {
@@ -647,15 +679,31 @@ window.showLoadingState = showLoadingState;
     };
 
 
-    // Configuración de Premios por Nivel (5 Niveles VIP) — Optimizado < 3.9% COGS
-    // Ticket mínimo por sello: $12.00 (validar en producción)
-    window.TIER_REWARDS = [
+    // Configuración de Premios por Nivel (5 Niveles VIP)
+    const DEFAULT_TIER_REWARDS = [
       { level: 1, name: "El Iniciado", reward: "Bebida Premium Gratis", emoji: "🥤", color: "var(--lime)", textColor: "var(--ink)", cogs: 0.75 },
       { level: 2, name: "El Fiel", reward: "Postre Sorpresa del Chef", emoji: "🍰", color: "#ff9900", textColor: "var(--bone)", cogs: 1.20 },
       { level: 3, name: "El Discípulo", reward: "Nachos PEQ + Bebida Gratis", emoji: "🏔️", color: "#00ccff", textColor: "var(--bone)", cogs: 2.93 },
       { level: 4, name: "El Profeta", reward: "Tacos (3U) + Bebida Gratis", emoji: "🌮", color: "#cc33ff", textColor: "var(--bone)", cogs: 4.20 },
       { level: 5, name: "El Santo", reward: "Cena Secreta para 2 + 2 Bebidas", emoji: "👑", color: "#ffcc00", textColor: "var(--ink)", cogs: 3.00 }
     ];
+    window.TIER_REWARDS = [...DEFAULT_TIER_REWARDS];
+
+    async function loadTierRewards() {
+      if (!functionsService) {
+        window.TIER_REWARDS = [...DEFAULT_TIER_REWARDS];
+        return;
+      }
+      try {
+        const result = await callFunction("getTierRewards");
+        if (Array.isArray(result?.tiers) && result.tiers.length) {
+          window.TIER_REWARDS = result.tiers;
+        }
+      } catch (err) {
+        console.warn("[Rewards] Usando tiers locales por fallback:", err.message || err);
+        window.TIER_REWARDS = [...DEFAULT_TIER_REWARDS];
+      }
+    }
 
     // Los sellos se acreditan exclusivamente por compras reales verificadas por el
     // administrador (ver checklist T06). No existe ninguna vía en el cliente para que
@@ -858,17 +906,6 @@ window.showLoadingState = showLoadingState;
         const selectedMeat = document.getElementById("profile-meat").value;
         const cravingsVal = document.getElementById("profile-cravings").value.trim();
 
-        // Calcular si se debe otorgar bono de cumpleaños
-        let birthdayClaimed = currentProfile.birthdayClaimed || false;
-        let newPoints = currentProfile.points || 0;
-        let birthdayAwarded = false;
-
-        if (dateVal && !birthdayClaimed) {
-          newPoints += 100;
-          birthdayClaimed = true;
-          birthdayAwarded = true;
-        }
-
         const updatedProfile = {
           ...currentProfile,
           name: `${firstNameVal} ${lastNameVal}`.trim() || currentProfile.name || currentUser.displayName,
@@ -877,9 +914,6 @@ window.showLoadingState = showLoadingState;
           phone: phoneVal,
           gender: genderVal,
           birthday: dateVal,
-          birthdayClaimed: birthdayClaimed,
-          points: newPoints,
-          isVip: newPoints >= 100,
           gastronomy: {
             spicyTolerance: selectedSpicy,
             avocado: selectedAvocado,
@@ -897,7 +931,15 @@ window.showLoadingState = showLoadingState;
           currentProfile = updatedProfile;
         } else {
           const userDocRef = doc(dbService, "users", currentUser.uid);
-          await setDoc(userDocRef, updatedProfile, { merge: true });
+          await setDoc(userDocRef, {
+            name: updatedProfile.name,
+            firstName: updatedProfile.firstName,
+            lastName: updatedProfile.lastName,
+            phone: updatedProfile.phone,
+            gender: updatedProfile.gender,
+            birthday: updatedProfile.birthday,
+            gastronomy: updatedProfile.gastronomy
+          }, { merge: true });
           currentProfile = updatedProfile;
         }
 
@@ -905,9 +947,7 @@ window.showLoadingState = showLoadingState;
         triggerMarketingWebhook(updatedProfile, "profile_updated");
 
         statusMsg.style.color = "var(--lime)";
-        statusMsg.innerText = birthdayAwarded 
-          ? "¡Perfil Guardado! +100 $PADRE por tu Cumpleaños 🎉"
-          : "✓ ¡Perfil Guardado con éxito!";
+        statusMsg.innerText = "✓ ¡Perfil Guardado con éxito!";
         
         updateDashboardUI();
 
@@ -959,6 +999,7 @@ window.showLoadingState = showLoadingState;
           couponCode: couponCode,
           color: 'var(--lime)'
         });
+        trackLoyaltyEvent("redeem_success", { rewardId, pointsSpent: cost || result.data.cost || 0 });
         // currentProfile se actualiza solo vía el listener onSnapshot de users/{uid}
       } catch (err) {
         console.error(err);
@@ -974,6 +1015,10 @@ window.showLoadingState = showLoadingState;
 
     window.markRewardAsUsed = async function(rewardId) {
       if (!currentUser || !currentProfile.activeRewards) return;
+      if (!isMock) {
+        alert("Los premios se validan en caja desde el panel administrador.");
+        return;
+      }
       
       const newActive = currentProfile.activeRewards.filter(r => r.id !== rewardId);
       
@@ -981,10 +1026,6 @@ window.showLoadingState = showLoadingState;
         if (isMock) {
           const userRef = { collection: "users", id: currentUser.uid };
           await dbService.setDoc(userRef, { activeRewards: newActive });
-          currentProfile.activeRewards = newActive;
-        } else {
-          const userDocRef = doc(dbService, "users", currentUser.uid);
-          await setDoc(userDocRef, { activeRewards: newActive }, { merge: true });
           currentProfile.activeRewards = newActive;
         }
         
@@ -1035,6 +1076,10 @@ window.showLoadingState = showLoadingState;
     async function loadActivityHistory(userId) {
       const ordersListContainer = document.getElementById("account-orders-list");
       if (!ordersListContainer) return;
+      const loadingHTML = `<div class="empty-orders">Cargando actividad...</div>`;
+      ordersListContainer.innerHTML = loadingHTML;
+      const feedElLoading = document.getElementById('solana-transactions-feed');
+      if (feedElLoading) feedElLoading.innerHTML = loadingHTML;
       
       try {
         let orders = [];
@@ -1063,7 +1108,7 @@ window.showLoadingState = showLoadingState;
         let extraRowHTML = "";
         
         // Desglosar missing points
-        if (missingPoints >= 100 && !orders.find(o => o.items && o.items.some(i => i.name === "Regalo de Bienvenida" || i.name === "Bono por registrar una cuenta"))) {
+        if (missingPoints >= 10 && !orders.find(o => o.items && o.items.some(i => i.name === "Regalo de Bienvenida" || i.name === "Bono por registrar una cuenta"))) {
             extraRowHTML += `
             <div class="order-card" style="margin-bottom: 12px; background: rgba(180, 255, 30, 0.05); border: 1px dashed rgba(180, 255, 30, 0.3);">
               <div class="order-meta">
@@ -1072,11 +1117,11 @@ window.showLoadingState = showLoadingState;
               </div>
               <div class="order-details" style="color: var(--mute);">Bono por crear cuenta en SantoPadre®</div>
               <div class="order-reward" style="color: var(--lime); font-weight: bold;">
-                +100 $PADRE
+                +10 $PADRE
               </div>
             </div>
             `;
-            missingPoints -= 100;
+            missingPoints -= 10;
         }
         
         if (missingPoints >= 100 && currentProfile.birthday && !orders.find(o => o.items && o.items.some(i => i.name === "Regalo de Cumpleaños"))) {
@@ -1119,10 +1164,11 @@ window.showLoadingState = showLoadingState;
         }
 
         let ordersHTML = orders.map(order => {
-          const dateStr = new Date(order.createdAt).toLocaleDateString("es-ES", {
+          const rawDate = order.createdAt?.toDate ? order.createdAt.toDate() : new Date(order.createdAt || Date.now());
+          const dateStr = rawDate.toLocaleDateString("es-ES", {
             day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
           });
-          const itemsStr = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
+          const itemsStr = (order.items || []).map(item => `${item.quantity || 1}x ${item.name}`).join(", ");
           const isNegative = order.pointsEarned < 0;
           return `
             <div class="order-card" style="margin-bottom: 12px;">
@@ -1152,6 +1198,10 @@ window.showLoadingState = showLoadingState;
         }
       } catch (err) {
         console.error(err);
+        const errorHTML = `<div class="empty-orders">No se pudo cargar la actividad. Intenta de nuevo.</div>`;
+        ordersListContainer.innerHTML = errorHTML;
+        const feedEl = document.getElementById('solana-transactions-feed');
+        if (feedEl) feedEl.innerHTML = errorHTML;
       }
     }
 
@@ -1306,6 +1356,7 @@ window.showLoadingState = showLoadingState;
         window.currentUser = user;
         // Obtener o crear perfil en BD
         currentProfile = await getOrCreateProfile(user);
+        await loadTierRewards();
         loadMarketingWebhookFromConfig();
 
         if (window.location.pathname.includes("signup.html")) {
@@ -1560,7 +1611,7 @@ window.showLoadingState = showLoadingState;
           uid: user.uid,
           name: user.displayName || "Cliente",
           email: user.email,
-          points: 100,
+          points: 10,
           isVip: false,
           createdAt: new Date().toISOString()
         };
@@ -1584,7 +1635,7 @@ window.showLoadingState = showLoadingState;
             userId: user.uid,
             createdAt: Date.now(),
             total: 0,
-            pointsEarned: 100,
+            pointsEarned: 10,
             items: [{ name: "Regalo de Bienvenida", quantity: 1, price: 0 }],
             status: "completado",
             orderType: "quest_reward"
@@ -1595,30 +1646,12 @@ window.showLoadingState = showLoadingState;
           return newProfile;
         }
       } else {
-        const docRef = doc(dbService, "users", user.uid);
-        const snap = await getDoc(docRef);
-        if (snap.exists()) {
-          return snap.data();
-        } else {
-          const newProfile = createNewProfileObj();
-          await setDoc(docRef, newProfile);
-
-          // Log de transacción de bienvenida en firebase
-          const welcomeOrder = {
-            userId: user.uid,
-            createdAt: Date.now(),
-            total: 0,
-            pointsEarned: 100,
-            items: [{ name: "Regalo de Bienvenida", quantity: 1, price: 0 }],
-            status: "completado",
-            orderType: "quest_reward"
-          };
-          const ordersCol = collection(dbService, "orders");
-          await addDoc(ordersCol, welcomeOrder);
-
-          triggerMarketingWebhook(newProfile, "user_registered");
-          return newProfile;
-        }
+        const syncResult = await callFunction("syncUserProfile", {
+          name: user.displayName || "Cliente",
+          referrerId: refId || undefined
+        });
+        if (syncResult.profile) triggerMarketingWebhook(syncResult.profile, "user_registered");
+        return syncResult.profile;
       }
     }
 
@@ -1765,34 +1798,6 @@ window.showLoadingState = showLoadingState;
       
       const elAvatarBadge = document.getElementById("profile-avatar-badge");
       if (elAvatarBadge) elAvatarBadge.innerText = userFullName.charAt(0).toUpperCase();
-
-      // Autocorrección de puntos de bienvenida heredados (de 10 a 100)
-      if (points === 10 || points === 110) {
-        const newPoints = points + 90;
-        currentProfile.points = newPoints; // Actualización local inmediata
-        points = newPoints;
-        if (elSummaryPoints) elSummaryPoints.innerText = `${points} $PADRE`;
-        
-        // Ejecutar actualización en segundo plano
-        (async () => {
-          try {
-            if (isMock) {
-              const userRef = { collection: "users", id: currentUser.uid };
-              const usersData = JSON.parse(localStorage.getItem("santopadre_mock_db_users") || "{}");
-              if (usersData[currentUser.uid]) {
-                usersData[currentUser.uid].points = newPoints;
-                localStorage.setItem("santopadre_mock_db_users", JSON.stringify(usersData));
-              }
-            } else {
-              const userDocRef = doc(dbService, "users", currentUser.uid);
-              await setDoc(userDocRef, { points: newPoints }, { merge: true });
-            }
-            console.log(`Puntos de bienvenida corregidos a ${newPoints}`);
-          } catch (e) {
-            console.error("Error al corregir puntos de bienvenida:", e);
-          }
-        })();
-      }
 
       const userPhotoURL = currentUser.photoURL || currentProfile.photoURL;
       const avatarImg = document.getElementById("user-display-avatar");
@@ -2358,4 +2363,3 @@ window.showLoadingState = showLoadingState;
     };
 
     window.switchTab = window.switchTopTab;
-

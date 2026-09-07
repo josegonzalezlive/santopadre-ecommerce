@@ -224,7 +224,9 @@ exports.generateApplePass = functions.https.onRequest((req, res) => {
 // 🎯 SANTO PADRE CUSTOM FIREBASE FUNCTIONS
 // ==========================================
 
-exports.generateReferralLink = require('./referrals').generateReferralLink;
-exports.redeemReward = require('./rewards').redeemReward;
-exports.claimTierReward = require('./rewards').claimTierReward;
-exports.sendComprobanteNotification = require('./notifications').sendComprobanteNotification;
+Object.assign(exports, require('./rewards'));
+Object.assign(exports, {
+  generateReferralLink: require('./referrals').generateReferralLink,
+  claimReferral: require('./referrals').claimReferral,
+  sendComprobanteNotification: require('./notifications').sendComprobanteNotification
+});

@@ -849,6 +849,32 @@
           </div>
           <p id="firebase-success-msg" style="color: var(--lime); font-size: 12px; display: none; font-weight: bold; margin-bottom: 0;"></p>
         </div>
+
+        <div style="max-width: 980px; margin-top: 24px; padding: 24px; background: var(--ink-2); border: 1px solid var(--line); border-radius: 14px;">
+          <h3 style="font-family: var(--space); color: var(--lime); font-size: 18px; text-transform: uppercase; margin-bottom: 8px;">Premios por Nivel</h3>
+          <p style="font-size: 13px; color: var(--mute); line-height: 1.5; margin-bottom: 16px;">Edita los premios de sellos sin publicar cambios de código.</p>
+          <div id="tier-rewards-settings" style="display: grid; gap: 12px;">
+            <p style="color: var(--mute); font-size: 13px;">Cargando premios...</p>
+          </div>
+          <p id="tier-settings-success-msg" style="color: var(--lime); font-size: 12px; display: none; font-weight: bold; margin-top: 14px;">✓ Premio actualizado.</p>
+        </div>
+
+        <div style="max-width: 760px; margin-top: 24px; padding: 24px; background: var(--ink-2); border: 1px solid var(--line); border-radius: 14px;">
+          <h3 style="font-family: var(--space); color: var(--lime); font-size: 18px; text-transform: uppercase; margin-bottom: 8px;">Campaña de Puntos</h3>
+          <p style="font-size: 13px; color: var(--mute); line-height: 1.5; margin-bottom: 16px;">Activa un multiplicador temporal sobre compras verificadas.</p>
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--white); margin-bottom: 14px;">
+            <input type="checkbox" id="campaign-active">
+            Campaña activa
+          </label>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;">
+            <input type="text" id="campaign-name" placeholder="Nombre de campaña" style="background: var(--ink-3); border: 1px solid var(--line); color: var(--white); padding: 12px 14px; border-radius: 8px; font-size: 13px; outline: none;">
+            <input type="number" id="campaign-multiplier" min="1" max="5" step="0.25" placeholder="x2" style="background: var(--ink-3); border: 1px solid var(--line); color: var(--white); padding: 12px 14px; border-radius: 8px; font-size: 13px; outline: none;">
+            <input type="date" id="campaign-starts" style="background: var(--ink-3); border: 1px solid var(--line); color: var(--white); padding: 12px 14px; border-radius: 8px; font-size: 13px; outline: none;">
+            <input type="date" id="campaign-ends" style="background: var(--ink-3); border: 1px solid var(--line); color: var(--white); padding: 12px 14px; border-radius: 8px; font-size: 13px; outline: none;">
+          </div>
+          <button class="admin-btn" onclick="saveLoyaltyCampaignSettings()" style="height: 44px; margin-top: 16px; width: fit-content; padding: 0 30px;">Guardar Campaña</button>
+          <p id="campaign-settings-success-msg" style="color: var(--lime); font-size: 12px; display: none; font-weight: bold; margin-top: 14px;">✓ Campaña guardada.</p>
+        </div>
       </div>
 
       <!-- TAB: AUDITORÍA -->
@@ -902,7 +928,7 @@
 
   <script type="module">
     import { getActiveServices } from "./js/firebase-config.js";
-    const { auth, db, googleProvider, isMock } = getActiveServices();
+    const { auth, db, functions: functionsService, googleProvider, isMock } = getActiveServices();
 
     const ALLOWED_ADMIN_EMAILS = [
       "josegonzalez.private@gmail.com",
@@ -935,9 +961,38 @@
       }
     }
 
+    async function callFunction(name, payload = {}) {
+      if (!functionsService) {
+        throw new Error("Cloud Functions no esta inicializado.");
+      }
+      const { httpsCallable } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js");
+      const fn = httpsCallable(functionsService, name);
+      const result = await fn(payload);
+      return result.data;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
     let allUsers = [];
     let allOrders = [];
     let allAuditLogs = [];
+    let tierRewardsSettings = [];
+    let campaignSettings = null;
+
+    const DEFAULT_TIER_REWARDS = [
+      { level: 1, name: "El Iniciado", reward: "Bebida Premium Gratis", emoji: "🥤", color: "var(--lime)", textColor: "var(--ink)", cogs: 0.75, active: true },
+      { level: 2, name: "El Fiel", reward: "Postre Sorpresa del Chef", emoji: "🍰", color: "#ff9900", textColor: "var(--bone)", cogs: 1.20, active: true },
+      { level: 3, name: "El Discípulo", reward: "Nachos PEQ + Bebida Gratis", emoji: "🏔️", color: "#00ccff", textColor: "var(--bone)", cogs: 2.93, active: true },
+      { level: 4, name: "El Profeta", reward: "Tacos (3U) + Bebida Gratis", emoji: "🌮", color: "#cc33ff", textColor: "var(--bone)", cogs: 4.20, active: true },
+      { level: 5, name: "El Santo", reward: "Cena Secreta para 2 + 2 Bebidas", emoji: "👑", color: "#ffcc00", textColor: "var(--ink)", cogs: 3.00, active: true }
+    ];
 
     // Variables para desuscripción en tiempo real
     let unsubscribeUsers = null;
@@ -1097,6 +1152,8 @@
     // Load all data with Realtime Listeners (onSnapshot)
     async function loadAllData() {
       loadMarketingWebhook();
+      loadTierRewardsSettings();
+      loadCampaignSettings();
       // Desuscribirse de listeners anteriores si existen
       if (unsubscribeUsers) { unsubscribeUsers(); unsubscribeUsers = null; }
       if (unsubscribeOrders) { unsubscribeOrders(); unsubscribeOrders = null; }
@@ -1398,16 +1455,7 @@
           auditLogs.push(auditLog);
           localStorage.setItem("santopadre_mock_audit_logs", JSON.stringify(auditLogs));
         } else {
-          const { doc, setDoc, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-          const userDocRef = doc(db, "users", userId);
-          await setDoc(userDocRef, { 
-            points: newPoints, 
-            stamps: newStamps,
-            isVip: newPoints >= 100
-          }, { merge: true });
-
-          const auditCol = collection(db, "audit_logs");
-          await addDoc(auditCol, auditLog);
+          await callFunction("adminQuickAddStamp", { userId });
         }
         
         alert(`✓ ¡Éxito! Se sumó +1 Sello y +100 PTS a ${u.name || "Cliente"}.\nTotal: ${newStamps}/5 sellos.`);
@@ -1751,34 +1799,12 @@
             await dbService.addDoc({ name: "orders" }, mockOrder);
           }
         } else {
-          // 1. Guardar en Firestore real (Colección users)
-          const { doc, setDoc, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-          const userDocRef = doc(db, "users", userId);
-          await setDoc(userDocRef, { 
-            points: newPoints, 
+          await callFunction("adminAdjustUserLoyalty", {
+            userId,
+            points: newPoints,
             stamps: newStamps,
-            isVip: newPoints >= 100
-          }, { merge: true });
-
-          // 2. Registrar en la colección audit_logs de Firestore
-          const auditCol = collection(db, "audit_logs");
-          await addDoc(auditCol, auditLog);
-
-          // 3. Crear orden virtual de transacción si cambiaron los puntos
-          const diffPoints = newPoints - prevPoints;
-          if (diffPoints !== 0) {
-            const mockOrder = {
-              userId: userId,
-              createdAt: Date.now(),
-              total: 0,
-              pointsEarned: diffPoints,
-              items: [{ name: `Ajuste Admin: ${reason}`, quantity: 1, price: 0 }],
-              status: "completado",
-              orderType: "quest_reward"
-            };
-            const ordersCol = collection(db, "orders");
-            await addDoc(ordersCol, mockOrder);
-          }
+            reason
+          });
         }
 
         alert(`✓ Puntos y sellos actualizados con éxito.\nSe registró la acción en el historial de auditoría.`);
@@ -1862,15 +1888,7 @@
 
           await dbService.addDoc({ name: "orders" }, mockOrder);
         } else {
-          const { doc, setDoc, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-          const userDocRef = doc(db, "users", userId);
-          await setDoc(userDocRef, updateData, { merge: true });
-
-          const auditCol = collection(db, "audit_logs");
-          await addDoc(auditCol, auditLog);
-
-          const ordersCol = collection(db, "orders");
-          await addDoc(ordersCol, mockOrder);
+          await callFunction("adminApproveSocialQuest", { userId, questType });
         }
 
         alert("¡Misión aprobada con éxito y puntos acreditados!");
@@ -1930,12 +1948,7 @@
           auditLogs.push(auditLog);
           localStorage.setItem("santopadre_mock_audit_logs", JSON.stringify(auditLogs));
         } else {
-          const { doc, setDoc, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-          const userDocRef = doc(db, "users", userId);
-          await setDoc(userDocRef, updateData, { merge: true });
-
-          const auditCol = collection(db, "audit_logs");
-          await addDoc(auditCol, auditLog);
+          await callFunction("adminRejectSocialQuest", { userId, questType });
         }
 
         alert("Misión rechazada.");
@@ -2017,6 +2030,125 @@
       }
     }
 
+    async function loadTierRewardsSettings() {
+      try {
+        if (isMock) {
+          tierRewardsSettings = JSON.parse(localStorage.getItem("santopadre_tier_rewards") || "null") || DEFAULT_TIER_REWARDS;
+        } else {
+          const result = await callFunction("getTierRewards");
+          tierRewardsSettings = Array.isArray(result?.tiers) ? result.tiers : DEFAULT_TIER_REWARDS;
+        }
+      } catch (e) {
+        console.error("Error al cargar premios por nivel:", e);
+        tierRewardsSettings = DEFAULT_TIER_REWARDS;
+      }
+      renderTierRewardsSettings();
+    }
+
+    function renderTierRewardsSettings() {
+      const container = document.getElementById("tier-rewards-settings");
+      if (!container) return;
+      container.innerHTML = tierRewardsSettings.map((tier) => `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; align-items: center; background: var(--ink-3); border: 1px solid var(--line); border-radius: 8px; padding: 12px;">
+          <strong style="font-family: var(--space); color: var(--lime);">N${tier.level}</strong>
+          <input id="tier-name-${tier.level}" type="text" value="${escapeHtml(tier.name)}" placeholder="Nombre" style="background: var(--ink); border: 1px solid var(--line); color: var(--white); padding: 10px; border-radius: 8px; font-size: 12px; outline: none; min-width: 0;">
+          <input id="tier-reward-${tier.level}" type="text" value="${escapeHtml(tier.reward)}" placeholder="Premio" style="background: var(--ink); border: 1px solid var(--line); color: var(--white); padding: 10px; border-radius: 8px; font-size: 12px; outline: none; min-width: 0;">
+          <input id="tier-emoji-${tier.level}" type="text" value="${escapeHtml(tier.emoji || "")}" placeholder="Icono" style="background: var(--ink); border: 1px solid var(--line); color: var(--white); padding: 10px; border-radius: 8px; font-size: 12px; outline: none; min-width: 0;">
+          <input id="tier-cogs-${tier.level}" type="number" min="0" max="100" step="0.01" value="${Number(tier.cogs || 0)}" placeholder="COGS" style="background: var(--ink); border: 1px solid var(--line); color: var(--white); padding: 10px; border-radius: 8px; font-size: 12px; outline: none; min-width: 0;">
+          <button class="admin-btn" onclick="saveTierRewardSetting(${tier.level})" style="height: 38px; padding: 0 14px;">Guardar</button>
+        </div>
+      `).join("");
+    }
+
+    window.saveTierRewardSetting = async function(level) {
+      const current = tierRewardsSettings.find(t => Number(t.level) === Number(level)) || DEFAULT_TIER_REWARDS[level - 1];
+      const payload = {
+        level,
+        name: document.getElementById(`tier-name-${level}`).value,
+        reward: document.getElementById(`tier-reward-${level}`).value,
+        emoji: document.getElementById(`tier-emoji-${level}`).value,
+        color: current.color,
+        textColor: current.textColor,
+        cogs: Number(document.getElementById(`tier-cogs-${level}`).value || current.cogs),
+        active: current.active !== false
+      };
+      try {
+        if (isMock) {
+          tierRewardsSettings = tierRewardsSettings.map(t => Number(t.level) === Number(level) ? { ...t, ...payload } : t);
+          localStorage.setItem("santopadre_tier_rewards", JSON.stringify(tierRewardsSettings));
+        } else {
+          const result = await callFunction("adminSaveTierReward", payload);
+          tierRewardsSettings = tierRewardsSettings.map(t => Number(t.level) === Number(level) ? result.tier : t);
+        }
+        renderTierRewardsSettings();
+        const msg = document.getElementById("tier-settings-success-msg");
+        if (msg) {
+          msg.style.display = "block";
+          setTimeout(() => { msg.style.display = "none"; }, 2500);
+        }
+      } catch (e) {
+        console.error("Error al guardar premio por nivel:", e);
+        alert("Error al guardar premio: " + e.message);
+      }
+    };
+
+    async function loadCampaignSettings() {
+      try {
+        if (isMock) {
+          campaignSettings = JSON.parse(localStorage.getItem("santopadre_loyalty_campaign") || "null") || { active: false, name: "", pointsMultiplier: 1, startsAt: "", endsAt: "" };
+        } else {
+          const result = await callFunction("getLoyaltyCampaignSettings");
+          campaignSettings = result?.campaign || { active: false, name: "", pointsMultiplier: 1, startsAt: "", endsAt: "" };
+        }
+      } catch (e) {
+        console.error("Error al cargar campana:", e);
+        campaignSettings = { active: false, name: "", pointsMultiplier: 1, startsAt: "", endsAt: "" };
+      }
+      renderCampaignSettings();
+    }
+
+    function renderCampaignSettings() {
+      if (!campaignSettings) return;
+      const activeEl = document.getElementById("campaign-active");
+      const nameEl = document.getElementById("campaign-name");
+      const multiplierEl = document.getElementById("campaign-multiplier");
+      const startsEl = document.getElementById("campaign-starts");
+      const endsEl = document.getElementById("campaign-ends");
+      if (activeEl) activeEl.checked = Boolean(campaignSettings.active);
+      if (nameEl) nameEl.value = campaignSettings.name || "";
+      if (multiplierEl) multiplierEl.value = campaignSettings.pointsMultiplier || 1;
+      if (startsEl) startsEl.value = campaignSettings.startsAt || "";
+      if (endsEl) endsEl.value = campaignSettings.endsAt || "";
+    }
+
+    window.saveLoyaltyCampaignSettings = async function() {
+      const payload = {
+        active: document.getElementById("campaign-active").checked,
+        name: document.getElementById("campaign-name").value.trim(),
+        pointsMultiplier: Number(document.getElementById("campaign-multiplier").value || 1),
+        startsAt: document.getElementById("campaign-starts").value,
+        endsAt: document.getElementById("campaign-ends").value
+      };
+      try {
+        if (isMock) {
+          campaignSettings = payload;
+          localStorage.setItem("santopadre_loyalty_campaign", JSON.stringify(payload));
+        } else {
+          const result = await callFunction("adminSaveLoyaltyCampaign", payload);
+          campaignSettings = result.campaign;
+        }
+        renderCampaignSettings();
+        const msg = document.getElementById("campaign-settings-success-msg");
+        if (msg) {
+          msg.style.display = "block";
+          setTimeout(() => { msg.style.display = "none"; }, 2500);
+        }
+      } catch (e) {
+        console.error("Error al guardar campana:", e);
+        alert("Error al guardar campana: " + e.message);
+      }
+    };
+
     window.saveAdminSettings = async function() {
       const url = document.getElementById("settings-webhook-url").value.trim();
       try {
@@ -2083,15 +2215,7 @@
           auditLogs.push(auditLog);
           localStorage.setItem("santopadre_mock_audit_logs", JSON.stringify(auditLogs));
         } else {
-          const { doc, setDoc, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-          const userDocRef = doc(db, "users", userId);
-          await setDoc(userDocRef, { 
-            activeRewards: newActive, 
-            claimedRewards: newClaimed
-          }, { merge: true });
-
-          const auditCol = collection(db, "audit_logs");
-          await addDoc(auditCol, auditLog);
+          await callFunction("adminConsumeReward", { userId, rewardId });
         }
 
         alert(`✓ ¡Canje completado con éxito! Se ha entregado el premio "${rewardName}".`);
@@ -2117,9 +2241,13 @@
             localStorage.setItem("santopadre_mock_db_orders", JSON.stringify(ordersData));
           }
         } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-          const orderDocRef = doc(db, "orders", orderId);
-          await setDoc(orderDocRef, { status: newStatus }, { merge: true });
+          if (newStatus === "Completado") {
+            await callFunction("confirmPurchaseAndAwardPoints", { orderId });
+          } else {
+            const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+            const orderDocRef = doc(db, "orders", orderId);
+            await setDoc(orderDocRef, { status: newStatus }, { merge: true });
+          }
         }
 
         alert(`✓ Estado de orden actualizado a "${newStatus}".`);
@@ -2202,7 +2330,7 @@
         return;
       }
 
-      const newUid = "manual_" + Math.random().toString(36).substring(2, 10).toUpperCase();
+      let newUid = "manual_" + Math.random().toString(36).substring(2, 10).toUpperCase();
       const newProfile = {
         uid: newUid,
         name: name,
@@ -2212,7 +2340,7 @@
         phone: phone || "",
         gender: gender || "",
         birthday: birthday || "",
-        points: 100,
+        points: 10,
         stamps: 0,
         isVip: false,
         createdAt: new Date().toISOString(),
@@ -2232,7 +2360,7 @@
           userId: newUid,
           createdAt: Date.now(),
           total: 0,
-          pointsEarned: 100,
+          pointsEarned: 10,
           items: [{ name: "Regalo de Bienvenida", quantity: 1, price: 0 }],
           status: "completado",
           orderType: "quest_reward"
@@ -2244,11 +2372,15 @@
           localStorage.setItem("santopadre_mock_db_users", JSON.stringify(usersData));
           await dbService.addDoc({ name: "orders" }, welcomeOrder);
         } else {
-          const { doc, setDoc, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-          const userDocRef = doc(db, "users", newUid);
-          await setDoc(userDocRef, newProfile);
-          const ordersCol = collection(db, "orders");
-          await addDoc(ordersCol, welcomeOrder);
+          const result = await callFunction("adminCreateManualUser", {
+            name,
+            email,
+            phone,
+            gender,
+            birthday,
+            meat
+          });
+          newUid = result.userId;
         }
 
         alert(`✓ Cliente registrado con éxito.\nSerial ID: SP-${newUid.substring(0, 8).toUpperCase()}`);

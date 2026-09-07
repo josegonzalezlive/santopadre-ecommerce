@@ -2,7 +2,7 @@
 import { getActiveServices } from "./firebase-config.js";
 
 // Variables globales del módulo
-let authService, dbService, googleProvider, isMock;
+let authService, dbService, functionsService, googleProvider, isMock;
 let currentUser = null;
 let currentProfile = null;
 let pendingWishProductId = null;
@@ -11,14 +11,16 @@ let pendingWishProductId = null;
 const services = getActiveServices();
 authService = services.auth;
 dbService = services.db;
+functionsService = services.functions;
 googleProvider = services.googleProvider;
 isMock = services.isMock;
 
 // Imports dinámicos para Firebase real
-let doc, getDoc, setDoc, collection, addDoc, query, where, orderBy, getDocs;
+let doc, getDoc, setDoc, collection, addDoc, query, where, orderBy, getDocs, httpsCallable;
 if (!isMock) {
   try {
     const firestoreModule = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+    const functionsModule = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js");
     doc = firestoreModule.doc;
     getDoc = firestoreModule.getDoc;
     setDoc = firestoreModule.setDoc;
@@ -28,10 +30,20 @@ if (!isMock) {
     where = firestoreModule.where;
     orderBy = firestoreModule.orderBy;
     getDocs = firestoreModule.getDocs;
+    httpsCallable = functionsModule.httpsCallable;
   } catch (err) {
     console.error("Error cargando módulos de Firestore, forzando modo simulación:", err);
     isMock = true;
   }
+}
+
+async function callFunction(name, payload = {}) {
+  if (!functionsService || !httpsCallable) {
+    throw new Error("Cloud Functions no esta inicializado.");
+  }
+  const fn = httpsCallable(functionsService, name);
+  const result = await fn(payload);
+  return result.data;
 }
 
 // Inicialización de la UI y listeners
@@ -136,7 +148,7 @@ async function getOrCreateUserProfile(user) {
         name: user.displayName || "Cliente",
         email: user.email,
         photoURL: user.photoURL || "assets/logo-sm.webp",
-        points: 100, // 100 puntos de regalo de bienvenida!
+        points: 10,
         isVip: false,
         createdAt: new Date().toISOString()
       };
@@ -147,7 +159,7 @@ async function getOrCreateUserProfile(user) {
         userId: user.uid,
         createdAt: Date.now(),
         total: 0,
-        pointsEarned: 100,
+        pointsEarned: 10,
         items: [{ name: "Regalo de Bienvenida", quantity: 1, price: 0 }],
         status: "completado",
         orderType: "quest_reward"
@@ -157,38 +169,10 @@ async function getOrCreateUserProfile(user) {
       return newProfile;
     }
   } else {
-    // Firebase Real
-    const docRef = doc(dbService, "users", user.uid);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data();
-    } else {
-      const newProfile = {
-        uid: user.uid,
-        name: user.displayName || "Cliente",
-        email: user.email,
-        photoURL: user.photoURL || "assets/logo-sm.webp",
-        points: 100, // 100 puntos de regalo de bienvenida!
-        isVip: false,
-        createdAt: new Date().toISOString()
-      };
-      await setDoc(docRef, newProfile);
-
-      // Log de transacción de bienvenida
-      const welcomeOrder = {
-        userId: user.uid,
-        createdAt: Date.now(),
-        total: 0,
-        pointsEarned: 100,
-        items: [{ name: "Regalo de Bienvenida", quantity: 1, price: 0 }],
-        status: "completado",
-        orderType: "quest_reward"
-      };
-      const ordersCol = collection(dbService, "orders");
-      await addDoc(ordersCol, welcomeOrder);
-
-      return newProfile;
-    }
+    const syncResult = await callFunction("syncUserProfile", {
+      name: user.displayName || "Cliente"
+    });
+    return syncResult.profile;
   }
 }
 
@@ -232,15 +216,19 @@ export async function logoutUser() {
 export async function saveOrderToHistory(orderData) {
   if (!currentUser) return null;
 
-  const pointsEarned = Math.floor(orderData.total || 0); // 1 punto por cada $1 gastado
+  const estimatedPointsEarned = Math.floor(orderData.total || 0); // 1 punto por cada $1 gastado
   const orderRecord = {
     userId: currentUser.uid,
     items: orderData.items || [],
     total: orderData.total || 0,
     isVip: currentProfile?.isVip || false,
-    pointsEarned: pointsEarned,
+    estimatedPointsEarned,
+    pointsEarned: 0,
     createdAt: new Date().toISOString(),
-    status: "completado" // Estado por defecto
+    status: "pending_confirmation",
+    payment: orderData.payment || "",
+    txHash: orderData.txHash || null,
+    solanaCluster: orderData.solanaCluster || null
   };
 
   try {
@@ -250,7 +238,7 @@ export async function saveOrderToHistory(orderData) {
       orderId = newDoc.id;
       
       // Actualizar puntos del usuario en Mock DB
-      const newPoints = (currentProfile?.points || 0) + pointsEarned;
+      const newPoints = (currentProfile?.points || 0) + estimatedPointsEarned;
       const isVip = newPoints >= 100; // Si pasa de 100 puntos, es VIP!
       
       const userRef = { collection: "users", id: currentUser.uid };
@@ -263,13 +251,23 @@ export async function saveOrderToHistory(orderData) {
       const docRef = await addDoc(ordersCol, orderRecord);
       orderId = docRef.id;
 
-      // Actualizar puntos de fidelidad en Firestore
-      const newPoints = (currentProfile?.points || 0) + pointsEarned;
-      const isVip = newPoints >= 100;
-      
-      const userDocRef = doc(dbService, "users", currentUser.uid);
-      await setDoc(userDocRef, { points: newPoints, isVip }, { merge: true });
-      currentProfile = { ...currentProfile, points: newPoints, isVip };
+      if (orderData.payment === "phantom" && orderData.txHash) {
+        const confirmResult = await callFunction("confirmPurchaseAndAwardPoints", {
+          orderId,
+          solanaSignature: orderData.txHash,
+          cluster: orderData.solanaCluster || "mainnet-beta"
+        });
+        callFunction("trackLoyaltyEvent", {
+          event: "purchase_points_success",
+          surface: "checkout",
+          metadata: {
+            orderId,
+            pointsAwarded: confirmResult.pointsAwarded || confirmResult.pointsDelta || 0
+          }
+        }).catch((err) => console.warn("[Loyalty Analytics] No se pudo registrar la compra:", err.message || err));
+        const refreshed = await getDoc(doc(dbService, "users", currentUser.uid));
+        if (refreshed.exists()) currentProfile = refreshed.data();
+      }
     }
 
     // Actualizar UI

@@ -14,60 +14,85 @@ service cloud.firestore {
     // lugar del código (js/modules/wallet.js, functions/rewards.js y functions/referrals.js
     // leen y escriben todos en 'users/{uid}'). Se elimina para no dejar una colección
     // abierta sin protección.
+    function protectedUserFields() {
+      return [
+        'points',
+        'stamps',
+        'isVip',
+        'referredBy',
+        'referralStatus',
+        'activeRewards',
+        'claimedRewards',
+        'usdcBalance',
+        'pointsExpiresAt',
+        'pointsLastActivityAt'
+      ];
+    }
+
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow read, write: if isAdmin();
 
-      // Alta de cuenta: solo el propio usuario, y solo con el saldo inicial exacto
-      // que otorga js/dashboard.js (getOrCreateProfile -> createNewProfileObj()).
+      // El saldo inicial lo otorga Auth onCreate/syncUserProfile con Admin SDK.
       allow create: if request.auth != null && request.auth.uid == userId &&
         request.resource.data.uid == userId &&
-        request.resource.data.points == 100 &&
-        request.resource.data.isVip == false &&
-        (!request.resource.data.keys().hasAny(['stamps']) || request.resource.data.stamps == 0);
+        !request.resource.data.keys().hasAny(protectedUserFields());
 
-      // Un usuario normal solo puede modificar su propio documento si:
-      //   (a) no toca ningún campo de saldo/recompensa protegido, o
-      //   (b) el cambio es exactamente una de las misiones "instantáneas" que el
-      //       propio cliente puede autoacreditarse una sola vez (cumpleaños +100,
-      //       seguir Instagram +50). Todo lo demás (canjes, sellos, aprobación de
-      //       reseñas/redes, ascensos de nivel) pasa por Cloud Functions con
-      //       Admin SDK, que no están sujetas a estas reglas.
+      // El usuario solo puede editar perfil/evidencia; saldos y recompensas son server-side.
       allow update: if isAdmin() || (
         request.auth != null && request.auth.uid == userId &&
-        !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['stamps', 'claimedRewards', 'activeRewards', 'uid']) &&
-        (
-          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['points', 'isVip'])) ||
-
-          (request.resource.data.points == resource.data.points + 100 &&
-           request.resource.data.birthdayClaimed == true &&
-           (!('birthdayClaimed' in resource.data) || resource.data.birthdayClaimed == false)) ||
-
-          (request.resource.data.points == resource.data.points + 50 &&
-           request.resource.data.instagramClaimed == true &&
-           (!('instagramClaimed' in resource.data) || resource.data.instagramClaimed == false))
-        )
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedUserFields())
       );
 
       allow delete: if isAdmin();
 
       match /transactions/{txId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-        allow read, write: if isAdmin();
+        allow read: if (request.auth != null && request.auth.uid == userId) || isAdmin();
+        allow write: if false;
       }
     }
 
     // Reglas para la colección de órdenes (pedidos/canjes)
     match /orders/{orderId} {
-      allow create: if (request.auth != null && request.resource.data.userId == request.auth.uid) || isAdmin();
+      allow create: if isAdmin() || (
+        request.auth != null &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending_confirmation' &&
+        request.resource.data.pointsEarned == 0
+      );
       allow read: if (request.auth != null && resource.data.userId == request.auth.uid) || isAdmin();
       allow update, delete: if isAdmin();
     }
 
     // Reglas para la colección de auditoría
     match /audit_logs/{logId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /referralClaims/{claimId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /rateLimits/{limitId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /tierRewards/{tierId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /loyaltyCampaigns/{campaignId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /loyalty_events/{eventId} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // Configuración pública de solo-lectura (ej. config/marketing: URL del webhook de

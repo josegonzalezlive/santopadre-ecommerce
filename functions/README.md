@@ -41,6 +41,12 @@ Resultados de reconciliación. `reconcileLoyaltyBalances` detecta diferencias ca
 horas y `adminReconcileUserLoyalty({ userId, repair })` permite revisar o reparar el
 saldo cacheado contra el ledger.
 
+### `loyaltyJobState/{jobId}`
+
+Checkpoints internos de jobs paginados. Lo usan `backfillLoyaltyLedger`,
+`reconcileLoyaltyBalances` y `expireLoyaltyPoints` para no procesar siempre los mismos
+usuarios. Server-only.
+
 ### `orders/{orderId}`
 
 Historial de "pedidos" — incluye compras reales del checkout Y entradas sintéticas
@@ -91,6 +97,14 @@ el cliente no debe controlar.
 - **`rewards.js` → `adminReconcileUserLoyalty({ userId, repair })`**:
   compara `users/{uid}.points` contra `loyaltyLedger`. Con `repair: true`, corrige el
   saldo cacheado sin crear un movimiento artificial de puntos.
+- **`rewards.js` → `adminListLoyaltyReconciliations({ status?, limit? })`**:
+  lista discrepancias/reparaciones recientes para construir un panel operativo.
+- **`rewards.js` → `adminBackfillLoyaltyLedger({ userId?, txLimit?, afterTxId? })`**:
+  migra transacciones históricas de `users/{uid}/transactions` a `loyaltyLedger`.
+  Es idempotente: si la entrada global ya existe, la salta.
+- **`rewards.js` → `backfillLoyaltyLedger`**:
+  scheduler cada 12 horas para avanzar el backfill histórico por páginas usando
+  `loyaltyJobState/backfillLoyaltyLedger`.
 - **`referrals.js` → `generateReferralLink()`**: genera/devuelve el código de referido
   del usuario autenticado.
 - **`notifications.js` → `sendComprobanteNotification({ recipientPhone, userName, amount })`**:
@@ -102,6 +116,18 @@ el cliente no debe controlar.
 Las callables aceptan `ENFORCE_APP_CHECK=true` para activar `enforceAppCheck` en el
 backend. No está activado por defecto para no romper clientes hasta que Firebase App
 Check esté configurado en la consola y en el frontend.
+
+## Tests
+
+```bash
+npm run check:functions
+npm test
+npm run test:rules
+npm run test:all
+```
+
+`npm run test:rules` y `npm run test:all` requieren Java porque levantan el emulador de
+Firestore.
 
 ## Pendiente conocido (no arreglado en esta pasada)
 

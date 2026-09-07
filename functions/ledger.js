@@ -74,6 +74,39 @@ function buildPointLedgerEntry({
   };
 }
 
+function buildLedgerEntryFromUserTransaction(userId, txId, txData = {}, options = {}) {
+  const pointsDelta = Number(txData.pointsDelta ?? txData.amount ?? 0);
+  const type = txData.type || options.type || txId;
+  const sourceId = txData.sourceId || txData.orderId || txData.signature || txId;
+
+  return buildPointLedgerEntry({
+    userId,
+    type,
+    sourceId,
+    orderId: txData.orderId || null,
+    pointsDelta,
+    reason: txData.reason || txData.reward || type,
+    balanceBefore: txData.balanceBefore ?? null,
+    balanceAfter: txData.balanceAfter ?? null,
+    actor: {
+      uid: txData.actorUid || null,
+      email: txData.actorEmail || null,
+      role: txData.actorRole || 'legacy_backfill'
+    },
+    metadata: {
+      ...(txData.metadata || {}),
+      legacyTransactionId: txId,
+      backfilledFromUserTransaction: true,
+      backfillRunId: options.backfillRunId || null
+    },
+    attributes: {
+      rewardId: txData.rewardId || null,
+      reward: txData.reward || null,
+      couponCode: txData.couponCode || null
+    }
+  });
+}
+
 function writePointLedger(tx, db, userRef, txRef, entry) {
   const ledgerId = ledgerDocId(entry.userId, entry.type, entry.sourceId);
   tx.set(txRef, entry);
@@ -101,6 +134,7 @@ module.exports = {
   assertLedgerPointsDelta,
   ledgerDocId,
   buildPointLedgerEntry,
+  buildLedgerEntryFromUserTransaction,
   writePointLedger,
   calculateLedgerBalance
 };

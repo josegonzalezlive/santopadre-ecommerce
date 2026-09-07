@@ -3,7 +3,7 @@ const functions = require('firebase-functions');
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { getApps, initializeApp } = require('firebase-admin/app');
-const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue, FieldPath, Timestamp } = require('firebase-admin/firestore');
 // TEMPORAL: ver notas de deploy - no requerir './notifications' evita que defineSecret()
 // bloquee el analisis de deploy sin WHATSAPP_TOKEN/WHATSAPP_PHONE_NUMBER_ID en Secret Manager.
 const sendComprobanteWhatsapp = null, waToken = null, waPhoneId = null;
@@ -27,15 +27,21 @@ const {
   LEDGER_COLLECTION,
   RECONCILIATION_COLLECTION,
   buildPointLedgerEntry,
+  buildLedgerEntryFromUserTransaction,
   writePointLedger,
   ledgerDocId,
   calculateLedgerBalance
 } = require('./ledger');
+const { assertKnownKeys } = require('./validation');
 
 if (!getApps().length) initializeApp();
 
 const db = getFirestore();
 const CALLABLE_OPTIONS = { maxInstances: 10, ...(process.env.ENFORCE_APP_CHECK === 'true' ? { enforceAppCheck: true } : {}) };
+const JOB_STATE_COLLECTION = 'loyaltyJobState';
+const BACKFILL_JOB = 'backfillLoyaltyLedger';
+const RECONCILE_JOB = 'reconcileLoyaltyBalances';
+const EXPIRE_JOB = 'expireLoyaltyPoints';
 
 function requireAuth(request) {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Login required');
@@ -79,16 +85,6 @@ function assertReason(value) {
     throw new HttpsError('invalid-argument', 'Debes especificar un motivo valido');
   }
   return reason;
-}
-
-function assertKnownKeys(data, allowedKeys, operation) {
-  const payload = data || {};
-  const allowed = new Set(allowedKeys);
-  const unknown = Object.keys(payload).filter((key) => !allowed.has(key));
-  if (unknown.length) {
-    throw new HttpsError('invalid-argument', `Campos no permitidos en ${operation}: ${unknown.join(', ')}`);
-  }
-  return payload;
 }
 
 function logLoyalty(event, payload = {}) {
@@ -838,7 +834,8 @@ exports.adminConsumeReward = onCall(CALLABLE_OPTIONS, async (request) => {
       balanceBefore: user.points || 0,
       balanceAfter: user.points || 0,
       actor: { uid: auth.uid, email: auth.token.email || null, role },
-      metadata: { auditId, rewardId, rewardName: reward.name, couponCode: reward.code || null }
+      metadata: { auditId, rewardId, rewardName: reward.name, couponCode: reward.code || null },
+      attributes: { rewardId, reward: reward.name, couponCode: reward.code || null }
     }));
     result = { userId, rewardId, consumed: true, auditId };
   });
@@ -1016,6 +1013,104 @@ function compactMetadata(value, depth = 0) {
   return null;
 }
 
+function timestampToIso(value) {
+  if (!value) return null;
+  if (typeof value.toDate === 'function') return value.toDate().toISOString();
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'string') return value;
+  return null;
+}
+
+async function getPagedUsersForJob(jobName, pageSize) {
+  const stateRef = db.collection(JOB_STATE_COLLECTION).doc(jobName);
+  const stateSnap = await stateRef.get();
+  const state = stateSnap.exists ? stateSnap.data() : {};
+  let query = db.collection('users').orderBy(FieldPath.documentId()).limit(pageSize);
+  if (state.lastUserId) query = query.startAfter(state.lastUserId);
+  let users = await query.get();
+
+  if (users.empty && state.lastUserId) {
+    await stateRef.set({
+      lastUserId: null,
+      completedCycleAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+    users = await db.collection('users').orderBy(FieldPath.documentId()).limit(pageSize).get();
+  }
+
+  return { stateRef, state, users };
+}
+
+async function savePagedUsersJobState(stateRef, users, extra = {}) {
+  const lastDoc = users.docs[users.docs.length - 1];
+  await stateRef.set({
+    lastUserId: lastDoc ? lastDoc.id : null,
+    processedInLastRun: users.size,
+    updatedAt: FieldValue.serverTimestamp(),
+    ...extra
+  }, { merge: true });
+}
+
+function normalizeBackfillLimit(value, fallback, max) {
+  const limit = Number(value || fallback);
+  return Number.isInteger(limit) && limit > 0 ? Math.min(limit, max) : fallback;
+}
+
+async function backfillLedgerForUserPage({ userId, txLimit = 100, afterTxId = null, backfillRunId = null }) {
+  const userRef = db.collection('users').doc(userId);
+  const userSnap = await userRef.get();
+  if (!userSnap.exists) return { userId, found: false, scanned: 0, created: 0, skipped: 0, invalid: 0, hasMore: false, nextAfterTxId: null };
+
+  let query = userRef.collection('transactions').orderBy(FieldPath.documentId()).limit(txLimit);
+  if (afterTxId) query = query.startAfter(afterTxId);
+  const txSnap = await query.get();
+  const batch = db.batch();
+  let created = 0;
+  let skipped = 0;
+  let invalid = 0;
+  let lastTxId = null;
+
+  const candidates = [];
+  for (const txDoc of txSnap.docs) {
+    lastTxId = txDoc.id;
+    try {
+      const entry = buildLedgerEntryFromUserTransaction(userId, txDoc.id, txDoc.data(), { backfillRunId });
+      const ledgerRef = db.collection(LEDGER_COLLECTION).doc(ledgerDocId(userId, entry.type, entry.sourceId));
+      candidates.push({ txDoc, entry, ledgerRef });
+    } catch (err) {
+      invalid += 1;
+      logLoyalty('loyalty_ledger_backfill_invalid_transaction', { userId, txId: txDoc.id, error: err.message });
+    }
+  }
+
+  const existing = await Promise.all(candidates.map((item) => item.ledgerRef.get()));
+  candidates.forEach((item, index) => {
+    if (existing[index].exists) {
+      skipped += 1;
+      return;
+    }
+    batch.set(item.ledgerRef, {
+      ...item.entry,
+      transactionPath: item.txDoc.ref.path,
+      userPath: userRef.path
+    });
+    created += 1;
+  });
+
+  if (created > 0) await batch.commit();
+
+  return {
+    userId,
+    found: true,
+    scanned: txSnap.size,
+    created,
+    skipped,
+    invalid,
+    hasMore: txSnap.size === txLimit,
+    nextAfterTxId: txSnap.size === txLimit ? lastTxId : null
+  };
+}
+
 exports.trackLoyaltyEvent = onCall(CALLABLE_OPTIONS, async (request) => {
   const auth = requireAuth(request);
   assertKnownKeys(request.data, ['event', 'surface', 'metadata'], 'trackLoyaltyEvent');
@@ -1031,6 +1126,141 @@ exports.trackLoyaltyEvent = onCall(CALLABLE_OPTIONS, async (request) => {
     createdAt: FieldValue.serverTimestamp()
   });
   return { ok: true, eventId: eventRef.id };
+});
+
+exports.adminListLoyaltyReconciliations = onCall(CALLABLE_OPTIONS, async (request) => {
+  await requireAdminRole(request, ['superadmin', 'admin']);
+  assertKnownKeys(request.data, ['status', 'limit'], 'adminListLoyaltyReconciliations');
+  const status = typeof request.data?.status === 'string' ? request.data.status.trim() : '';
+  const limit = normalizeBackfillLimit(request.data?.limit, 50, 100);
+  const allowedStatuses = new Set(['', 'matched', 'mismatch', 'repaired']);
+  if (!allowedStatuses.has(status)) throw new HttpsError('invalid-argument', 'status invalido');
+
+  const snap = await db.collection(RECONCILIATION_COLLECTION)
+    .orderBy('createdAt', 'desc')
+    .limit(status ? Math.min(limit * 3, 300) : limit)
+    .get();
+
+  const records = [];
+  snap.forEach((doc) => {
+    const data = doc.data();
+    if (status && data.status !== status) return;
+    if (records.length >= limit) return;
+    records.push({
+      id: doc.id,
+      userId: data.userId || null,
+      cachedPoints: Number(data.cachedPoints || 0),
+      ledgerBalance: Number(data.ledgerBalance || 0),
+      ledgerEntries: Number(data.ledgerEntries || 0),
+      delta: Number(data.delta || 0),
+      status: data.status || 'unknown',
+      repaired: Boolean(data.repaired),
+      createdAt: timestampToIso(data.createdAt)
+    });
+  });
+
+  return { records };
+});
+
+exports.adminBackfillLoyaltyLedger = onCall(CALLABLE_OPTIONS, async (request) => {
+  const { auth, role } = await requireAdminRole(request, ['superadmin', 'admin']);
+  assertKnownKeys(request.data, ['userId', 'txLimit', 'afterTxId'], 'adminBackfillLoyaltyLedger');
+  const txLimit = normalizeBackfillLimit(request.data?.txLimit, 100, 250);
+  const userId = request.data?.userId ? assertUserId(request.data.userId) : null;
+  const afterTxId = typeof request.data?.afterTxId === 'string' ? request.data.afterTxId.trim() : null;
+  const backfillRunId = `admin_${auth.uid}_${Date.now()}`;
+
+  if (userId) {
+    const result = await backfillLedgerForUserPage({ userId, txLimit, afterTxId, backfillRunId });
+    logLoyalty('loyalty_ledger_backfill_admin_user', { ...result, requestedByRole: role });
+    return result;
+  }
+
+  const { stateRef, state } = await getPagedUsersForJob(BACKFILL_JOB, 1);
+  let currentUserId = state.currentUserId || null;
+  let currentAfterTxId = state.currentAfterTxId || null;
+
+  if (!currentUserId) {
+    let userQuery = db.collection('users').orderBy(FieldPath.documentId()).limit(1);
+    if (state.lastUserId) userQuery = userQuery.startAfter(state.lastUserId);
+    let userSnap = await userQuery.get();
+    if (userSnap.empty && state.lastUserId) {
+      await stateRef.set({ lastUserId: null, currentUserId: null, currentAfterTxId: null }, { merge: true });
+      userSnap = await db.collection('users').orderBy(FieldPath.documentId()).limit(1).get();
+    }
+    currentUserId = userSnap.docs[0]?.id || null;
+  }
+
+  if (!currentUserId) {
+    await stateRef.set({ completedCycleAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return { found: false, scanned: 0, created: 0, skipped: 0, invalid: 0, hasMore: false };
+  }
+
+  const result = await backfillLedgerForUserPage({
+    userId: currentUserId,
+    txLimit,
+    afterTxId: currentAfterTxId,
+    backfillRunId
+  });
+
+  await stateRef.set({
+    currentUserId: result.hasMore ? currentUserId : null,
+    currentAfterTxId: result.hasMore ? result.nextAfterTxId : null,
+    lastUserId: result.hasMore ? state.lastUserId || null : currentUserId,
+    lastRunBy: auth.token.email || auth.uid,
+    lastRunByRole: role,
+    lastRunResult: result,
+    updatedAt: FieldValue.serverTimestamp()
+  }, { merge: true });
+
+  logLoyalty('loyalty_ledger_backfill_admin_page', { ...result, requestedByRole: role });
+  return result;
+});
+
+exports.backfillLoyaltyLedger = onSchedule('every 12 hours', async () => {
+  const stateRef = db.collection(JOB_STATE_COLLECTION).doc(BACKFILL_JOB);
+  const stateSnap = await stateRef.get();
+  const state = stateSnap.exists ? stateSnap.data() : {};
+  let currentUserId = state.currentUserId || null;
+  let currentAfterTxId = state.currentAfterTxId || null;
+
+  if (!currentUserId) {
+    let userQuery = db.collection('users').orderBy(FieldPath.documentId()).limit(1);
+    if (state.lastUserId) userQuery = userQuery.startAfter(state.lastUserId);
+    let userSnap = await userQuery.get();
+    if (userSnap.empty && state.lastUserId) {
+      await stateRef.set({
+        lastUserId: null,
+        currentUserId: null,
+        currentAfterTxId: null,
+        completedCycleAt: FieldValue.serverTimestamp()
+      }, { merge: true });
+      userSnap = await db.collection('users').orderBy(FieldPath.documentId()).limit(1).get();
+    }
+    currentUserId = userSnap.docs[0]?.id || null;
+  }
+
+  if (!currentUserId) {
+    logLoyalty('loyalty_ledger_backfill_empty', {});
+    return;
+  }
+
+  const result = await backfillLedgerForUserPage({
+    userId: currentUserId,
+    txLimit: 150,
+    afterTxId: currentAfterTxId,
+    backfillRunId: `scheduled_${Date.now()}`
+  });
+
+  await stateRef.set({
+    currentUserId: result.hasMore ? currentUserId : null,
+    currentAfterTxId: result.hasMore ? result.nextAfterTxId : null,
+    lastUserId: result.hasMore ? state.lastUserId || null : currentUserId,
+    lastRunResult: result,
+    updatedAt: FieldValue.serverTimestamp()
+  }, { merge: true });
+
+  logLoyalty('loyalty_ledger_backfill_batch', result);
 });
 
 async function calculateLedgerBalanceInTransaction(tx, userId) {
@@ -1114,7 +1344,7 @@ exports.adminReconcileUserLoyalty = onCall(CALLABLE_OPTIONS, async (request) => 
 });
 
 exports.reconcileLoyaltyBalances = onSchedule('every 6 hours', async () => {
-  const users = await db.collection('users').limit(200).get();
+  const { stateRef, users } = await getPagedUsersForJob(RECONCILE_JOB, 200);
   const batch = db.batch();
   let checked = 0;
   let mismatches = 0;
@@ -1152,12 +1382,40 @@ exports.reconcileLoyaltyBalances = onSchedule('every 6 hours', async () => {
   }
 
   await batch.commit();
-  logLoyalty('loyalty_reconciliation_batch', { checked, mismatches });
+  await savePagedUsersJobState(stateRef, users, { mismatchesInLastRun: mismatches });
+  logLoyalty('loyalty_reconciliation_batch', { checked, mismatches, lastUserId: users.docs[users.docs.length - 1]?.id || null });
 });
 
 exports.expireLoyaltyPoints = onSchedule('every day 04:00', async () => {
   const now = Timestamp.now();
-  const due = await db.collection('users').where('pointsExpiresAt', '<=', now).limit(150).get();
+  const stateRef = db.collection(JOB_STATE_COLLECTION).doc(EXPIRE_JOB);
+  const stateSnap = await stateRef.get();
+  const state = stateSnap.exists ? stateSnap.data() : {};
+  let query = db.collection('users')
+    .where('pointsExpiresAt', '<=', now)
+    .orderBy('pointsExpiresAt')
+    .orderBy(FieldPath.documentId())
+    .limit(150);
+  if (state.lastPointsExpiresAt && state.lastUserId) {
+    query = query.startAfter(state.lastPointsExpiresAt, state.lastUserId);
+  }
+  let due = await query.get();
+
+  if (due.empty && state.lastUserId) {
+    await stateRef.set({
+      lastPointsExpiresAt: null,
+      lastUserId: null,
+      completedCycleAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+    due = await db.collection('users')
+      .where('pointsExpiresAt', '<=', now)
+      .orderBy('pointsExpiresAt')
+      .orderBy(FieldPath.documentId())
+      .limit(150)
+      .get();
+  }
+
   const batch = db.batch();
   let expired = 0;
   due.forEach((doc) => {
@@ -1191,5 +1449,13 @@ exports.expireLoyaltyPoints = onSchedule('every day 04:00', async () => {
     });
   });
   await batch.commit();
-  logLoyalty('points_expired_batch', { expired });
+  const lastDoc = due.docs[due.docs.length - 1];
+  await stateRef.set({
+    lastPointsExpiresAt: lastDoc ? lastDoc.data().pointsExpiresAt || null : null,
+    lastUserId: lastDoc ? lastDoc.id : null,
+    processedInLastRun: due.size,
+    expiredInLastRun: expired,
+    updatedAt: FieldValue.serverTimestamp()
+  }, { merge: true });
+  logLoyalty('points_expired_batch', { expired, processed: due.size, lastUserId: lastDoc?.id || null });
 });

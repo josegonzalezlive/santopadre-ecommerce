@@ -107,6 +107,11 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /loyaltyJobState/{jobId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // Configuración pública de solo-lectura (ej. config/marketing: URL del webhook de
     // n8n/Sheets que dashboard.js consulta). Solo un admin la edita desde admin.html.
     match /config/{docId} {

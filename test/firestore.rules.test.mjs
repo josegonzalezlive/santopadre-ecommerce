@@ -148,23 +148,27 @@ describe('internal loyalty collections', () => {
     await assertFails(addDoc(collection(adminDb, 'loyalty_events'), { event: 'redeem_success' }));
     await assertFails(setDoc(doc(adminDb, 'loyaltyLedger', 'entry1'), { userId: 'alice', pointsDelta: 100 }));
     await assertFails(setDoc(doc(adminDb, 'loyaltyReconciliations', 'entry1'), { userId: 'alice', delta: 100 }));
+    await assertFails(setDoc(doc(adminDb, 'loyaltyJobState', 'backfillLoyaltyLedger'), { lastUserId: 'alice' }));
   });
 
-  test('allows admins to read global ledger and reconciliation records', async () => {
+  test('allows admins to read global ledger, reconciliation and job state records', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       // OJO: context.firestore() tampoco es idempotente - llamarlo dos veces en el mismo
       // callback lanza "Firestore has already been started...". Se llama una sola vez.
       const seedDb = context.firestore();
       await setDoc(doc(seedDb, 'loyaltyLedger', 'entry1'), { userId: 'alice', pointsDelta: 100 });
       await setDoc(doc(seedDb, 'loyaltyReconciliations', 'entry1'), { userId: 'alice', delta: 0 });
+      await setDoc(doc(seedDb, 'loyaltyJobState', 'backfillLoyaltyLedger'), { lastUserId: 'alice' });
     });
     const adminDb = authedDb('admin', 'josegonzalez.private@gmail.com');
     const userDb = authedDb('alice');
 
     await assertSucceeds(getDoc(doc(adminDb, 'loyaltyLedger', 'entry1')));
     await assertSucceeds(getDoc(doc(adminDb, 'loyaltyReconciliations', 'entry1')));
+    await assertSucceeds(getDoc(doc(adminDb, 'loyaltyJobState', 'backfillLoyaltyLedger')));
     await assertFails(getDoc(doc(userDb, 'loyaltyLedger', 'entry1')));
     await assertFails(getDoc(doc(userDb, 'loyaltyReconciliations', 'entry1')));
+    await assertFails(getDoc(doc(userDb, 'loyaltyJobState', 'backfillLoyaltyLedger')));
   });
 
   test('allows tier reads but blocks direct writes', async () => {

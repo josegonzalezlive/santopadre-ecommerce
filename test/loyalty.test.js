@@ -17,8 +17,14 @@ const {
   assertLedgerPointsDelta,
   ledgerDocId,
   compactLedgerMetadata,
-  buildPointLedgerEntry
+  buildPointLedgerEntry,
+  buildLedgerEntryFromUserTransaction
 } = require('../functions/ledger');
+const {
+  _getAdminRole,
+  _hasAdminRole
+} = require('../functions/referrals');
+const { assertKnownKeys } = require('../functions/validation');
 
 describe('loyalty config', () => {
   test('uses the server-side welcome bonus required by the program', () => {
@@ -61,6 +67,39 @@ describe('loyalty config', () => {
     assert.equal(campaign.active, true);
     assert.equal(campaign.name, 'Doble PADRE');
     assert.equal(campaign.pointsMultiplier, 5);
+  });
+});
+
+describe('admin role helpers', () => {
+  test('recognizes hardcoded superadmin emails', async () => {
+    const role = await _getAdminRole({ auth: { token: { email: 'santopadrevzla@gmail.com' } } });
+    assert.equal(role, 'superadmin');
+  });
+
+  test('recognizes role and roles custom claims before reading Firestore', async () => {
+    assert.equal(await _getAdminRole({ auth: { token: { role: 'cashier' } } }), 'cashier');
+    assert.equal(await _getAdminRole({ auth: { token: { roles: ['marketing'] } } }), 'marketing');
+  });
+
+  test('checks allowed roles', async () => {
+    const request = { auth: { token: { role: 'cashier' } } };
+    assert.equal(await _hasAdminRole(request, ['cashier', 'admin']), true);
+    assert.equal(await _hasAdminRole(request, ['marketing']), false);
+  });
+});
+
+describe('payload validation helpers', () => {
+  test('allows only known payload keys', () => {
+    const payload = { rewardId: 'bebida' };
+    assert.equal(assertKnownKeys(payload, ['rewardId'], 'redeemReward'), payload);
+  });
+
+  test('rejects unknown payload keys with an invalid-argument error', () => {
+    assert.throws(() => assertKnownKeys({ rewardId: 'bebida', cost: 1 }, ['rewardId'], 'redeemReward'), (err) => {
+      assert.equal(err.code, 'invalid-argument');
+      assert.match(err.message, /cost/);
+      return true;
+    });
   });
 });
 
@@ -137,5 +176,32 @@ describe('ledger helpers', () => {
     assert.equal(entry.balanceAfter, 35);
     assert.equal(entry.actorRole, 'admin');
     assert.equal(entry.couponCode, 'SP-PT-ABC123');
+  });
+
+  test('builds backfill entries from legacy user transactions', () => {
+    const entry = buildLedgerEntryFromUserTransaction('alice', 'redeem_1', {
+      type: 'canje',
+      pointsDelta: -1000,
+      rewardId: 'bebida',
+      reward: 'Bebida gratis',
+      couponCode: 'SP-PT-123',
+      reason: 'Canje legacy'
+    }, { backfillRunId: 'run-1' });
+
+    assert.equal(entry.userId, 'alice');
+    assert.equal(entry.type, 'canje');
+    assert.equal(entry.sourceId, 'redeem_1');
+    assert.equal(entry.pointsDelta, -1000);
+    assert.equal(entry.rewardId, 'bebida');
+    assert.equal(entry.couponCode, 'SP-PT-123');
+    assert.equal(entry.actorRole, 'legacy_backfill');
+    assert.equal(entry.metadata.backfillRunId, 'run-1');
+  });
+
+  test('rejects backfill entries without a valid points delta', () => {
+    assert.throws(() => buildLedgerEntryFromUserTransaction('alice', 'bad_tx', {
+      type: 'manual',
+      pointsDelta: 'abc'
+    }), /Invalid ledger points delta/);
   });
 });

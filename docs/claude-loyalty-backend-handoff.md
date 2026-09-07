@@ -6,217 +6,122 @@ Repo local: `/Users/josegonzalez/Documents/Codex/2026-06-25/quiero-que-clones-es
 
 ## Estado de rama
 
-La rama remota ya tiene el commit de Codex:
+La rama remota ya tiene estos commits de Codex:
 
 ```text
+809cd51 feat(loyalty): ledger contable global, roles admin y reconciliacion
 cb6a288 feat(loyalty): implement Codex rewards backend tasks
 ```
 
-Después de ese commit, Codex empezó una segunda pasada de mejora backend. Esa segunda
-pasada está en cambios locales sin commit al momento de escribir este handoff.
+Después de `809cd51`, Codex inició una tercera pasada técnica basada en
+`docs/backend-loyalty-foda-checklist.md`. Esta pasada está en cambios locales hasta
+que se haga commit/push.
 
-Cambios locales esperados:
+## Ya integrado
 
-- `functions/ledger.js` nuevo.
-- `functions/rewards.js` modificado.
-- `functions/referrals.js` modificado.
-- `functions/notifications.js` modificado.
-- `firestore.rules` modificado.
-- `test/loyalty.test.js` modificado.
-- `test/firestore.rules.test.mjs` modificado.
-- `functions/README.md` modificado.
-- `docs/loyalty-monitoring.md` modificado.
-
-## Lo que ya implementó Codex en el commit `cb6a288`
-
-- T06: `confirmPurchaseAndAwardPoints` valida una orden real antes de acreditar PADRE.
-- T07: `initializeUserRewards` en Auth `onCreate` inicializa usuario con `points: 10`, `stamps: 0`, `isVip: false`.
-- T09: `confirmSolanaDeposit` verifica signature/monto on-chain antes de acreditar.
-- T11: el flujo real de depósito invoca WhatsApp comprobante.
-- T12: rate limiting server-side en canjes y acciones sensibles.
-- T14: tests base de `firestore.rules`.
-- T16: panel admin real para aprobar misiones, consumir premios y ajustar loyalty.
-- T17: referidos bloquean auto-referido y reuso.
+- T06: compras verificadas server-side antes de acreditar PADRE.
+- T07: bono de bienvenida desde Auth `onCreate`.
+- T09: depósitos Solana verificados on-chain antes de acreditar.
+- T11: comprobante WhatsApp conectado al depósito real.
+- T12: rate limiting server-side en flujos sensibles.
+- T14: tests base de Firestore Rules.
+- T16: panel admin real para misiones, canjes y ajustes.
+- T17: referidos con bloqueo de auto-referido y reuso.
 - T19: documentación de monitoreo.
 - T21: expiración TTL con scheduler.
-- T24: `tierRewards` y campaña loyalty configurables desde Firestore/admin.
+- T24: tiers/campañas configurables.
 - T27: estados loading/empty/error en Actividad.
-- T30: tracking básico del embudo loyalty.
+- T30: tracking base del embudo loyalty.
+- Ledger global `loyaltyLedger` y reconciliación contra `users/{uid}.points`.
+- Roles admin en Functions: `superadmin`, `admin`, `cashier`, `marketing`.
+- App Check preparado con `ENFORCE_APP_CHECK=true`.
 
-## Segunda pasada backend de Codex pendiente de revisar/terminar
+## Tercera pasada técnica en progreso
 
-Objetivo: pasar de saldo mutable a modelo auditable y operable.
+- `adminBackfillLoyaltyLedger({ userId?, txLimit?, afterTxId? })`: callable admin
+  idempotente para migrar transacciones históricas de `users/{uid}/transactions` a
+  `loyaltyLedger`.
+- `backfillLoyaltyLedger`: scheduler cada 12 horas con checkpoint en
+  `loyaltyJobState/backfillLoyaltyLedger`.
+- `adminListLoyaltyReconciliations({ status?, limit? })`: callable admin para listar
+  discrepancias/reparaciones recientes.
+- `reconcileLoyaltyBalances`: ahora pagina por `users` usando
+  `loyaltyJobState/reconcileLoyaltyBalances`.
+- `expireLoyaltyPoints`: ahora pagina vencimientos usando
+  `loyaltyJobState/expireLoyaltyPoints`.
+- `reward_consumed`: ahora escribe evento global no monetario en `loyaltyLedger`.
+- `package.json`: agrega `check:functions` y `test:all`.
+- `firestore.rules`: protege `loyaltyJobState`.
+- `docs/backend-loyalty-foda-checklist.md`: FODA y checklist dividido entre Codex,
+  Claude Code y humano.
 
-### Ledger global
-
-Nuevo archivo: `functions/ledger.js`.
-
-Agrega helpers para:
-
-- `loyaltyLedger/{entryId}` como ledger global server-only.
-- `buildPointLedgerEntry(...)` con `balanceBefore`, `balanceAfter`, `actorUid`, `actorEmail`, `actorRole`, `metadata`.
-- `writePointLedger(...)` para escribir en una sola transacción:
-  - `users/{uid}/transactions/{txId}`
-  - `loyaltyLedger/{entryId}`
-- `calculateLedgerBalance(...)` para reconciliar.
-
-Punto importante: `users/{uid}.points` queda como saldo cacheado para UI. La fuente
-auditable pasa a ser `loyaltyLedger`.
-
-### Reconciliación
-
-En `functions/rewards.js` se agregó:
-
-- `adminReconcileUserLoyalty({ userId, repair })`
-  - `admin`/`superadmin` solamente.
-  - Calcula `ledgerBalance` vs `users/{uid}.points`.
-  - Con `repair: true`, corrige el saldo cacheado y escribe `audit_logs`.
-- `reconcileLoyaltyBalances`
-  - Scheduler cada 6 horas.
-  - Revisa hasta 200 usuarios por ejecución.
-  - Escribe diferencias en `loyaltyReconciliations`.
-  - No repara automáticamente.
-
-### Roles admin
-
-En `functions/referrals.js` se agregó:
-
-- `_getAdminRole(request)`
-- `_hasAdminRole(request, allowedRoles)`
-
-Roles soportados:
-
-- `superadmin`
-- `admin`
-- `cashier`
-- `marketing`
-
-Compatibilidad:
-
-- Los emails hardcodeados siguen como `superadmin`.
-- `admins/{email}` sin `role` se trata como `admin`.
-- También soporta custom claims `role` o `roles`.
-
-Uso previsto:
-
-- `cashier`: sellos, canjes operativos, registro manual básico.
-- `marketing`: campañas y misiones sociales.
-- `admin`/`superadmin`: operaciones completas.
-
-Advertencia para Claude: `firestore.rules` todavía considera admin a cualquier doc en
-`admins/{email}` sin validar `role`; si quieres cerrar seguridad end-to-end, actualiza
-reglas y UI admin para respetar roles también en lecturas/escrituras directas.
-
-### App Check preparado
-
-Se agregó `CALLABLE_OPTIONS` en:
-
-- `functions/rewards.js`
-- `functions/referrals.js`
-- `functions/notifications.js`
-
-Si `ENFORCE_APP_CHECK=true`, las callables se registran con `enforceAppCheck: true`.
-No está activado por defecto para no romper clientes mientras App Check no esté
-configurado en Firebase Console y frontend.
-
-### Validación estricta de payloads
-
-`functions/rewards.js` ahora tiene `assertKnownKeys(...)` y se aplica a callables
-sensibles para rechazar campos inesperados.
-
-### Rate limit antes de llamadas caras
-
-Se agregó `enforceCallableRateLimit(...)` antes de:
-
-- `confirmPurchaseAndAwardPoints`
-- `confirmSolanaDeposit`
-
-Esto reduce abuso antes de consultar Solana RPC.
-
-### Firestore rules
-
-Se agregó protección para:
-
-- `loyaltyLedger/{entryId}`
-- `loyaltyReconciliations/{entryId}`
-- nuevos campos protegidos en `users/{uid}`:
-  - `reconciliationStatus`
-  - `lastReconciledAt`
-
-## Validaciones ya corridas por Codex
+## Validaciones corridas por Codex
 
 Pasaron:
 
 ```bash
-node --check functions/ledger.js
-node --check functions/referrals.js
-node --check functions/notifications.js
-node --check functions/rewards.js
-node --check functions/index.js
+npm run check:functions
 git diff --check
 npm test
 npx firebase-tools deploy --only firestore:rules --dry-run
+npx firebase-tools deploy --only functions --dry-run
 ```
 
-`npm test` quedó en:
+Resultado actual de `npm test`:
 
 ```text
-16 tests, 16 pass, 0 fail
+21 tests, 21 pass, 0 fail
 ```
 
-`firebase deploy --only functions --dry-run` cargó y analizó el código, pero se detuvo
-por falta de secrets:
+No pasó por dependencia de entorno:
 
-```text
-Error: In non-interactive mode but have no value for the secret: WHATSAPP_TOKEN
-Set this secret before deploying:
-firebase functions:secrets:set WHATSAPP_TOKEN
+```bash
+npm run test:rules
 ```
 
-`npm run test:rules` no pudo correr por falta de Java local:
+Motivo:
 
 ```text
 Unable to locate a Java Runtime.
 ```
 
-## Revisión recomendada para Claude antes de continuar
+## Revisión recomendada para Claude
 
-1. Revisar cuidadosamente el diff local de:
-   - `functions/ledger.js`
+1. Revisar el diff local antes de continuar, especialmente:
    - `functions/rewards.js`
-   - `functions/referrals.js`
+   - `functions/ledger.js`
    - `firestore.rules`
-2. Confirmar que todos los movimientos PADRE relevantes escriben también en
-   `loyaltyLedger`.
-3. Verificar si `reward_consumed` debe quedarse como transacción de monto `0` solo en
-   `users/{uid}/transactions` o también conviene duplicarlo al ledger global como evento
-   contable no monetario. Codex lo dejó como historial local de usuario.
-4. Endurecer roles en `firestore.rules` si se quiere separar admin/caja/marketing no
-   solo en Functions sino también en accesos directos del frontend admin.
-5. Considerar paginación real en `reconcileLoyaltyBalances`; hoy revisa los primeros
-   200 usuarios por ejecución para no exceder límite de batch.
-6. Revisar compatibilidad del upgrade `firebase-functions >=5.1.0` y runtime posterior
-   a Node 20. Firebase avisó que Node.js 20 fue deprecated el 2026-04-30 y será
-   decommissioned el 2026-10-30.
+   - `test/loyalty.test.js`
+2. Validar en emulador o staging:
+   - backfill de ledger
+   - reconciliación con y sin `repair`
+   - expiración paginada
+   - consumo de recompensa con evento global `pointsDelta: 0`
+3. Revisar si conviene mover la lógica nueva de `functions/rewards.js` a servicios
+   pequeños antes de crecer más.
+4. Endurecer roles también en `firestore.rules` y UI admin si se quiere separación
+   real entre caja, marketing y admin.
+5. Revisar upgrade de `firebase-functions >=5.1.0` y runtime posterior a Node.js 20.
 
-## Pendiente sin intervención humana inmediata
+## Pendiente sin intervención humana
 
-- Terminar revisión y commit de la segunda pasada backend.
-- Añadir tests unitarios de roles/admin payloads si se quiere más cobertura sin Java.
-- Añadir UI admin para ejecutar `adminReconcileUserLoyalty`.
-- Añadir backfill/migración controlada para crear `loyaltyLedger` de transacciones
-  históricas existentes.
-- Diseñar paginación robusta para jobs scheduler si la base de usuarios crece.
-- Actualizar `firestore.rules` para roles granulares.
+- UI admin para ejecutar `adminReconcileUserLoyalty`.
+- UI admin para ejecutar `adminBackfillLoyaltyLedger`.
+- Panel de salud backend: mismatches, depósitos pendientes, notificaciones fallidas,
+  jobs y abuso bloqueado.
+- Más tests de payloads y roles.
+- CI con `check:functions`, `npm test`, rules dry-run y emuladores.
+- Refactor gradual de `functions/rewards.js` en servicios.
 
-## Pendiente que requiere intervención humana
+## Pendiente con intervención humana
 
 - Configurar secrets reales:
   - `WHATSAPP_TOKEN`
   - `WHATSAPP_PHONE_NUMBER_ID`
+- Confirmar plantilla WhatsApp aprobada para comprobantes.
+- Configurar Firebase App Check en consola/frontend.
 - Decidir cuándo activar `ENFORCE_APP_CHECK=true`.
-- Configurar Firebase App Check en consola y frontend antes de activar enforcement.
-- Instalar Java local o correr tests de reglas en un entorno que tenga Java.
+- Instalar Java local o correr tests de reglas en un entorno con Java.
 - Autorizar deploy real de Functions.
-- Autorizar merge/cherry-pick a `main` cuando se lance loyalty en producción.
-- Revisar/crear alert policies reales en Cloud Monitoring.
+- Autorizar merge/cherry-pick a `main`.
+- Crear alert policies reales en Cloud Monitoring.

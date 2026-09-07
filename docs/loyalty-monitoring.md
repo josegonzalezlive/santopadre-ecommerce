@@ -82,11 +82,32 @@ Crear alert policies en Cloud Monitoring sobre:
 un saldo cacheado para lectura rápida de dashboard.
 
 - Job automático: `reconcileLoyaltyBalances`, cada 6 horas, revisa hasta 200 usuarios
-  por ejecución y escribe diferencias en `loyaltyReconciliations`.
+  por ejecución con checkpoint en `loyaltyJobState/reconcileLoyaltyBalances` y escribe
+  diferencias en `loyaltyReconciliations`.
 - Reparación manual: `adminReconcileUserLoyalty({ userId, repair: true })`, disponible
   solo para `admin`/`superadmin`.
 - La reparación ajusta el saldo cacheado contra el ledger y registra `audit_logs`; no
   crea un movimiento artificial en el ledger.
+
+## Backfill histórico
+
+`adminBackfillLoyaltyLedger({ userId?, txLimit?, afterTxId? })` y el scheduler
+`backfillLoyaltyLedger` migran transacciones antiguas de `users/{uid}/transactions` al
+ledger global. El proceso es idempotente y guarda avance en
+`loyaltyJobState/backfillLoyaltyLedger`.
+
+Eventos:
+
+- `loyalty_ledger_backfill_batch`
+- `loyalty_ledger_backfill_admin_page`
+- `loyalty_ledger_backfill_admin_user`
+- `loyalty_ledger_backfill_invalid_transaction`
+
+## Expiración
+
+`expireLoyaltyPoints` revisa hasta 150 usuarios vencidos por ejecución y guarda cursor
+en `loyaltyJobState/expireLoyaltyPoints`. Si llega al final de una página vencida,
+reinicia el ciclo automáticamente.
 
 ## Analitica de Embudo
 

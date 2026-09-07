@@ -505,9 +505,16 @@ exports.redeemReward = onCall(CALLABLE_OPTIONS, async (request) => {
   const couponCode = 'SP-PT-' + crypto.randomBytes(3).toString('hex').toUpperCase();
 
   const result = await db.runTransaction(async (tx) => {
-    await enforceRateLimit(tx, uid, 'redeemReward', 3000);
+    // Firestore exige que TODAS las lecturas de una transaccion ocurran antes que
+    // cualquier escritura. enforceRateLimit() hace su propia lectura+escritura del doc
+    // de rate limit, asi que debe ir DESPUES de las demas lecturas (tx.get(userRef)), no
+    // antes - si no, revienta con "Firestore transactions require all reads to be
+    // executed before all writes" en cuanto se llega a esa lectura. Bug real encontrado
+    // probando el flujo completo contra el emulador de Functions (nunca se habia
+    // ejercitado end-to-end antes de esto).
     const userDoc = await tx.get(userRef);
     if (!userDoc.exists) throw new HttpsError('not-found', 'Usuario no encontrado');
+    await enforceRateLimit(tx, uid, 'redeemReward', 3000);
 
     const balance = userDoc.data().points || 0;
     if (balance < catalogEntry.cost) throw new HttpsError('failed-precondition', 'Saldo insuficiente');
@@ -566,9 +573,10 @@ exports.claimTierReward = onCall(CALLABLE_OPTIONS, async (request) => {
   let response;
 
   await db.runTransaction(async (tx) => {
-    await enforceRateLimit(tx, uid, 'claimTierReward', 3000);
+    // Ver nota en redeemReward: todas las lecturas antes que cualquier escritura.
     const [userDoc, tiersSnap] = await Promise.all([tx.get(userRef), tx.get(db.collection('tierRewards'))]);
     if (!userDoc.exists) throw new HttpsError('not-found', 'Usuario no encontrado');
+    await enforceRateLimit(tx, uid, 'claimTierReward', 3000);
 
     const overrides = [];
     tiersSnap.forEach((doc) => overrides.push({ level: Number(doc.id), ...doc.data() }));
@@ -640,9 +648,9 @@ exports.adminQuickAddStamp = onCall(CALLABLE_OPTIONS, async (request) => {
   let result;
 
   await db.runTransaction(async (tx) => {
-    await enforceRateLimit(tx, auth.uid, 'adminQuickAddStamp', 3000);
     const snap = await tx.get(userRef);
     if (!snap.exists) throw new HttpsError('not-found', 'Usuario no encontrado');
+    await enforceRateLimit(tx, auth.uid, 'adminQuickAddStamp', 3000);
     const user = snap.data();
     const newStamps = (user.stamps || 0) + 1;
     if (newStamps > 25) throw new HttpsError('failed-precondition', 'El cliente ya alcanzo el limite de 25 sellos');
@@ -687,9 +695,9 @@ exports.adminAdjustUserLoyalty = onCall(CALLABLE_OPTIONS, async (request) => {
   let result;
 
   await db.runTransaction(async (tx) => {
-    await enforceRateLimit(tx, auth.uid, 'adminAdjustUserLoyalty', 3000);
     const snap = await tx.get(userRef);
     if (!snap.exists) throw new HttpsError('not-found', 'Usuario no encontrado');
+    await enforceRateLimit(tx, auth.uid, 'adminAdjustUserLoyalty', 3000);
     const user = snap.data();
     const pointsDelta = newPoints - (user.points || 0);
     const auditId = await writeAdminAudit(tx, auth, userRef, user, newPoints, newStamps, reason, {
@@ -734,9 +742,9 @@ exports.adminApproveSocialQuest = onCall(CALLABLE_OPTIONS, async (request) => {
   let result;
 
   await db.runTransaction(async (tx) => {
-    await enforceRateLimit(tx, auth.uid, `adminApprove_${request.data.questType}`, 3000);
     const snap = await tx.get(userRef);
     if (!snap.exists) throw new HttpsError('not-found', 'Usuario no encontrado');
+    await enforceRateLimit(tx, auth.uid, `adminApprove_${request.data.questType}`, 3000);
     const user = snap.data();
     if (user[quest.claimedField] === true) {
       result = { userId, alreadyClaimed: true, pointsDelta: 0 };
@@ -916,9 +924,9 @@ exports.claimInstagramFollowBonus = onCall(CALLABLE_OPTIONS, async (request) => 
   let result;
 
   await db.runTransaction(async (tx) => {
-    await enforceRateLimit(tx, auth.uid, 'claimInstagramFollowBonus', 3000);
     const snap = await tx.get(userRef);
     if (!snap.exists) throw new HttpsError('not-found', 'Usuario no encontrado');
+    await enforceRateLimit(tx, auth.uid, 'claimInstagramFollowBonus', 3000);
     const user = snap.data();
     if (user.instagramClaimed === true) {
       throw new HttpsError('already-exists', 'Ya reclamaste este bono');

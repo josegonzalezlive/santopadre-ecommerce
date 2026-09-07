@@ -1,17 +1,20 @@
 <!doctype html>
 <html lang="es">
 <head>
+  <link rel="preload" href="/css/cuenta.css" as="style">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mi Cuenta — SantoPadre®</title>
   <link rel="icon" type="image/webp" href="assets/logo.webp">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@50..125,300..900&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/cuenta.css">
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script defer src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
 </head>
 <body>
 
@@ -23,13 +26,13 @@
   <!-- HEADER -->
   <header>
     <div class="header-left">
-      <button class="back-btn" onclick="window.location.href='https://www.santopadre.store'">
+      <button aria-label="Botón" id="evt-0a3625" class="back-btn" >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
         Volver a la Tienda
       </button>
-      <button id="mobile-hamburger-btn" class="hamburger-btn" onclick="toggleMobileMenu()">
+      <button aria-label="Botón" id="mobile-hamburger-btn" class="hamburger-btn" >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="3" y1="12" x2="21" y2="12"></line>
           <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -39,7 +42,7 @@
     </div>
     <div class="logo">
       <a href="https://www.santopadre.store">
-        <img src="assets/logo-sm.webp" alt="SantoPadre® Logo" width="100" height="100" style="height: 46px; width: auto;">
+        <img src="assets/logo-sm.webp" alt="SantoPadre® Logo" width="100" height="100" fetchpriority="high" style="height: 46px; width: auto;">
       </a>
     </div>
     <div class="header-right">
@@ -48,7 +51,7 @@
   </header>
 
   <!-- MOBILE MENU OVERLAY -->
-  <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+  <div id="sidebar-overlay" class="sidebar-overlay" ></div>
 
   <!-- MAIN LOADING BOX -->
   <div class="account-container" id="loading-container">
@@ -57,68 +60,14 @@
     </div>
   </div>
 
-  <!-- AUTH PORTAL (Logged out state) -->
-  <div class="login-split-wrapper" id="login-container" style="display: none;">
-    <!-- COLUMNA IZQUIERDA: VIDEO -->
-    <div class="login-video-column">
-      <video autoplay loop muted playsinline>
-        <source src="assets/portal-usuario.mp4" type="video/mp4">
-      </video>
-    </div>
 
-    <!-- COLUMNA DERECHA: FORMULARIO -->
-    <div class="login-form-column">
-      <div class="welcome-box" style="max-width: 450px; width: 100%; background: transparent; border: none; box-shadow: none; padding: 0; margin-top: 0;">
-        <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; color: var(--white); line-height: 1.2; letter-spacing: 0.03em;">Portal de Recompensas</h3>
-        <p style="margin-bottom: 25px; color: var(--mute); font-size: 14px; line-height: 1.6; font-family: 'Space Grotesk', sans-serif;">Inicia sesión o regístrate para acumular $PADRE en cada visita, desbloquear premios sagrados y llevar tu devoción por el sabor de SantoPadre® al siguiente nivel.</p>
-        
-        <!-- GOOGLE LOGIN BUTTON -->
-        <button class="google-btn" id="login-google-btn" style="margin: 0 0 20px 0; width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px; background: var(--white); color: #1f1f1f; border: 1px solid #dadce0; padding: 12px 24px; border-radius: 8px; font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 14px; text-transform: uppercase; cursor: pointer; transition: all 0.2s;">
-          <svg viewBox="0 0 24 24" width="18" height="18" style="vertical-align: middle;">
-            <path fill="#EA4335" d="M12 5.04c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.68 14.97.6 12 .6 7.7.6 3.99 3.07 2.18 6.67l3.66 2.84C6.71 6.97 9.14 5.04 12 5.04z"/>
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-            <path fill="#34A853" d="M12 23.4c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.93 7.7 23.4 12 23.4z"/>
-          </svg>
-          <span style="font-weight: 800; font-family: 'Archivo', sans-serif;">Entrar con Google</span>
-        </button>
-
-        <div style="margin: 15px 0; display: flex; align-items: center; justify-content: center; gap: 10px;">
-          <hr style="flex: 1; border: none; border-top: 1px solid var(--line);">
-          <span style="font-size: 11px; color: var(--mute); text-transform: uppercase; font-weight: bold; letter-spacing: 0.1em;">O</span>
-          <hr style="flex: 1; border: none; border-top: 1px solid var(--line);">
-        </div>
-
-        <div id="email-auth-form" style="display: flex; flex-direction: column; gap: 16px; width: 100%; text-align: left;">
-          <div class="form-group">
-            <span class="form-label" style="font-size: 10px; font-weight: bold; color: var(--mute);">Correo Electrónico</span>
-            <input type="email" id="auth-email" class="profile-input" placeholder="ejemplo@correo.com" style="width: 100%; height: 44px; font-size: 13.5px; background: var(--ink-3); border-color: var(--line); border-radius: 8px;">
-          </div>
-          <div class="form-group">
-            <span class="form-label" style="font-size: 10px; font-weight: bold; color: var(--mute);">Contraseña</span>
-            <input type="password" id="auth-password" class="profile-input" placeholder="••••••••" style="width: 100%; height: 44px; font-size: 13.5px; background: var(--ink-3); border-color: var(--line); border-radius: 8px;">
-          </div>
-          <button class="admin-btn" id="email-submit-btn" style="width: 100%; margin-top: 5px; height: 46px; background: var(--accent); color: var(--white); font-family: var(--space); font-weight: 800; text-transform: uppercase; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s;">
-            Iniciar Sesión
-          </button>
-          <div style="text-align: center; margin-top: 10px;">
-            <a href="signup.html" style="color: var(--lime); font-size: 11px; text-decoration: underline; font-family: var(--space); letter-spacing: 0.05em; text-transform: uppercase; font-weight: bold;">¿No tienes cuenta? Regístrate</a>
-          </div>
-        </div>
-
-        <div id="login-mock-banner" class="mock-warning-banner" style="margin-top: 25px; display: none;">
-          ✨ Modo Simulación Activo
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- MAIN CUSTOMER PORTAL (Logged in state) -->
   <div class="account-container" id="dashboard-container" style="display: none;">
     <!-- LEFT SIDEBAR -->
     <aside class="sidebar">
       <!-- Mobile Close Button -->
-      <button class="close-sidebar-btn" onclick="toggleMobileMenu()">
+      <button aria-label="Botón" id="evt-7465ed" class="close-sidebar-btn" >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -126,7 +75,7 @@
       </button>
 
       <div class="profile-summary">
-        <img id="user-display-avatar" src="" alt="Foto de perfil" style="display: none; width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--lime); object-fit: cover; box-shadow: 0 0 15px rgba(220,254,84,0.25);">
+        <img loading="lazy" id="user-display-avatar" src="" alt="Foto de perfil" style="display: none; width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--lime); object-fit: cover; box-shadow: 0 0 15px rgba(220,254,84,0.25);">
         <div id="user-avatar-placeholder" class="avatar-placeholder-initial" style="display: none; width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--lime); background: var(--ink-3); color: var(--lime); font-family: var(--space); font-size: 20px; font-weight: 800; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(220,254,84,0.25);">
           <!-- Inicial dynamically rendered -->
         </div>
@@ -138,7 +87,7 @@
 
       <nav>
         <ul class="sidebar-nav">
-          <li class="sidebar-nav-item active" id="nav-recompensas" onclick="switchSidebarTab('recompensas')">
+          <li class="sidebar-nav-item active" id="nav-recompensas" >
             <a>
               <span class="nav-label">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -149,7 +98,7 @@
               </span>
             </a>
           </li>
-          <li class="sidebar-nav-item" id="nav-favoritos" onclick="switchSidebarTab('favoritos')">
+          <li class="sidebar-nav-item" id="nav-favoritos" >
             <a>
               <span class="nav-label">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -160,7 +109,7 @@
               <span class="nav-badge" id="favoritos-count-badge" style="display: none;">0</span>
             </a>
           </li>
-          <li class="sidebar-nav-item" id="nav-perfil" onclick="switchSidebarTab('perfil-detalles')">
+          <li class="sidebar-nav-item" id="nav-perfil" >
             <a>
               <span class="nav-label">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -171,7 +120,7 @@
               </span>
             </a>
           </li>
-          <li class="sidebar-nav-item" id="nav-pedidos" onclick="switchTopTab('actividad')">
+          <li class="sidebar-nav-item" id="nav-pedidos" >
             <a>
               <span class="nav-label">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -184,7 +133,7 @@
               <span class="nav-badge" id="sidebar-orders-badge">0</span>
             </a>
           </li>
-          <li class="sidebar-nav-item" id="nav-direcciones" onclick="switchSidebarTab('direcciones')">
+          <li class="sidebar-nav-item" id="nav-direcciones" >
             <a>
               <span class="nav-label">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -197,7 +146,7 @@
             </a>
           </li>
 
-          <li class="sidebar-nav-item item-volver-tienda" onclick="window.location.href='https://www.santopadre.store'">
+          <li id="evt-ccfde1" class="sidebar-nav-item item-volver-tienda" >
             <a>
               <span class="nav-label">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -234,7 +183,7 @@
         
         <!-- Tab Navigation Bar -->
         <ul class="tab-bar">
-          <li class="tab-item" id="tab-cartera" onclick="switchTopTab('cartera')">
+          <li class="tab-item" id="tab-cartera" >
             <button>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="2" y="4" width="20" height="16" rx="2"/>
@@ -243,7 +192,7 @@
               Cartera
             </button>
           </li>
-          <li class="tab-item" id="tab-sellos" onclick="switchTopTab('sellos')">
+          <li class="tab-item" id="tab-sellos" >
             <button>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="4" width="18" height="16" rx="2"></rect>
@@ -253,7 +202,7 @@
               Sellos
             </button>
           </li>
-          <li class="tab-item" id="tab-referidos" onclick="switchTopTab('referidos')">
+          <li class="tab-item" id="tab-referidos" >
             <button>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -264,7 +213,7 @@
               Referidos
             </button>
           </li>
-          <li class="tab-item active" id="tab-ganar" onclick="switchTopTab('ganar')">
+          <li class="tab-item active" id="tab-ganar" >
             <button>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
@@ -272,7 +221,7 @@
               Ganar
             </button>
           </li>
-          <li class="tab-item" id="tab-canjear" onclick="switchTopTab('canjear')">
+          <li class="tab-item" id="tab-canjear" >
             <button>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
@@ -280,7 +229,7 @@
               Canjear
             </button>
           </li>
-          <li class="tab-item" id="tab-actividad" onclick="switchTopTab('actividad')">
+          <li class="tab-item" id="tab-actividad" >
             <button>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -328,7 +277,7 @@
                   </div>
 
                   <br>
-                  <button onclick="connectSimulatedWallet()" style="background: rgba(220, 254, 84, 0.15); border: 1px solid var(--lime); color: var(--lime); padding: 12px 28px; font-size: 13px; font-family: var(--space); font-weight: bold; border-radius: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(220, 254, 84, 0.25)'" onmouseout="this.style.background='rgba(220, 254, 84, 0.15)'">
+                  <button aria-label="Botón" id="evt-8315c9"  style="background: rgba(220, 254, 84, 0.15); border: 1px solid var(--lime); color: var(--lime); padding: 12px 28px; font-size: 13px; font-family: var(--space); font-weight: bold; border-radius: 10px; cursor: pointer; transition: all 0.2s;">
                     Activar Cuenta Digital ⚡
                   </button>
                 </div>
@@ -359,7 +308,7 @@
                       <span style="font-size: 8px; color: var(--mute); text-transform: uppercase; font-family: var(--space); font-weight: bold; letter-spacing: 0.05em;">ID Cuenta Digital</span>
                       <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.25); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
                         <span id="wallet-address-display" style="font-family: var(--space); font-size: 11px; color: var(--mute);">EqqnYoF6...DLRG</span>
-                        <button onclick="copyWalletAddress()" style="background: none; border: none; color: var(--lime); font-size: 10px; font-family: var(--space); cursor: pointer; padding: 2px 4px; font-weight: bold; text-decoration: underline;">Copiar</button>
+                        <button aria-label="Botón" id="evt-fb7514"  style="background: none; border: none; color: var(--lime); font-size: 10px; font-family: var(--space); cursor: pointer; padding: 2px 4px; font-weight: bold; text-decoration: underline;">Copiar</button>
                       </div>
                     </div>
                     
@@ -374,7 +323,7 @@
               <!-- Action Grid below VIP card -->
               <div class="wallet-action-grid" style="margin-bottom: 24px;">
                 <!-- Agregar Fondos (Full Width) -->
-                <button id="action-btn-add-funds" onclick="openAddFundsModal()" class="btn-action-primary grid-full-width" style="display: none;">
+                <button aria-label="Botón" id="action-btn-add-funds"  class="btn-action-primary grid-full-width" style="display: none;">
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="2" y="4" width="20" height="16" rx="2"></rect>
                     <line x1="12" y1="4" x2="12" y2="20"></line>
@@ -383,13 +332,9 @@
                   Agregar Fondos
                 </button>
                 <!-- Ver QR -->
-                <button onclick="showWalletQR()" class="btn-action-secondary" id="action-btn-qr" style="display: none;">
+                <button aria-label="Botón"  class="btn-action-secondary" id="action-btn-qr" style="display: none;">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><rect x="7" y="7" width="3" height="3"></rect><rect x="14" y="7" width="3" height="3"></rect><rect x="7" y="14" width="3" height="3"></rect><rect x="14" y="14" width="3" height="3"></rect></svg>
                   Ver QR de Canje
-                </button>
-                <!-- Simular Compra -->
-                <button onclick="simulateConsumption()" class="btn-action-secondary" id="action-btn-simulate" style="display: none;">
-                  Simular Compra 🍔
                 </button>
               </div>
 
@@ -479,7 +424,7 @@
 
               <!-- Strip Image (Estilo Apple Wallet Strip) -->
               <div class="pass-strip">
-                <img src="assets/menu/fajitas.avif" alt="Banquete SantoPadre">
+                <img loading="lazy" src="assets/menu/fajitas.avif" alt="Banquete SantoPadre">
               </div>
 
               <!-- Perforaciones del ticket (efecto PassKit) -->
@@ -511,7 +456,7 @@
                 </div>
 
                 <div id="claim-reward-section" style="margin-top: 15px; text-align: center; display: none;">
-                  <button class="quest-btn" onclick="window.claimPendingReward()" style="background: var(--lime); color: var(--ink-3); font-weight: 800; width: 100%; height: 44px; font-size: 14px; border-radius: 8px;">Reclamar Premio de Ascenso</button>
+                  <button aria-label="Botón" id="evt-f000de" class="quest-btn"  style="background: var(--lime); color: var(--ink-3); font-weight: 800; width: 100%; height: 44px; font-size: 14px; border-radius: 8px;">Reclamar Premio de Ascenso</button>
                 </div>
 
                 <p class="pass-promo-text">
@@ -538,11 +483,11 @@
 
             <!-- Botones de Add to Wallet oficiales -->
             <div class="wallet-badge-row" style="display: flex; gap: 15px; justify-content: center; margin-top: 25px; flex-wrap: wrap;">
-              <a href="#" class="wallet-badge apple-wallet" onclick="window.downloadPasskitMock('apple'); return false;" style="transition: transform 0.2s;">
-                <img src="assets/apple-wallet-badge.svg" alt="Add to Apple Wallet" style="height: 40px; display: block;">
+              <a id="evt-7484ba" href="#" class="wallet-badge apple-wallet"  style="transition: transform 0.2s;">
+                <img loading="lazy" src="assets/apple-wallet-badge.svg" alt="Add to Apple Wallet" style="height: 40px; display: block;">
               </a>
-              <a href="#" class="wallet-badge google-wallet" onclick="window.downloadPasskitMock('google'); return false;" style="transition: transform 0.2s;">
-                <img src="assets/google-wallet-badge.svg" alt="Add to Google Wallet" style="height: 40px; display: block;">
+              <a id="evt-615e07" href="#" class="wallet-badge google-wallet"  style="transition: transform 0.2s;">
+                <img loading="lazy" src="assets/google-wallet-badge.svg" alt="Add to Google Wallet" style="height: 40px; display: block;">
               </a>
             </div>
           </div>
@@ -569,7 +514,7 @@
                     <p>10 $PADRE por cada $1.00 gastado</p>
                   </div>
                 </div>
-                <button class="quest-btn" onclick="window.location.href='https://www.santopadre.store'">Comprar ahora</button>
+                <button aria-label="Botón" id="evt-2a100b" class="quest-btn" >Comprar ahora</button>
               </div>
             </div>
 
@@ -608,7 +553,7 @@
                 </div>
                 <span class="quest-status" id="birthday-quest-status" style="font-size: 13px; font-weight: 700; color: var(--mute);">Pendiente</span>
               </div>
-              <button class="quest-details-toggle" onclick="toggleDetails('birthday-details')">
+              <button aria-label="Botón" id="evt-dd383e" class="quest-details-toggle" >
                 Ver detalles <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               <div class="quest-details-panel" id="quest-birthday-details">
@@ -629,7 +574,7 @@
                       </select>
                     </div>
                   </div>
-                  <button class="quest-btn" id="save-birthday-btn" style="height: 44px; width: 100%; display: flex; align-items: center; justify-content: center; margin-top: 4px;">Reclamar 🎁</button>
+                  <button aria-label="Botón" class="quest-btn" id="save-birthday-btn" style="height: 44px; width: 100%; display: flex; align-items: center; justify-content: center; margin-top: 4px;">Reclamar 🎁</button>
                 </div>
               </div>
             </div>
@@ -650,13 +595,13 @@
                 </div>
                 <span class="quest-status" id="review-quest-status" style="font-size: 13px; font-weight: 700; color: var(--mute);">Pendiente</span>
               </div>
-              <button class="quest-details-toggle" onclick="toggleDetails('review-details')">
+              <button aria-label="Botón" id="evt-9d1d8a" class="quest-details-toggle" >
                 Ver detalles <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               <div class="quest-details-panel" id="quest-review-details">
                 <p style="margin-bottom: 12px;">Escribe una reseña honesta sobre SantoPadre® en nuestro perfil de Google Maps y te regalaremos 150 $PADRE.</p>
                 <div style="display: flex; flex-direction: column; gap: 10px; max-width: 450px;">
-                  <button class="quest-btn btn-google-review" onclick="window.trackReviewClick(); window.open('https://g.page/r/CRyfApltCzMbEAE/review', '_blank')">
+                  <button aria-label="Botón" id="evt-d671f2" class="quest-btn btn-google-review" >
                     <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink: 0;">
                       <path fill="#EA4335" d="M12 5.04c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.68 14.97.6 12 .6 7.7.6 3.99 3.07 2.18 6.67l3.66 2.84C6.71 6.97 9.14 5.04 12 5.04z"/>
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -665,13 +610,13 @@
                     </svg>
                     <span>1. Escribir reseña en Google Maps</span>
                   </button>
-                  <button class="quest-btn" id="claim-review-btn" disabled style="display: flex; align-items: center; justify-content: center; width: 100%; background: var(--ink-3); border: 1px solid var(--lime); color: var(--lime); opacity: 0.5; cursor: not-allowed;" onclick="window.showReviewVerificationForm()">
+                  <button aria-label="Botón" class="quest-btn" id="claim-review-btn" disabled style="display: flex; align-items: center; justify-content: center; width: 100%; background: var(--ink-3); border: 1px solid var(--lime); color: var(--lime); opacity: 0.5; cursor: not-allowed;" >
                     2. Ya hice la reseña (Reclamar 150 $PADRE)
                   </button>
                   <div id="review-verification-form" style="display: none; flex-direction: column; gap: 8px; margin-top: 10px; padding: 12px; background: var(--ink); border: 1px solid var(--line); border-radius: 4px; width: 100%;">
                     <span style="font-size: 10px; text-transform: uppercase; color: var(--mute); font-weight: bold; letter-spacing: 0.05em; text-align: left;">Nombre con el que dejaste la reseña en Google</span>
-                    <input type="text" id="review-google-username" class="profile-input" placeholder="Ej: Juan Pérez" style="padding: 10px; font-size: 13px;">
-                    <button class="quest-btn" id="submit-review-verification-btn" onclick="window.submitReviewVerification()" style="height: 36px; display: flex; align-items: center; justify-content: center; background: var(--accent); color: var(--white); font-weight: bold; margin-top: 4px;">
+                    <input type="text" aria-label="review-google-username" id="review-google-username" class="profile-input" placeholder="Ej: Juan Pérez" style="padding: 10px; font-size: 13px;">
+                    <button aria-label="Botón" class="quest-btn" id="submit-review-verification-btn"  style="height: 36px; display: flex; align-items: center; justify-content: center; background: var(--accent); color: var(--white); font-weight: bold; margin-top: 4px;">
                       Enviar para verificación
                     </button>
                   </div>
@@ -697,13 +642,13 @@
                 </div>
                 <span class="quest-status" id="instagram-quest-status" style="font-size: 13px; font-weight: 700; color: var(--mute);">Pendiente</span>
               </div>
-              <button class="quest-details-toggle" onclick="toggleDetails('instagram-details')">
+              <button aria-label="Botón" id="evt-65a2f0" class="quest-details-toggle" >
                 Ver detalles <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               <div class="quest-details-panel" id="quest-instagram-details">
                 <p style="margin-bottom: 12px; font-size: 13px; color: var(--mute);">Síguenos en Instagram <strong>@santopadre.ve</strong> y obtén 50 $PADRE de forma inmediata.</p>
                 <div style="display: flex; flex-direction: column; gap: 10px; max-width: 450px; width: 100%;">
-                  <button class="quest-btn" onclick="window.open('https://instagram.com/santopadre.ve', '_blank')" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: white; border: none; font-weight: bold; height: 44px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                  <button aria-label="Botón" id="evt-b66e0d" class="quest-btn"  style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: white; border: none; font-weight: bold; height: 44px; display: flex; align-items: center; justify-content: center; width: 100%;">
                     Seguir en Instagram
                   </button>
                 </div>
@@ -728,22 +673,22 @@
                 </div>
                 <span class="quest-status" id="igstory-quest-status" style="font-size: 13px; font-weight: 700; color: var(--mute);">Pendiente</span>
               </div>
-              <button class="quest-details-toggle" onclick="toggleDetails('igstory-details')">
+              <button aria-label="Botón" id="evt-f24e45" class="quest-details-toggle" >
                 Ver detalles <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               <div class="quest-details-panel" id="quest-igstory-details">
                 <p style="margin-bottom: 12px; font-size: 13px; color: var(--mute);">Comparte una foto o video disfrutando de tu comida en tus historias de Instagram, etiqueta a <strong>@santopadre.ve</strong> y escribe tu usuario abajo para verificar.</p>
                 <div style="display: flex; flex-direction: column; gap: 10px; max-width: 450px; width: 100%;">
-                  <button class="quest-btn" onclick="window.open('https://instagram.com/santopadre.ve', '_blank')" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: white; border: none; font-weight: bold; height: 44px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                  <button aria-label="Botón" id="evt-f6f272" class="quest-btn"  style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: white; border: none; font-weight: bold; height: 44px; display: flex; align-items: center; justify-content: center; width: 100%;">
                     1. Ir a Instagram
                   </button>
-                  <button class="quest-btn" id="claim-igstory-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; background: var(--ink-3); border: 1px solid var(--lime); color: var(--lime); height: 44px;" onclick="window.showIgStoryForm()">
+                  <button aria-label="Botón" class="quest-btn" id="claim-igstory-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; background: var(--ink-3); border: 1px solid var(--lime); color: var(--lime); height: 44px;" >
                     2. Enviar verificación
                   </button>
                   <div id="igstory-verification-form" style="display: none; flex-direction: column; gap: 8px; margin-top: 10px; padding: 12px; background: var(--ink); border: 1px solid var(--line); border-radius: 4px; width: 100%;">
                     <span style="font-size: 10px; text-transform: uppercase; color: var(--mute); font-weight: bold; letter-spacing: 0.05em; text-align: left;">Tu Usuario de Instagram (Ej: @juan)</span>
-                    <input type="text" id="igstory-username" class="profile-input" placeholder="Ej: @juan" style="padding: 10px; font-size: 13px; background: var(--ink-3); border-color: var(--line); border-radius: 8px;">
-                    <button class="quest-btn" id="submit-igstory-btn" onclick="window.submitIgStoryVerification()" style="height: 36px; display: flex; align-items: center; justify-content: center; background: var(--accent); color: var(--white); font-weight: bold; margin-top: 4px;">
+                    <input type="text" aria-label="igstory-username" id="igstory-username" class="profile-input" placeholder="Ej: @juan" style="padding: 10px; font-size: 13px; background: var(--ink-3); border-color: var(--line); border-radius: 8px;">
+                    <button aria-label="Botón" class="quest-btn" id="submit-igstory-btn"  style="height: 36px; display: flex; align-items: center; justify-content: center; background: var(--accent); color: var(--white); font-weight: bold; margin-top: 4px;">
                       Enviar para revisión
                     </button>
                   </div>
@@ -769,21 +714,21 @@
                 </div>
                 <span class="quest-status" id="igpost-quest-status" style="font-size: 13px; font-weight: 700; color: var(--mute);">Pendiente</span>
               </div>
-              <button class="quest-details-toggle" onclick="toggleDetails('igpost-details')">
+              <button aria-label="Botón" id="evt-69ef69" class="quest-details-toggle" >
                 Ver detalles <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               <div class="quest-details-panel" id="quest-igpost-details">
                 <p style="margin-bottom: 12px; font-size: 13px; color: var(--mute);">Sube fotos o un carrusel a tu perfil de Instagram promocionando a SantoPadre®, etiqueta a <strong>@santopadre.ve</strong> y usa el hashtag <strong>#SantoPadre</strong>.</p>
                 <div style="display: flex; flex-direction: column; gap: 10px; max-width: 450px; width: 100%;">
-                  <button class="quest-btn" id="claim-igpost-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; background: var(--ink-3); border: 1px solid var(--lime); color: var(--lime); height: 44px;" onclick="window.showIgPostForm()">
+                  <button aria-label="Botón" class="quest-btn" id="claim-igpost-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; background: var(--ink-3); border: 1px solid var(--lime); color: var(--lime); height: 44px;" >
                     Reclamar 200 $PADRE
                   </button>
                   <div id="igpost-verification-form" style="display: none; flex-direction: column; gap: 8px; margin-top: 10px; padding: 12px; background: var(--ink); border: 1px solid var(--line); border-radius: 4px; width: 100%;">
                     <span style="font-size: 10px; text-transform: uppercase; color: var(--mute); font-weight: bold; letter-spacing: 0.05em; text-align: left;">Tu Usuario de Instagram</span>
-                    <input type="text" id="igpost-username" class="profile-input" placeholder="Ej: @juan" style="padding: 10px; font-size: 13px; background: var(--ink-3); border-color: var(--line); border-radius: 8px; margin-bottom: 5px;">
+                    <input type="text" aria-label="igpost-username" id="igpost-username" class="profile-input" placeholder="Ej: @juan" style="padding: 10px; font-size: 13px; background: var(--ink-3); border-color: var(--line); border-radius: 8px; margin-bottom: 5px;">
                     <span style="font-size: 10px; text-transform: uppercase; color: var(--mute); font-weight: bold; letter-spacing: 0.05em; text-align: left;">Enlace de la publicación (opcional)</span>
-                    <input type="text" id="igpost-link" class="profile-input" placeholder="Ej: https://instagram.com/p/..." style="padding: 10px; font-size: 13px; background: var(--ink-3); border-color: var(--line); border-radius: 8px;">
-                    <button class="quest-btn" id="submit-igpost-btn" onclick="window.submitIgPostVerification()" style="height: 36px; display: flex; align-items: center; justify-content: center; background: var(--accent); color: var(--white); font-weight: bold; margin-top: 4px;">
+                    <input type="text" aria-label="igpost-link" id="igpost-link" class="profile-input" placeholder="Ej: https://instagram.com/p/..." style="padding: 10px; font-size: 13px; background: var(--ink-3); border-color: var(--line); border-radius: 8px;">
+                    <button aria-label="Botón" class="quest-btn" id="submit-igpost-btn"  style="height: 36px; display: flex; align-items: center; justify-content: center; background: var(--accent); color: var(--white); font-weight: bold; margin-top: 4px;">
                       Enviar para revisión
                     </button>
                   </div>
@@ -807,21 +752,21 @@
                 </div>
                 <span class="quest-status" id="tiktok-quest-status" style="font-size: 13px; font-weight: 700; color: var(--mute);">Pendiente</span>
               </div>
-              <button class="quest-details-toggle" onclick="toggleDetails('tiktok-details')">
+              <button aria-label="Botón" id="evt-1383c3" class="quest-details-toggle" >
                 Ver detalles <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               <div class="quest-details-panel" id="quest-tiktok-details">
                 <p style="margin-bottom: 12px; font-size: 13px; color: var(--mute);">Sube un video (reseña, unboxing o trend) en TikTok promocionando a SantoPadre®, etiquétanos como <strong>@santopadre.ve</strong> y envíanos el enlace.</p>
                 <div style="display: flex; flex-direction: column; gap: 10px; max-width: 450px; width: 100%;">
-                  <button class="quest-btn" id="claim-tiktok-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; background: var(--ink-3); border: 1px solid var(--lime); color: var(--lime); height: 44px;" onclick="window.showTikTokForm()">
+                  <button aria-label="Botón" class="quest-btn" id="claim-tiktok-btn" style="display: flex; align-items: center; justify-content: center; width: 100%; background: var(--ink-3); border: 1px solid var(--lime); color: var(--lime); height: 44px;" >
                     Reclamar 300 $PADRE
                   </button>
                   <div id="tiktok-verification-form" style="display: none; flex-direction: column; gap: 8px; margin-top: 10px; padding: 12px; background: var(--ink); border: 1px solid var(--line); border-radius: 4px; width: 100%;">
                     <span style="font-size: 10px; text-transform: uppercase; color: var(--mute); font-weight: bold; letter-spacing: 0.05em; text-align: left;">Tu Usuario de TikTok</span>
-                    <input type="text" id="tiktok-username" class="profile-input" placeholder="Ej: @juan_tiktok" style="padding: 10px; font-size: 13px; background: var(--ink-3); border-color: var(--line); border-radius: 8px; margin-bottom: 5px;">
+                    <input type="text" aria-label="tiktok-username" id="tiktok-username" class="profile-input" placeholder="Ej: @juan_tiktok" style="padding: 10px; font-size: 13px; background: var(--ink-3); border-color: var(--line); border-radius: 8px; margin-bottom: 5px;">
                     <span style="font-size: 10px; text-transform: uppercase; color: var(--mute); font-weight: bold; letter-spacing: 0.05em; text-align: left;">Enlace del video</span>
-                    <input type="text" id="tiktok-link" class="profile-input" placeholder="Ej: https://tiktok.com/@..." style="padding: 10px; font-size: 13px; background: var(--ink-3); border-color: var(--line); border-radius: 8px;">
-                    <button class="quest-btn" id="submit-tiktok-btn" onclick="window.submitTikTokVerification()" style="height: 36px; display: flex; align-items: center; justify-content: center; background: var(--accent); color: var(--white); font-weight: bold; margin-top: 4px;">
+                    <input type="text" aria-label="tiktok-link" id="tiktok-link" class="profile-input" placeholder="Ej: https://tiktok.com/@..." style="padding: 10px; font-size: 13px; background: var(--ink-3); border-color: var(--line); border-radius: 8px;">
+                    <button aria-label="Botón" class="quest-btn" id="submit-tiktok-btn"  style="height: 36px; display: flex; align-items: center; justify-content: center; background: var(--accent); color: var(--white); font-weight: bold; margin-top: 4px;">
                       Enviar para revisión
                     </button>
                   </div>
@@ -848,13 +793,13 @@
                 </div>
                 <span class="quest-status" id="invite-quest-status" style="font-size: 13px; font-weight: 700; color: var(--mute);">Pendiente</span>
               </div>
-              <button class="quest-details-toggle" onclick="toggleDetails('invite-details')">
+              <button aria-label="Botón" id="evt-996afa" class="quest-details-toggle" >
                 Ver detalles <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               <div class="quest-details-panel" id="quest-invite-details">
                 <p style="margin-bottom: 12px; font-size: 13px; color: var(--mute);">Comparte tu enlace de referidos con un amigo. Cuando él se registre y haga su primera compra mayor a $15, ambos ganarán recompensas (él bebida gratis, tú 200 $PADRE).</p>
                 <div style="display: flex; flex-direction: column; gap: 10px; max-width: 450px; width: 100%;">
-                  <button class="quest-btn" onclick="switchTopTab('referidos')" style="display: flex; align-items: center; justify-content: center; width: 100%; background: var(--ink-3); border: 1px solid var(--lime); color: var(--lime); height: 44px;">
+                  <button aria-label="Botón" id="evt-56b8ae" class="quest-btn"  style="display: flex; align-items: center; justify-content: center; width: 100%; background: var(--ink-3); border: 1px solid var(--lime); color: var(--lime); height: 44px;">
                     Ir a Referidos para compartir enlace
                   </button>
                 </div>
@@ -885,60 +830,60 @@
             <!-- Producto 1 -->
             <div class="reward-card">
               <div class="reward-card-img-wrapper">
-                <img src="assets/menu/coca-cola.avif" alt="Bebida" class="reward-card-img">
+                <img loading="lazy" src="assets/menu/coca-cola.avif" alt="Bebida" class="reward-card-img">
               </div>
               <div class="reward-card-body">
                 <h4 class="reward-card-title">Bebida Refrescante</h4>
                 <p class="reward-card-pts">1,000 $PADRE</p>
-                <button class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="redeemReward('bebida', 1000)">Canjear</button>
+                <button aria-label="Botón" id="evt-a34219" class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" >Canjear</button>
               </div>
             </div>
             
             <!-- Producto 2 -->
             <div class="reward-card">
               <div class="reward-card-img-wrapper">
-                <img src="assets/menu/tacos-pastor.avif" alt="Tacos al Pastor" class="reward-card-img">
+                <img loading="lazy" src="assets/menu/tacos-pastor.avif" alt="Tacos al Pastor" class="reward-card-img">
               </div>
               <div class="reward-card-body">
                 <h4 class="reward-card-title">Tacos al Pastor</h4>
                 <p class="reward-card-pts">2,800 $PADRE</p>
-                <button class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="redeemReward('tacos-pastor', 2800)">Canjear</button>
+                <button aria-label="Botón" id="evt-21979b" class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" >Canjear</button>
               </div>
             </div>
 
             <!-- Producto 3 -->
             <div class="reward-card">
               <div class="reward-card-img-wrapper">
-                <img src="assets/menu/nachos.avif" alt="Nachos Clásicos" class="reward-card-img">
+                <img loading="lazy" src="assets/menu/nachos.avif" alt="Nachos Clásicos" class="reward-card-img">
               </div>
               <div class="reward-card-body">
                 <h4 class="reward-card-title">Nachos Clásicos</h4>
                 <p class="reward-card-pts">3,500 $PADRE</p>
-                <button class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="redeemReward('nachos', 3500)">Canjear</button>
+                <button aria-label="Botón" id="evt-424e6c" class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" >Canjear</button>
               </div>
             </div>
 
             <!-- Producto 4: Birria Ramen -->
             <div class="reward-card">
               <div class="reward-card-img-wrapper">
-                <img src="assets/menu/birria-ramen.avif" alt="Birria Ramen" class="reward-card-img">
+                <img loading="lazy" src="assets/menu/birria-ramen.avif" alt="Birria Ramen" class="reward-card-img">
               </div>
               <div class="reward-card-body">
                 <h4 class="reward-card-title">Birria Ramen</h4>
                 <p class="reward-card-pts">6,500 $PADRE</p>
-                <button class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="redeemReward('birria-ramen', 6500)">Canjear</button>
+                <button aria-label="Botón" id="evt-4c0200" class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" >Canjear</button>
               </div>
             </div>
 
             <!-- Producto 5 -->
             <div class="reward-card">
               <div class="reward-card-img-wrapper">
-                <img src="assets/menu/tacos-birria.avif" alt="Tacos de Birria" class="reward-card-img">
+                <img loading="lazy" src="assets/menu/tacos-birria.avif" alt="Tacos de Birria" class="reward-card-img">
               </div>
               <div class="reward-card-body">
                 <h4 class="reward-card-title">Tacos de Birria</h4>
                 <p class="reward-card-pts">6,500 $PADRE</p>
-                <button class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="redeemReward('tacos-birria', 6500)">Canjear</button>
+                <button aria-label="Botón" id="evt-6a1862" class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" >Canjear</button>
               </div>
             </div>
 
@@ -952,79 +897,79 @@
               <div class="reward-card-body">
                 <h4 class="reward-card-title">Burrito El Santo</h4>
                 <p class="reward-card-pts">7,200 $PADRE</p>
-                <button class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="redeemReward('burritos', 7200)">Canjear</button>
+                <button aria-label="Botón" id="evt-47242f" class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" >Canjear</button>
               </div>
             </div>
 
             <!-- Producto 7 -->
             <div class="reward-card">
               <div class="reward-card-img-wrapper">
-                <img src="assets/menu/flauta-pollo.avif" alt="Flautas de Pollo" class="reward-card-img">
+                <img loading="lazy" src="assets/menu/flauta-pollo.avif" alt="Flautas de Pollo" class="reward-card-img">
               </div>
               <div class="reward-card-body">
                 <h4 class="reward-card-title">Flautas de Pollo</h4>
                 <p class="reward-card-pts">7,500 $PADRE</p>
-                <button class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="redeemReward('flautas-pollo', 7500)">Canjear</button>
+                <button aria-label="Botón" id="evt-3bace8" class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" >Canjear</button>
               </div>
             </div>
 
             <!-- Producto 8 -->
             <div class="reward-card">
               <div class="reward-card-img-wrapper">
-                <img src="assets/menu/tacos-carne.avif" alt="Tacos de Asada" class="reward-card-img">
+                <img loading="lazy" src="assets/menu/tacos-carne.avif" alt="Tacos de Asada" class="reward-card-img">
               </div>
               <div class="reward-card-body">
                 <h4 class="reward-card-title">Tacos de Asada</h4>
                 <p class="reward-card-pts">8,500 $PADRE</p>
-                <button class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="redeemReward('tacos-carne', 8500)">Canjear</button>
+                <button aria-label="Botón" id="evt-f2d4cf" class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" >Canjear</button>
               </div>
             </div>
 
             <!-- Producto 9: Gorra Trucker -->
             <div class="reward-card">
               <div class="reward-card-img-wrapper">
-                <img src="assets/gorra.webp" alt="Gorra Trucker La Parroquia" class="reward-card-img">
+                <img loading="lazy" src="assets/gorra.webp" alt="Gorra Trucker La Parroquia" class="reward-card-img">
               </div>
               <div class="reward-card-body">
                 <h4 class="reward-card-title">Gorra Trucker La Parroquia</h4>
                 <p class="reward-card-pts">9,000 $PADRE</p>
-                <button class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="redeemReward('cap-trucker', 9000)">Canjear</button>
+                <button aria-label="Botón" id="evt-77c7be" class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" >Canjear</button>
               </div>
             </div>
 
             <!-- Producto 10: Camiseta Classic -->
             <div class="reward-card">
               <div class="reward-card-img-wrapper">
-                <img src="assets/camisa-1.webp" alt="Camiseta Classic SantoPadre" class="reward-card-img">
+                <img loading="lazy" src="assets/camisa-1.webp" alt="Camiseta Classic SantoPadre" class="reward-card-img">
               </div>
               <div class="reward-card-body">
                 <h4 class="reward-card-title">Camiseta Classic SantoPadre</h4>
                 <p class="reward-card-pts">12,500 $PADRE</p>
-                <button class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="redeemReward('tshirt-logo', 12500)">Canjear</button>
+                <button aria-label="Botón" id="evt-92844c" class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" >Canjear</button>
               </div>
             </div>
 
             <!-- Producto 11: Gift Card $25 -->
             <div class="reward-card">
               <div class="reward-card-img-wrapper">
-                <img src="assets/menu/gift-card-25.avif" alt="Gift Card SantoPadre $25" class="reward-card-img">
+                <img loading="lazy" src="assets/menu/gift-card-25.avif" alt="Gift Card SantoPadre $25" class="reward-card-img">
               </div>
               <div class="reward-card-body">
                 <h4 class="reward-card-title">Gift Card SantoPadre $25</h4>
                 <p class="reward-card-pts">12,500 $PADRE</p>
-                <button class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="redeemReward('gift-card-25', 12500)">Canjear</button>
+                <button aria-label="Botón" id="evt-1416bd" class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" >Canjear</button>
               </div>
             </div>
 
             <!-- Producto 12: Gift Card $50 -->
             <div class="reward-card">
               <div class="reward-card-img-wrapper">
-                <img src="assets/menu/gift-card-50.avif" alt="Gift Card SantoPadre $50" class="reward-card-img">
+                <img loading="lazy" src="assets/menu/gift-card-50.avif" alt="Gift Card SantoPadre $50" class="reward-card-img">
               </div>
               <div class="reward-card-body">
                 <h4 class="reward-card-title">Gift Card SantoPadre $50</h4>
                 <p class="reward-card-pts">25,000 $PADRE</p>
-                <button class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" onclick="redeemReward('gift-card-50', 25000)">Canjear</button>
+                <button aria-label="Botón" id="evt-5e48f4" class="quest-btn" style="width: 100%; padding: 8px; font-size: 12px; border-radius: 8px;" >Canjear</button>
               </div>
             </div>
           </div>
@@ -1051,8 +996,8 @@
               </p>
               <label for="referral-link-new">Tu URL de referencias única</label>
               <div class="referral-input-group">
-                <input type="text" id="referral-link-new" class="referral-input" readonly value="https://www.santopadre.store/ref?id=cargando...">
-                <button class="referral-copy-btn" id="copy-ref-btn-new" onclick="window.copyReferralLink()">Copiar</button>
+                <input type="text" aria-label="referral-link-new" id="referral-link-new" class="referral-input" readonly value="https://www.santopadre.store/ref?id=cargando...">
+                <button aria-label="Botón" class="referral-copy-btn" id="copy-ref-btn-new" >Copiar</button>
               </div>
             </div>
             
@@ -1148,22 +1093,22 @@
             <div class="form-row" style="width: 100%;">
               <div class="form-group">
                 <span class="form-label">Nombre</span>
-                <input type="text" id="profile-name" class="profile-input" required>
+                <input type="text" aria-label="profile-name" id="profile-name" class="profile-input" required>
               </div>
               <div class="form-group">
                 <span class="form-label">Apellido</span>
-                <input type="text" id="profile-lastname" class="profile-input" placeholder="Ej. González">
+                <input type="text" aria-label="profile-lastname" id="profile-lastname" class="profile-input" placeholder="Ej. González">
               </div>
             </div>
             
             <div class="form-row" style="width: 100%;">
               <div class="form-group">
                 <span class="form-label">Email (De Google)</span>
-                <input type="email" id="profile-email" class="profile-input" readonly style="opacity: 0.7; cursor: not-allowed;">
+                <input type="email" aria-label="profile-email" id="profile-email" class="profile-input" readonly style="opacity: 0.7; cursor: not-allowed;">
               </div>
               <div class="form-group">
                 <span class="form-label">Número de Teléfono</span>
-                <input type="tel" id="profile-phone" class="profile-input" placeholder="Ej. +34 600 000 000">
+                <input type="tel" aria-label="profile-phone" id="profile-phone" class="profile-input" placeholder="Ej. +34 600 000 000">
               </div>
             </div>
             
@@ -1208,25 +1153,25 @@
               <div class="radio-card-grid">
                 
                 <label class="radio-card">
-                  <input type="radio" name="spicy-tolerance" value="cero" required>
+                  <input type="radio" aria-label="spicy-tolerance" name="spicy-tolerance" value="cero" required>
                   <div class="radio-card-title">❌ Cero Picante</div>
                   <div class="radio-card-desc">No tolera ni el jalapeño. Salsas base de tomate dulce o crema.</div>
                 </label>
                 
                 <label class="radio-card">
-                  <input type="radio" name="spicy-tolerance" value="turista">
+                  <input type="radio" aria-label="spicy-tolerance" name="spicy-tolerance" value="turista">
                   <div class="radio-card-title">🌶️ Picante Turista</div>
                   <div class="radio-card-desc">Sabor sutil sin quemadura (salsa verde suave, pico de gallo sin vena).</div>
                 </label>
                 
                 <label class="radio-card">
-                  <input type="radio" name="spicy-tolerance" value="mexicano">
+                  <input type="radio" aria-label="spicy-tolerance" name="spicy-tolerance" value="mexicano">
                   <div class="radio-card-title">🌶️🌶️ Picante Medio</div>
                   <div class="radio-card-desc">Nivel taquería estándar. Salsas rojas, de árbol o chipotle con normalidad.</div>
                 </label>
                 
                 <label class="radio-card">
-                  <input type="radio" name="spicy-tolerance" value="habanero">
+                  <input type="radio" aria-label="spicy-tolerance" name="spicy-tolerance" value="habanero">
                   <div class="radio-card-title">🌶️🌶️🌶️ Nivel Habanero</div>
                   <div class="radio-card-desc">Salsas de la casa extremas, chiles tatemados a mordidas y habanero.</div>
                 </label>
@@ -1243,15 +1188,15 @@
                 <span style="font-size: 12px; color: var(--bone); font-weight: 600; display: block; margin-bottom: 6px;">El Factor Aguacate:</span>
                 <div class="segment-group">
                   <div class="segment-item">
-                    <input type="radio" name="avocado-preference" id="avocado-guac" value="guacamole" required>
+                    <input type="radio" name="avocado-preference" aria-label="avocado-guac" id="avocado-guac" value="guacamole" required>
                     <label for="avocado-guac" class="segment-label">🥑 Guacamole Extra</label>
                   </div>
                   <div class="segment-item">
-                    <input type="radio" name="avocado-preference" id="avocado-slices" value="rebanadas">
+                    <input type="radio" name="avocado-preference" aria-label="avocado-slices" id="avocado-slices" value="rebanadas">
                     <label for="avocado-slices" class="segment-label">Aguacate Rebanado</label>
                   </div>
                   <div class="segment-item">
-                    <input type="radio" name="avocado-preference" id="avocado-avoid" value="evitar">
+                    <input type="radio" name="avocado-preference" aria-label="avocado-avoid" id="avocado-avoid" value="evitar">
                     <label for="avocado-avoid" class="segment-label">❌ Evitar Aguacate</label>
                   </div>
                 </div>
@@ -1262,11 +1207,11 @@
                 <span style="font-size: 12px; color: var(--bone); font-weight: 600; display: block; margin-bottom: 6px;">El "Team Cilantro":</span>
                 <div class="segment-group">
                   <div class="segment-item">
-                    <input type="radio" name="cilantro-team" id="cilantro-all" value="con_todo" required>
+                    <input type="radio" name="cilantro-team" aria-label="cilantro-all" id="cilantro-all" value="con_todo" required>
                     <label for="cilantro-all" class="segment-label">🌿 Con Todo (Cilantro y Cebolla)</label>
                   </div>
                   <div class="segment-item">
-                    <input type="radio" name="cilantro-team" id="cilantro-avoid" value="sin_cilantro">
+                    <input type="radio" name="cilantro-team" aria-label="cilantro-avoid" id="cilantro-avoid" value="sin_cilantro">
                     <label for="cilantro-avoid" class="segment-label">🚫 Jabón (Sin Cilantro)</label>
                   </div>
                 </div>
@@ -1277,19 +1222,19 @@
                 <span style="font-size: 12px; color: var(--bone); font-weight: 600; display: block; margin-bottom: 8px;">Adiciones Recurrentes:</span>
                 <div class="checkbox-grid">
                   <label class="checkbox-card">
-                    <input type="checkbox" name="addition-extra-queso" value="queso_fundido">
+                    <input type="checkbox" aria-label="addition-extra-queso" name="addition-extra-queso" value="queso_fundido">
                     <span class="checkbox-label">🧀 Extra queso fundido</span>
                   </label>
                   <label class="checkbox-card">
-                    <input type="checkbox" name="addition-crema" value="doble_crema">
+                    <input type="checkbox" aria-label="addition-crema" name="addition-crema" value="doble_crema">
                     <span class="checkbox-label">🥛 Doble crema</span>
                   </label>
                   <label class="checkbox-card">
-                    <input type="checkbox" name="addition-frijoles" value="frijoles_refritos">
+                    <input type="checkbox" aria-label="addition-frijoles" name="addition-frijoles" value="frijoles_refritos">
                     <span class="checkbox-label">🫘 Frijoles refritos extra</span>
                   </label>
                   <label class="checkbox-card">
-                    <input type="checkbox" name="addition-cebollitas" value="cebollitas_nopales">
+                    <input type="checkbox" aria-label="addition-cebollitas" name="addition-cebollitas" value="cebollitas_nopales">
                     <span class="checkbox-label">🧅 Cebollitas cambray/nopales</span>
                   </label>
                 </div>
@@ -1301,19 +1246,19 @@
               <span class="form-label" style="margin-bottom: 6px; display: block;">3. Preferencias de Tortilla</span>
               <div class="radio-card-grid" style="grid-template-columns: repeat(3, 1fr);">
                 <label class="radio-card">
-                  <input type="radio" name="tortilla-type" value="maiz" required>
+                  <input type="radio" aria-label="tortilla-type" name="tortilla-type" value="maiz" required>
                   <div class="radio-card-title">🌽 Maíz</div>
                   <div class="radio-card-desc">Tradicional nixtamal.</div>
                 </label>
                 
                 <label class="radio-card">
-                  <input type="radio" name="tortilla-type" value="trigo">
+                  <input type="radio" aria-label="tortilla-type" name="tortilla-type" value="trigo">
                   <div class="radio-card-title">🌾 Trigo</div>
                   <div class="radio-card-desc">Harina suave elástica.</div>
                 </label>
                 
                 <label class="radio-card">
-                  <input type="radio" name="tortilla-type" value="bowl">
+                  <input type="radio" aria-label="tortilla-type" name="tortilla-type" value="bowl">
                   <div class="radio-card-title">🥣 Bowl</div>
                   <div class="radio-card-desc">Sin tortilla.</div>
                 </label>
@@ -1346,7 +1291,7 @@
           </div>
 
           <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px;">
-            <button type="submit" id="save-profile-btn" class="quest-btn" style="padding: 14px 28px; font-size: 13px;">Guardar Perfil</button>
+            <button aria-label="Botón" type="submit" id="save-profile-btn" class="quest-btn" style="padding: 14px 28px; font-size: 13px;">Guardar Perfil</button>
             <span id="save-status-msg" style="font-size: 13px; font-weight: bold; display: none;"></span>
           </div>
 
@@ -1363,7 +1308,7 @@
               <h4 style="color: var(--lime);">Dirección Principal</h4>
               <p id="profile-saved-address" style="margin-top: 5px; font-size: 14px; color: var(--white);">No se ha guardado ninguna dirección aún. Completa tu primer pedido y la guardaremos aquí.</p>
             </div>
-            <button class="quest-btn" style="background: var(--ink-3); border: 1px solid var(--line); color: var(--bone);" onclick="alert('Se actualizará automáticamente en tu próxima compra.')">Configurar en Checkout</button>
+            <button aria-label="Botón" id="evt-85ea40" class="quest-btn" style="background: var(--ink-3); border: 1px solid var(--line); color: var(--bone);" >Configurar en Checkout</button>
           </div>
         </div>
       </div>
@@ -1384,17 +1329,17 @@
     </main>
   </div>
   <!-- Firebase dependencies (Module script handles logic) -->
-  <script src="js/catalog.js"></script>
+  <script defer src="js/catalog.js"></script>
   <script type="module" src="js/dashboard.js"></script>
   <!-- Reward Popup Modal -->
-  <div id="reward-popup-modal" onclick="if(event.target===this){this.style.opacity='0';setTimeout(()=>this.style.display='none',400);}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.4s ease;">
+  <div id="reward-popup-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.4s ease;">
     <div style="background: var(--ink); border: 2px solid var(--lime); border-radius: 24px; padding: 40px 28px 32px; text-align: center; max-width: 390px; width: 92%; position: relative; box-shadow: 0 10px 50px rgba(220,254,84,0.2); transform: scale(0.8); transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);" id="reward-popup-content">
 
       <!-- Close button -->
-      <button onclick="const m=document.getElementById('reward-popup-modal');m.style.opacity='0';setTimeout(()=>m.style.display='none',400);" style="position: absolute; top: 14px; right: 18px; background: none; border: none; color: var(--mute); font-size: 26px; cursor: pointer; line-height: 1;">&times;</button>
+      <button aria-label="Botón" id="evt-b08dbf" style="position: absolute; top: 14px; right: 18px; background: none; border: none; color: var(--mute); font-size: 26px; cursor: pointer; line-height: 1;">&times;</button>
 
       <!-- Chest image -->
-      <img src="assets/reward_chest.png" alt="Cofre de Recompensa" style="width: 140px; height: auto; margin: 0 auto 18px; display: block; filter: drop-shadow(0 0 20px rgba(220,254,84,0.55)); animation: float 3s ease-in-out infinite;">
+      <img src="assets/reward_chest.png" alt="Cofre de Recompensa" fetchpriority="high" style="width: 140px; height: auto; margin: 0 auto 18px; display: block; filter: drop-shadow(0 0 20px rgba(220,254,84,0.55)); animation: float 3s ease-in-out infinite;">
 
       <!-- Title (dynamic) -->
       <h2 id="reward-popup-title" style="font-family: var(--space); color: var(--lime); font-size: 22px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em;">¡Felicidades!</h2>
@@ -1409,21 +1354,21 @@
       </div>
 
       <!-- CTA button -->
-      <button onclick="const m=document.getElementById('reward-popup-modal');m.style.opacity='0';setTimeout(()=>m.style.display='none',400);" style="background: var(--lime); color: var(--ink); border: none; padding: 13px 30px; font-weight: 900; font-family: var(--space); font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 10px; cursor: pointer; width: 100%; transition: transform 0.15s; margin-bottom: 15px;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">¡Entendido! 🤘</button>
+      <button aria-label="Botón" id="evt-618758" style="background: var(--lime); color: var(--ink); border: none; padding: 13px 30px; font-weight: 900; font-family: var(--space); font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 10px; cursor: pointer; width: 100%; transition: transform 0.15s; margin-bottom: 15px;">¡Entendido! 🤘</button>
       
       <!-- Ver más tarde link -->
       <div style="text-align: center;">
-        <a href="#" onclick="event.preventDefault(); const m=document.getElementById('reward-popup-modal');m.style.opacity='0';setTimeout(()=>m.style.display='none',400); if(window.switchTab) switchTab('canjear');" style="color: var(--mute); font-family: var(--archivo); font-size: 13px; text-decoration: underline; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--mute)'">Ver más tarde</a>
+        <a id="evt-9f40c4" href="#" style="color: var(--mute); font-family: var(--archivo); font-size: 13px; text-decoration: underline; cursor: pointer; transition: color 0.2s;">Ver más tarde</a>
       </div>
     </div>
   </div>
 
   <!-- Add Funds Modal -->
-  <div id="add-funds-modal" onclick="if(event.target===this){this.style.opacity='0';setTimeout(()=>this.style.display='none',400);}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.4s ease;">
-    <div style="background: var(--ink); border: 1px solid var(--line); border-radius: 20px; padding: 30px; text-align: left; max-width: 440px; width: 92%; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.8); transform: scale(1); transition: transform 0.4s ease;" id="add-funds-content" onclick="event.stopPropagation();">
+  <div id="add-funds-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.4s ease;">
+    <div style="background: var(--ink); border: 1px solid var(--line); border-radius: 20px; padding: 30px; text-align: left; max-width: 440px; width: 92%; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.8); transform: scale(1); transition: transform 0.4s ease;" id="add-funds-content" >
       
       <!-- Close button -->
-      <button onclick="const m=document.getElementById('add-funds-modal');m.style.opacity='0';setTimeout(()=>m.style.display='none',400);" style="position: absolute; top: 18px; right: 20px; background: none; border: none; color: var(--mute); font-size: 26px; cursor: pointer; line-height: 1;">&times;</button>
+      <button aria-label="Botón" id="evt-c7a424" style="position: absolute; top: 18px; right: 20px; background: none; border: none; color: var(--mute); font-size: 26px; cursor: pointer; line-height: 1;">&times;</button>
       
       <h2 style="font-family: var(--space); color: var(--white); font-size: 22px; margin-bottom: 20px;">Recargar Cartera</h2>
       
@@ -1432,7 +1377,7 @@
         <label style="display: block; color: var(--mute); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Monto a recargar (USD)</label>
         <div style="position: relative; margin-bottom: 8px;">
           <span style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--white); font-weight: bold; font-size: 18px;">$</span>
-          <input type="number" id="add-funds-amount" placeholder="0.00" min="1" step="any" oninput="updateEstimatedPadre()" style="width: 100%; background: var(--ink-2); border: 1px solid var(--line); color: var(--white); border-radius: 8px; padding: 14px 14px 14px 35px; font-size: 18px; font-family: var(--space); font-weight: bold; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='var(--lime)'" onblur="this.style.borderColor='var(--line)'">
+          <input type="number" aria-label="add-funds-amount" id="add-funds-amount" placeholder="0.00" min="1" step="any" oninput="updateEstimatedPadre()" style="width: 100%; background: var(--ink-2); border: 1px solid var(--line); color: var(--white); border-radius: 8px; padding: 14px 14px 14px 35px; font-size: 18px; font-family: var(--space); font-weight: bold; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='var(--lime)'" onblur="this.style.borderColor='var(--line)'">
         </div>
         
         <!-- Estimated Reward points info -->
@@ -1442,9 +1387,9 @@
         
         <!-- Quick Amounts -->
         <div style="display: flex; gap: 10px;">
-          <button onclick="document.getElementById('add-funds-amount').value='10.00'; updateEstimatedPadre();" style="flex: 1; background: var(--ink-2); border: 1px solid var(--line); color: var(--bone); border-radius: 6px; padding: 10px; cursor: pointer; font-family: var(--space); font-size: 13px; transition: background 0.2s;" onmouseover="this.style.background='var(--line)'" onmouseout="this.style.background='var(--ink-2)'">$10</button>
-          <button onclick="document.getElementById('add-funds-amount').value='20.00'; updateEstimatedPadre();" style="flex: 1; background: var(--ink-2); border: 1px solid var(--line); color: var(--bone); border-radius: 6px; padding: 10px; cursor: pointer; font-family: var(--space); font-size: 13px; transition: background 0.2s;" onmouseover="this.style.background='var(--line)'" onmouseout="this.style.background='var(--ink-2)'">$20</button>
-          <button onclick="document.getElementById('add-funds-amount').value='50.00'; updateEstimatedPadre();" style="flex: 1; background: var(--ink-2); border: 1px solid var(--line); color: var(--bone); border-radius: 6px; padding: 10px; cursor: pointer; font-family: var(--space); font-size: 13px; transition: background 0.2s;" onmouseover="this.style.background='var(--line)'" onmouseout="this.style.background='var(--ink-2)'">$50</button>
+          <button aria-label="Botón" id="evt-71acb6"  style="flex: 1; background: var(--ink-2); border: 1px solid var(--line); color: var(--bone); border-radius: 6px; padding: 10px; cursor: pointer; font-family: var(--space); font-size: 13px; transition: background 0.2s;">$10</button>
+          <button aria-label="Botón" id="evt-d8341f"  style="flex: 1; background: var(--ink-2); border: 1px solid var(--line); color: var(--bone); border-radius: 6px; padding: 10px; cursor: pointer; font-family: var(--space); font-size: 13px; transition: background 0.2s;">$20</button>
+          <button aria-label="Botón" id="evt-818b45"  style="flex: 1; background: var(--ink-2); border: 1px solid var(--line); color: var(--bone); border-radius: 6px; padding: 10px; cursor: pointer; font-family: var(--space); font-size: 13px; transition: background 0.2s;">$50</button>
         </div>
       </div>
       
@@ -1454,7 +1399,7 @@
         
         <div class="payment-methods-grid">
           <!-- Efectivo -->
-          <div class="modal-payment-card active" data-value="efectivo" onclick="selectPaymentMethod('efectivo')">
+          <div id="evt-24315c" class="modal-payment-card active" data-value="efectivo" >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="6" width="20" height="12" rx="2"></rect>
               <circle cx="12" cy="12" r="2"></circle>
@@ -1463,7 +1408,7 @@
             <span>Efectivo</span>
           </div>
           <!-- Pago Móvil -->
-          <div class="modal-payment-card" data-value="pago-movil" onclick="selectPaymentMethod('pago-movil')">
+          <div id="evt-b7abea" class="modal-payment-card" data-value="pago-movil" >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
               <line x1="12" y1="18" x2="12.01" y2="18"></line>
@@ -1471,7 +1416,7 @@
             <span>Pago Móvil</span>
           </div>
           <!-- Zelle -->
-          <div class="modal-payment-card" data-value="zelle" onclick="selectPaymentMethod('zelle')">
+          <div id="evt-ce3a0c" class="modal-payment-card" data-value="zelle" >
             <svg viewBox="353 215.5 763 310.5" style="height: 18px; width: auto; fill: currentColor; display: block; margin: 0 auto;">
               <path d="m423 258.5-65.726-.605v43.605h108.926l-113.2 145.1v36.9h70v42.5h42v-42.5h71.4c.6-1.7.811-6.284-2.989-10.484-6.3-7-11.31-14.316-15.91-23.516-2.1-4.1-3.695-9.011-4.295-9.411-14.06-.644-94.949-.478-94.905-.989l113.3-145.989v-34.611h-66.6v-43h-42v43zm303.3-20.3c-1 .4-1.3 22.5-1.3 106.2 0 113.1-.1 111.2 4.9 120.9 4.5 8.7 15.5 16.5 27.8 19.7 6.8 1.8 26.8 2 34.5.4 9.9-2.1 11.8-5.1 7.9-12.8-2.5-4.8-5.8-15.3-6.6-21.1-1.1-6.9-2.5-8-10.9-7.8-4 .1-7.8-.2-8.5-.6-4.1-2.6-4.1-3.3-4.1-104.6 0-65.1-.3-97.8-1-99.1-1-1.8-2.3-1.9-21.3-1.8-11.1 0-20.8.3-21.4.6zm91.7.3c-1.3.8-1.5 13.6-1.5 105.2 0 98.7.1 104.7 1.9 111.6 3.4 13.6 11.1 21.9 25.7 28 5.6 2.3 8.1 2.7 19.4 3 15.1.4 22.8-.7 30.5-4.6 7.6-3.7 7.8-6.3 1.3-15.8-2.6-3.8-6.6-10.3-8.8-14.4l-4-7.5-7.3-.1c-9.1-.2-10-.6-11.7-4.9-1.3-2.9-1.5-17.8-1.5-100.5 0-65.1-.3-97.8-1-99.1-1-1.8-2.3-1.9-21.3-1.9-11.1 0-20.9.5-21.7 1zm266 21.5c-8.1 3.7-12.3 10.1-12.4 19-.1 7.6 3 13.4 9.3 17.5 7.8 5.3 20.3 3.8 26.8-3.2 8.3-8.9 6.6-24.3-3.6-31.2-5.3-3.6-14.6-4.5-20.1-2.1zm16 3.7c11.3 5.7 13 20.3 3.4 28.8-4.1 3.6-7 4.4-13.3 3.8-17.4-1.7-20.8-26.1-4.6-33.4 4.4-2 9.5-1.7 14.5.8z"/>
               <path d="m1084.7 268.2c-.7 1.2-.8 19.8-.1 21.7.3.9 1.2 1.6 2 1.6 1 0 1.4-1.4 1.4-5 0-4.5.2-5 2.3-5 1.6 0 3 1.4 5.2 5 1.8 3 3.6 5 4.7 5 2.4 0 2.3-.4-1.4-5.8-2.2-3.2-2.8-4.7-1.9-5 2.6-.9 5.1-4.2 5.1-6.7 0-4.5-3.2-6.5-10.4-6.5-3.6 0-6.7.3-6.9.7zm12.1 3.2c.8.4 1.2 1.9 1 3.2-.3 2.1-.9 2.4-5 2.7l-4.8.3v-3.5c0-3.5.1-3.6 3.8-3.6 2 0 4.3.4 5 .9zm-496.3 29.6c-.5.2-4.4 1.1-8.5 2-25.7 5.9-48.4 25.6-58 50.6-5.3 13.8-7.2 24.5-7.3 40.4-.1 22.3 4.4 38.7 14.7 54.3 11.6 17.5 28.6 29.4 50.6 35.4 7.5 2 10.8 2.3 28 2.3 17 0 20.5-.3 27.6-2.2 17.6-4.9 32.6-13 44.7-24.5 7.7-7.2 7.6-9.2-.2-15.2-3.2-2.5-9-7.9-12.8-12.1-4.8-5.1-7.7-7.5-9.2-7.5-1.4 0-4.6 2-7.7 5-10.7 9.7-24.2 14.3-41.9 14.2-16.2-.1-28-4.3-35.5-12.9-3.8-4.3-8.6-14.1-9.6-19.6l-.6-3.7h62.3c34.3 0 63-.4 63.7-.9 3.3-2.1 4.1-16.6 1.7-32.4-5.7-37.8-28.3-63.2-63.8-71.7-6.3-1.5-11.5-2-22.7-1.9-8 0-14.9.2-15.5.4zm26.7 38.6c7.3 1.5 16.3 6.5 20.5 11.3 3.9 4.4 7.9 12.3 8.9 17.4l.7 3.2h-81.5l.7-3.2c3-13.5 14.6-24.8 29-28.4 6.4-1.6 15-1.7 21.7-.3zm336.8-37.7c-35.5 7.9-59.5 32.9-67 69.8-4.5 21.8-2 47.2 6.5 65.4 11.6 25.2 32.7 41.5 61.5 47.4 9.1 1.9 12.7 2.1 27 1.7 12.1-.4 18.6-1.1 24.2-2.6 17.1-4.5 32.1-12.7 43.6-23.7 8.8-8.5 8.8-8.9-.7-16.8-4.4-3.6-10.3-9.3-13.1-12.6-6.5-7.5-8.2-7.6-15.5-1-10.9 9.9-23.9 14.3-42 14.2-25.4-.1-40.2-11-45-33l-.7-2.595h126.7c4.3-3.1 2.7-35.905-2.5-51.105-1-3-3.7-9-5.9-13.2-11.7-22.4-30.4-36.3-56.4-41.8-8.3-1.8-32.8-1.8-40.7-.1zm31.2 37.7c6.8 1.5 13.8 5 18.8 9.5 4.2 3.9 11 16.2 11 20v2.4h-81.2l.7-2.8c5.2-21.4 27.2-34.1 50.7-29.1z"/>
@@ -1479,7 +1424,7 @@
             <span>Zelle</span>
           </div>
           <!-- Phantom -->
-          <div class="modal-payment-card" data-value="phantom" onclick="selectPaymentMethod('phantom')">
+          <div id="evt-9f5eb8" class="modal-payment-card" data-value="phantom" >
             <svg style="height: 14px; width: auto; fill: currentColor; display: block; margin: 0 auto;" viewBox="0 0 150 32" xmlns="http://www.w3.org/2000/svg">
               <path fill-rule="evenodd" clip-rule="evenodd" d="M0 25.219C0 29.105 2.065 30 4.213 30c4.544 0 7.96-3.998 9.997-7.157-.248.698-.386 1.397-.386 2.069 0 1.845 1.047 3.159 3.112 3.159 2.837 0 5.866-2.517 7.436-5.229-.11.392-.165.755-.165 1.09 0 1.287.716 2.098 2.175 2.098 4.6 0 9.226-8.248 9.226-15.462 0-5.62-2.81-10.568-9.86-10.568C13.357 0 0 15.322 0 25.219ZM21.48 9.953c0-1.398.771-2.376 1.9-2.376 1.102 0 1.873.978 1.873 2.376s-.77 2.405-1.872 2.405c-1.13 0-1.9-1.007-1.9-2.405Zm5.894 0c0-1.398.77-2.376 1.9-2.376 1.101 0 1.872.978 1.872 2.376s-.77 2.405-1.872 2.405c-1.13 0-1.9-1.007-1.9-2.405ZM41.115 26.953h4.13v-3.775c0-1.985-.137-2.908-.936-4.725l.44-.224c1.323 3.048 3.278 4.25 5.316 4.25 3.277 0 5.893-2.908 5.893-7.41 0-4.305-2.396-7.464-5.838-7.464-2.038 0-4.048 1.174-5.37 4.222l-.44-.224c.55-1.202.935-2.404.935-3.55h-4.13v18.9Zm4.13-11.911c0-1.845 1.378-3.886 3.415-3.886 1.653 0 3.002 1.37 3.002 3.858 0 2.46-1.294 3.914-3.03 3.914-1.927 0-3.386-1.985-3.386-3.886ZM57.25 22.032h4.132V17.11c0-3.467 1.211-5.927 3.47-5.927 1.431 0 1.872.978 1.872 3.41v7.438h4.131v-8.108c0-4.418-1.57-6.32-4.572-6.32-3.056 0-4.048 2.098-5.232 4.502l-.44-.251c.605-1.51.77-2.46.77-3.803V3.327h-4.13v18.705ZM76.757 22.479c2.617 0 4.186-1.79 5.288-3.914l.468.251c-.44 1.007-.854 2.21-.854 3.216h4.049v-7.605c0-4.53-1.873-6.822-6.252-6.822-4.296 0-6.416 2.18-6.83 4.473l3.966.7c.138-1.203 1.102-2.014 2.644-2.014s2.423.783 2.423 1.734c0 .95-.908 1.398-3.332 1.426-3.58.056-6.224 1.37-6.224 4.166 0 2.292 1.79 4.389 4.654 4.389Zm-.55-4.641c0-2.265 3.442-.671 5.37-2.405v.532c0 1.985-1.763 3.41-3.415 3.41-.936 0-1.955-.39-1.955-1.537ZM87.56 22.032h4.13V17.11c0-3.467 1.212-5.927 3.47-5.927 1.432 0 1.873.978 1.873 3.41v7.438h4.131v-8.108c0-4.418-1.57-6.32-4.572-6.32-3.056 0-4.048 2.098-5.232 4.502l-.44-.251c.605-1.51.77-2.46.77-3.803h-4.13v13.98ZM112.328 22.088V18.62c-.882.307-3.333.838-3.333-1.202v-5.956h3.663v-3.41h-3.663V4.305l-4.158 1.258v2.488h-2.478v3.411h2.478l.028 6.291c0 4.67 4.103 5.34 7.463 4.334ZM120.988 22.479c4.185 0 7.38-3.243 7.38-7.465 0-4.194-3.195-7.41-7.38-7.41-4.186 0-7.408 3.216-7.408 7.41 0 4.222 3.222 7.465 7.408 7.465Zm-3.14-7.437c0-2.32 1.294-3.942 3.14-3.942 1.845 0 3.111 1.621 3.111 3.942 0 2.32-1.266 3.942-3.111 3.942-1.846 0-3.14-1.622-3.14-3.942ZM129.729 22.032h4.13V17.11c0-3.607 1.019-5.927 2.837-5.927 1.184 0 1.68.95 1.68 3.41v7.438h4.131V17.11c0-3.383 1.101-5.927 2.836-5.927 1.157 0 1.68 1.09 1.68 3.41v7.438h4.131v-8.108c0-4.446-1.432-6.32-4.241-6.32-2.919 0-4.076 2.014-4.847 4.446l-.468-.251c.413-1.454.165-2.237-.331-2.852-.716-.895-1.735-1.342-3.029-1.342-2.589 0-3.718 1.845-4.709 4.417l-.441-.28c.468-1.257.771-2.264.771-3.69h-4.13v13.98Z"/>
             </svg>
@@ -1489,7 +1434,7 @@
       </div>
 
       <!-- Hidden Input to track method -->
-      <input type="hidden" id="selected-payment-method" value="efectivo">
+      <input type="hidden" aria-label="selected-payment-method" id="selected-payment-method" value="efectivo">
 
       <!-- Detalles de Pago en el Modal -->
       <div class="payment-details-box">
@@ -1506,21 +1451,21 @@
             <span class="detail-label">Banco</span>
             <span class="detail-value">
               BNC - 0191
-              <button class="mini-copy-btn" onclick="copyToClipboard('BNC - 0191', this)">Copiar</button>
+              <button aria-label="Botón" id="evt-20419c" class="mini-copy-btn" >Copiar</button>
             </span>
           </div>
           <div class="detail-row">
             <span class="detail-label">Cédula</span>
             <span class="detail-value">
               V-21564286
-              <button class="mini-copy-btn" onclick="copyToClipboard('21564286', this)">Copiar</button>
+              <button aria-label="Botón" id="evt-6cb266" class="mini-copy-btn" >Copiar</button>
             </span>
           </div>
           <div class="detail-row">
             <span class="detail-label">Teléfono</span>
             <span class="detail-value">
               0412-5540246
-              <button class="mini-copy-btn" onclick="copyToClipboard('04125540246', this)">Copiar</button>
+              <button aria-label="Botón" id="evt-0c1e15" class="mini-copy-btn" >Copiar</button>
             </span>
           </div>
         </div>
@@ -1531,7 +1476,7 @@
             <span class="detail-label">Email Zelle</span>
             <span class="detail-value" style="font-size: 12px;">
               luisgonzalez372f@gmail.com
-              <button class="mini-copy-btn" onclick="copyToClipboard('luisgonzalez372f@gmail.com', this)">Copiar</button>
+              <button aria-label="Botón" id="evt-be57b9" class="mini-copy-btn" >Copiar</button>
             </span>
           </div>
         </div>
@@ -1542,7 +1487,7 @@
             <span class="detail-label">Wallet Solana</span>
             <span class="detail-value" style="font-size: 11px;">
               7pHnSvY3...LFk3
-              <button class="mini-copy-btn" data-color="phantom" onclick="copyToClipboard('7pHnSvY3ki2SZ9YgXUt2ZxeS2F3cS5j2qNwgdHTQLFk3', this)">Copiar</button>
+              <button aria-label="Botón" id="evt-78fa7a" class="mini-copy-btn" data-color="phantom" >Copiar</button>
             </span>
           </div>
           <p style="color: var(--mute); font-size: 11px; margin: 10px 0 0 0; line-height: 1.4; text-align: center;">
@@ -1553,29 +1498,29 @@
       
       <!-- Action Buttons -->
       <!-- WhatsApp Submit (visible for Cash, Pago Movil, Zelle) -->
-      <button id="modal-submit-whatsapp" onclick="submitDepositWhatsApp()" style="background: var(--lime); color: var(--ink-3); border: none; padding: 15px; font-size: 14px; font-weight: 800; font-family: var(--space); text-transform: uppercase; letter-spacing: 0.05em; border-radius: 8px; cursor: pointer; width: 100%; transition: transform 0.15s; display: block;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+      <button aria-label="Botón" id="modal-submit-whatsapp"  style="background: var(--lime); color: var(--ink-3); border: none; padding: 15px; font-size: 14px; font-weight: 800; font-family: var(--space); text-transform: uppercase; letter-spacing: 0.05em; border-radius: 8px; cursor: pointer; width: 100%; transition: transform 0.15s; display: block;">
         Enviar Comprobante 💬
       </button>
 
       <!-- Phantom Web3 Submit (visible only for Phantom) -->
-      <button id="modal-submit-phantom" onclick="payWithPhantomModalDirect()" style="background: #AB9FF2; color: #1c1340; border: none; padding: 15px; font-size: 14px; font-weight: 800; font-family: var(--space); text-transform: uppercase; letter-spacing: 0.05em; border-radius: 8px; cursor: pointer; width: 100%; transition: transform 0.15s; display: none;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+      <button aria-label="Botón" id="modal-submit-phantom"  style="background: #AB9FF2; color: #1c1340; border: none; padding: 15px; font-size: 14px; font-weight: 800; font-family: var(--space); text-transform: uppercase; letter-spacing: 0.05em; border-radius: 8px; cursor: pointer; width: 100%; transition: transform 0.15s; display: none;">
         Pagar con Phantom Wallet ⚡
       </button>
 
     </div>
   </div>
   <!-- Solana QR Modal -->
-  <div id="solana-qr-modal" onclick="if(event.target===this){this.style.opacity='0';setTimeout(()=>this.style.display='none',400);}" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.4s ease;">
+  <div id="solana-qr-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10001; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; backdrop-filter: blur(8px); opacity: 0; transition: opacity 0.4s ease;">
     <div style="background: var(--ink); border: 1px solid var(--line); border-radius: 20px; padding: 30px; text-align: center; max-width: 360px; width: 92%; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.8); transform: scale(1); transition: transform 0.4s ease;">
       <!-- Close button -->
-      <button onclick="const m=document.getElementById('solana-qr-modal');m.style.opacity='0';setTimeout(()=>m.style.display='none',400);" style="position: absolute; top: 14px; right: 18px; background: none; border: none; color: var(--mute); font-size: 26px; cursor: pointer; line-height: 1;">&times;</button>
+      <button aria-label="Botón" id="evt-3aedda" style="position: absolute; top: 14px; right: 18px; background: none; border: none; color: var(--mute); font-size: 26px; cursor: pointer; line-height: 1;">&times;</button>
       
       <h3 style="font-family: var(--space); color: var(--white); font-size: 18px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em;">Código QR de Canje</h3>
       <p style="color: var(--mute); font-size: 11px; margin-bottom: 20px;">Muestra este código al cajero para pagar con tu saldo o acumular tus $PADRE</p>
       
       <!-- QR Image Container -->
       <div style="background: white; padding: 15px; border-radius: 12px; display: inline-block; margin-bottom: 20px; box-shadow: 0 0 20px rgba(220, 254, 84, 0.15);">
-        <img id="solana-qr-img" src="" alt="SantoPadre QR" style="width: 180px; height: 180px; display: block;">
+        <img loading="lazy" id="solana-qr-img" src="" alt="SantoPadre QR" style="width: 180px; height: 180px; display: block;">
       </div>
       
       <div style="background: var(--ink-2); padding: 10px; border-radius: 8px; border: 1px solid var(--line); margin-bottom: 20px;">
@@ -1583,416 +1528,15 @@
         <strong style="font-size: 12px; color: var(--white); font-family: var(--space);">EqqnYoF6qJqaP9...DLRG</strong>
       </div>
       
-      <button onclick="const m=document.getElementById('solana-qr-modal');m.style.opacity='0';setTimeout(()=>m.style.display='none',400);" style="background: var(--lime); color: var(--ink-3); border: none; padding: 12px; font-weight: 800; font-family: var(--space); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 8px; cursor: pointer; width: 100%;">
+      <button aria-label="Botón" id="evt-f804bf" style="background: var(--lime); color: var(--ink-3); border: none; padding: 12px; font-weight: 800; font-family: var(--space); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 8px; cursor: pointer; width: 100%;">
         Listo
       </button>
     </div>
   </div>
 
   <!-- Web3 Simulation Script -->
-  <script>
-    let walletConnected = false;
-    let padreBalance = 210;
-    let usdcBalance = 5.00;
-    const walletAddress = "EqqnYoF6qJqaP9n82uQxvdV8rVnyw5rxP57UPU96DLRG";
-
-    function connectSimulatedWallet() {
-      walletConnected = true;
-      
-      // Update Tag
-      const tag = document.getElementById('wallet-status-tag');
-      if (tag) {
-        tag.style.background = 'rgba(34, 197, 94, 0.1)';
-        tag.style.borderColor = 'rgba(34, 197, 94, 0.2)';
-        tag.style.color = '#22c55e';
-        tag.innerHTML = '<span style="width: 6px; height: 6px; border-radius: 50%; background: #22c55e; display: inline-block; animation: pulse 1.5s infinite;"></span> Activo';
-      }
-
-      // Switch Views
-      const disconnectedView = document.getElementById('wallet-disconnected-view');
-      if (disconnectedView) disconnectedView.style.display = 'none';
-      
-      const connectedView = document.getElementById('wallet-connected-view');
-      if (connectedView) connectedView.style.display = 'block';
-
-      // Set Balances
-      // Try to read current points from main card if they exist
-      const mainPointsEl = document.getElementById('wallet-points-value');
-      if (mainPointsEl) {
-        const val = parseInt(mainPointsEl.innerText);
-        if (!isNaN(val) && val > 0) {
-          padreBalance = val;
-        } else {
-          mainPointsEl.innerText = padreBalance + " $PADRE";
-        }
-      }
-      
-      // Show action buttons and history panel
-      const actionBtnAddFunds = document.getElementById('action-btn-add-funds');
-      if (actionBtnAddFunds) actionBtnAddFunds.style.display = 'inline-flex';
-
-      const actionBtnQr = document.getElementById('action-btn-qr');
-      if (actionBtnQr) actionBtnQr.style.display = 'inline-flex';
-      
-      const actionBtnSimulate = document.getElementById('action-btn-simulate');
-      if (actionBtnSimulate) actionBtnSimulate.style.display = 'inline-flex';
-      
-      const historyPanel = document.getElementById('wallet-history-panel');
-      if (historyPanel) historyPanel.style.display = 'block';
-      
-      updateBalancesUI();
-
-      // Clear Tx Feed and Add Conectado Tx
-      const feed = document.getElementById('solana-transactions-feed');
-      if (feed) {
-        feed.innerHTML = '';
-        addSimulatedTx('Activación', 'Cuenta digital de lealtad activada', 'Completado');
-      }
-    }
-
-    function updateBalancesUI() {
-      const padreEl = document.getElementById('sol-padre-balance');
-      if (padreEl) padreEl.innerText = padreBalance + " $PADRE";
-      
-      const usdcEl = document.getElementById('sol-usdc-balance');
-      if (usdcEl) usdcEl.innerText = "$" + usdcBalance.toFixed(2);
-      
-      // Also update main layout PTS
-      const mainPointsEl = document.getElementById('wallet-points-value');
-      if (mainPointsEl) {
-        mainPointsEl.innerText = padreBalance + " $PADRE";
-      }
-
-      // Sync inactive view points too
-      const inactivePointsEl = document.getElementById('wallet-points-value-inactive');
-      if (inactivePointsEl) {
-        inactivePointsEl.innerText = padreBalance + " $PADRE";
-      }
-    }
-
-    function copyWalletAddress() {
-      navigator.clipboard.writeText(walletAddress).then(() => {
-        alert("ID de Cuenta SantoPadre copiado al portapapeles: " + walletAddress);
-      }).catch(err => {
-        console.error('Error al copiar la dirección de la cuenta: ', err);
-      });
-    }
-
-    function showWalletQR() {
-      const qrImg = document.getElementById('solana-qr-img');
-      const qrData = `santopadre:account?id=${walletAddress}&balance=${usdcBalance}`;
-      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrData)}`;
-      
-      const modal = document.getElementById('solana-qr-modal');
-      modal.style.display = 'flex';
-      setTimeout(() => modal.style.opacity = '1', 10);
-    }
-
-    function simulateConsumption() {
-      if (usdcBalance < 5.00) {
-        alert("Saldo de prepago insuficiente. Recarga tu saldo en el botón 'Agregar Fondos'.");
-        return;
-      }
-      
-      usdcBalance -= 5.00;
-      padreBalance += 50; // Earn 10 points per dollar (equivalent to 100 $PADRE = $1.00 USD)
-      
-      updateBalancesUI();
-      addSimulatedTx('Compra POS', '-$5.00 / +50 $PADRE', 'Completado');
-    }
-
-    function addSimulatedTx(type, desc, status) {
-      const feed = document.getElementById('solana-transactions-feed');
-      if (!feed) return;
-      const txHash = Math.random().toString(36).substring(2, 10).toUpperCase();
-      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      const txRow = document.createElement('div');
-      txRow.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.04);";
-      txRow.innerHTML = `
-        <div style="text-align: left;">
-          <strong style="color: var(--white); font-size: 11px; display: block;">${type}</strong>
-          <span style="color: var(--mute); font-size: 9px; font-family: var(--space);">OP-${txHash}</span>
-        </div>
-        <div style="text-align: right;">
-          <span style="color: ${desc.includes('-') ? '#ff4d4d' : 'var(--lime)'}; font-size: 11px; font-weight: bold; display: block;">${desc}</span>
-          <span style="color: var(--mute); font-size: 9px;">${time} | <span style="color: #22c55e;">${status}</span></span>
-        </div>
-      `;
-      
-      // Remove placeholder message if it's there
-      if (feed.innerText.includes('No hay operaciones')) {
-        feed.innerHTML = '';
-      }
-      
-      feed.insertBefore(txRow, feed.firstChild);
-    }
-
-    // --- RECARGAS (ADD FUNDS) NEW LOGIC ---
-    function openAddFundsModal() {
-      const modal = document.getElementById('add-funds-modal');
-      modal.style.display = 'flex';
-      setTimeout(() => modal.style.opacity = '1', 10);
-      document.getElementById('add-funds-amount').value = '';
-      document.getElementById('estimated-padre-pts').innerText = '0';
-      selectPaymentMethod('efectivo');
-    }
-
-    function selectPaymentMethod(method) {
-      document.getElementById('selected-payment-method').value = method;
-      
-      // Update grid cards active state
-      const cards = document.querySelectorAll('.modal-payment-card');
-      cards.forEach(card => {
-        if (card.getAttribute('data-value') === method) {
-          card.classList.add('active');
-        } else {
-          card.classList.remove('active');
-        }
-      });
-      
-      // Toggle details boxes
-      const boxes = document.querySelectorAll('.payment-info-box');
-      boxes.forEach(box => {
-        if (box.id === 'details-' + method) {
-          box.style.display = 'block';
-        } else {
-          box.style.display = 'none';
-        }
-      });
-      
-      // Toggle submit buttons
-      const submitWhatsApp = document.getElementById('modal-submit-whatsapp');
-      const submitPhantom = document.getElementById('modal-submit-phantom');
-      if (method === 'phantom') {
-        submitWhatsApp.style.display = 'none';
-        submitPhantom.style.display = 'block';
-      } else {
-        submitWhatsApp.style.display = 'block';
-        submitPhantom.style.display = 'none';
-      }
-    }
-
-    function copyToClipboard(text, btn) {
-      navigator.clipboard.writeText(text).then(() => {
-        const originalText = btn.innerText;
-        btn.innerText = 'Copiado!';
-        btn.style.color = '#22c55e';
-        setTimeout(() => {
-          btn.innerText = originalText;
-          btn.style.color = '';
-        }, 1500);
-      }).catch(err => {
-        console.error('Error al copiar: ', err);
-      });
-    }
-
-    function updateEstimatedPadre() {
-      const amountInput = document.getElementById('add-funds-amount');
-      const amount = parseFloat(amountInput.value) || 0;
-      const points = Math.round(amount * 100);
-      document.getElementById('estimated-padre-pts').innerText = points;
-    }
-
-    function submitDepositWhatsApp() {
-      const amount = document.getElementById('add-funds-amount').value || '0';
-      const methodVal = document.getElementById('selected-payment-method').value;
-      
-      let methodText = 'Efectivo';
-      if (methodVal === 'pago-movil') methodText = 'Pago Móvil';
-      if (methodVal === 'zelle') methodText = 'Zelle';
-      
-      if (parseFloat(amount) <= 0 || isNaN(parseFloat(amount))) {
-        alert("Por favor ingresa un monto válido antes de enviar el comprobante.");
-        return;
-      }
-
-      const msg = `Hola, quiero recargar $${parseFloat(amount).toFixed(2)} a mi Cartera SantoPadre. Mi método de pago es ${methodText}. Adjunto mi comprobante de pago.`;
-      window.open(`https://wa.me/584125540246?text=${encodeURIComponent(msg)}`, '_blank');
-      
-      // Close modal
-      const m = document.getElementById('add-funds-modal');
-      m.style.opacity = '0';
-      setTimeout(() => m.style.display = 'none', 400);
-    }
-
-    async function payWithPhantomModalDirect() {
-      const amountInput = document.getElementById('add-funds-amount');
-      const amount = parseFloat(amountInput.value) || 0;
-      
-      if (amount <= 0 || isNaN(amount)) {
-        alert("Por favor ingresa un monto válido.");
-        return;
-      }
-
-      // Check if Phantom is installed
-      const isPhantomInstalled = window.solana && window.solana.isPhantom;
-      
-      if (!isPhantomInstalled) {
-        const confirmSim = confirm("Phantom Wallet no detectada en este navegador.\n\n¿Deseas simular una transacción exitosa en Solana Devnet para recargar tu saldo?");
-        if (confirmSim) {
-          simulateSuccessfulWeb3Deposit(amount);
-        }
-        return;
-      }
-
-      const phantomBtn = document.getElementById('modal-submit-phantom');
-      const originalText = phantomBtn.innerText;
-      
-      try {
-        phantomBtn.innerText = "Conectando Phantom...";
-        phantomBtn.disabled = true;
-        
-        const resp = await window.solana.connect();
-        const senderPubkey = resp.publicKey;
-        
-        phantomBtn.innerText = "Preparando transacción...";
-        
-        // We'll use devnet for testing safety
-        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'), 'confirmed');
-        
-        // Calculate SOL amount (assuming 1 SOL = $150 USD)
-        const solPrice = 150;
-        const solAmount = amount / solPrice;
-        const lamports = Math.round(solAmount * solanaWeb3.LAMPORTS_PER_SOL);
-        
-        const receiverPubkey = new solanaWeb3.PublicKey('7pHnSvY3ki2SZ9YgXUt2ZxeS2F3cS5j2qNwgdHTQLFk3');
-        
-        const transaction = new solanaWeb3.Transaction().add(
-          solanaWeb3.SystemProgram.transfer({
-            fromPubkey: senderPubkey,
-            toPubkey: receiverPubkey,
-            lamports: lamports,
-          })
-        );
-        
-        const { blockhash } = await connection.getLatestBlockhash();
-        transaction.recentBlockhash = blockhash;
-        transaction.feePayer = senderPubkey;
-        
-        phantomBtn.innerText = "Aprobando en Phantom...";
-        
-        const { signature } = await window.solana.signAndSendTransaction(transaction);
-        
-        phantomBtn.innerText = "Confirmando en Solana...";
-        await connection.confirmTransaction(signature);
-        
-        phantomBtn.innerText = "¡Pago Completado!";
-        confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.6 }
-        });
-        
-        usdcBalance += amount;
-        const earnedPoints = Math.round(amount * 100);
-        padreBalance += earnedPoints;
-        updateBalancesUI();
-        
-        addSimulatedTx('Depósito SOL (Phantom)', `+$${amount.toFixed(2)} / +${earnedPoints} $PADRE`, 'Completado');
-        
-        setTimeout(() => {
-          const m = document.getElementById('add-funds-modal');
-          m.style.opacity = '0';
-          setTimeout(() => {
-            m.style.display = 'none';
-            phantomBtn.innerText = originalText;
-            phantomBtn.disabled = false;
-          }, 400);
-        }, 1500);
-
-      } catch (err) {
-        console.error("Phantom Transaction Error: ", err);
-        alert("Error en la transacción o usuario rechazó el pago.\n\nDetalle: " + err.message);
-        phantomBtn.innerText = originalText;
-        phantomBtn.disabled = false;
-      }
-    }
-
-    function simulateSuccessfulWeb3Deposit(amount) {
-      const phantomBtn = document.getElementById('modal-submit-phantom');
-      const originalText = phantomBtn.innerText;
-      
-      phantomBtn.innerText = "Conectando Wallet...";
-      phantomBtn.disabled = true;
-      
-      setTimeout(() => {
-        phantomBtn.innerText = "Enviando transacción (SOL)...";
-        
-        setTimeout(() => {
-          phantomBtn.innerText = "Confirmando en Blockchain...";
-          
-          setTimeout(() => {
-            phantomBtn.innerText = "¡Depósito Exitoso! 🎉";
-            
-            confetti({
-              particleCount: 100,
-              spread: 70,
-              origin: { y: 0.6 }
-            });
-            
-            usdcBalance += amount;
-            const earnedPoints = Math.round(amount * 100);
-            padreBalance += earnedPoints;
-            updateBalancesUI();
-            
-            addSimulatedTx('Depósito SOL (Simulado)', `+$${amount.toFixed(2)} / +${earnedPoints} $PADRE`, 'Completado');
-            
-            setTimeout(() => {
-              const m = document.getElementById('add-funds-modal');
-              m.style.opacity = '0';
-              setTimeout(() => {
-                m.style.display = 'none';
-                phantomBtn.innerText = originalText;
-                phantomBtn.disabled = false;
-              }, 400);
-            }, 1000);
-            
-          }, 1200);
-        }, 1200);
-      }, 1000);
-    }
-
-    // Setup Mutation Observer to synchronize points displays
-    function setupPointsSync() {
-      const targetNode = document.getElementById('wallet-points-value');
-      if (!targetNode) return;
-      
-      const config = { characterData: true, childList: true, subtree: true };
-      
-      const callback = function(mutationsList, observer) {
-        for (const mutation of mutationsList) {
-          if (mutation.type === 'childList' || mutation.type === 'characterData') {
-            const rawText = targetNode.innerText;
-            const pointsVal = parseInt(rawText);
-            if (!isNaN(pointsVal)) {
-              padreBalance = pointsVal;
-              
-              // Sync inactive view
-              const inactiveEl = document.getElementById('wallet-points-value-inactive');
-              if (inactiveEl && inactiveEl.innerText !== rawText) {
-                inactiveEl.innerText = rawText;
-              }
-              
-              // Sync sub-display
-              const subDisplayEl = document.getElementById('sol-padre-balance');
-              if (subDisplayEl && subDisplayEl.innerText !== rawText) {
-                subDisplayEl.innerText = rawText;
-              }
-            }
-          }
-        }
-      };
-      
-      const observer = new MutationObserver(callback);
-      observer.observe(targetNode, config);
-    }
-
-    // Initialize observer
-    document.addEventListener("DOMContentLoaded", () => {
-      setupPointsSync();
-    });
-  </script>
+  <script defer src="js/wallet-utils.js"></script>
+  <script src="js/wallet-bindings.js" defer></script>
   
   <style>
     @keyframes pulse {

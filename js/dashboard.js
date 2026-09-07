@@ -1,9 +1,22 @@
     import { getActiveServices } from "./firebase-config.js";
+import { doc, setDoc, getDoc, collection, addDoc, query, where, orderBy, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
+import { subscribeToBalance, subscribeToTransactions, processRecarga, processCanje } from "./modules/wallet.js";
+import { showLoadingState } from "./modules/ui.js";
 
-    let authService, dbService, isMock, googleProvider, signInWithPopupFunc;
+// Expose wallet functions for bindings and utils
+window.processRecarga = processRecarga;
+window.processCanje = processCanje;
+window.showLoadingState = showLoadingState;
+
+
+
+    let authService, dbService, functionsService, isMock, googleProvider, signInWithPopupFunc;
     const services = getActiveServices();
     authService = services.auth;
     dbService = services.db;
+    functionsService = services.functions;
     isMock = services.isMock;
     googleProvider = services.googleProvider;
     signInWithPopupFunc = services.signInWithPopup;
@@ -275,7 +288,6 @@
           await dbService.setDoc(userRef, updatedProfile);
           currentProfile = updatedProfile;
         } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const userDocRef = doc(dbService, "users", currentUser.uid);
           await setDoc(userDocRef, { points: newPoints, isVip, birthday: dateVal, birthdayClaimed: true }, { merge: true });
           currentProfile = updatedProfile;
@@ -332,7 +344,6 @@
           await dbService.setDoc(userRef, updatedProfile);
           currentProfile = updatedProfile;
         } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const userDocRef = doc(dbService, "users", currentUser.uid);
           await setDoc(userDocRef, { 
             reviewStatus: "pending", 
@@ -349,46 +360,9 @@
       }
     };
 
-    // Simulador de aprobación de administrador
-    window.simulateAdminReviewApprove = async function() {
-      if (!currentUser) return;
-      
-      const pointsBonus = 150;
-      try {
-        const newPoints = (currentProfile.points || 0) + pointsBonus;
-        const isVip = newPoints >= 100;
-        
-        const updatedProfile = { 
-          ...currentProfile, 
-          points: newPoints, 
-          isVip, 
-          reviewStatus: "approved", 
-          reviewClaimed: true 
-        };
-
-        if (isMock) {
-          const userRef = { collection: "users", id: currentUser.uid };
-          await dbService.setDoc(userRef, updatedProfile);
-          currentProfile = updatedProfile;
-        } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-          const userDocRef = doc(dbService, "users", currentUser.uid);
-          await setDoc(userDocRef, { 
-            points: newPoints, 
-            isVip, 
-            reviewStatus: "approved", 
-            reviewClaimed: true 
-          }, { merge: true });
-          currentProfile = updatedProfile;
-        }
-        
-        await logPointsTransaction("Reseña de Google Aprobada", 150);
-        alert("¡Simulación exitosa! Reseña aprobada. Se han sumado 150 $PADRE a tu cuenta.");
-        updateDashboardUI();
-      } catch (err) {
-        console.error(err);
-      }
-    };
+    // La aprobación de reseñas la realiza un administrador autenticado desde admin.html
+    // (isAdmin() en firestore.rules). El cliente solo puede dejar la reseña en estado
+    // "pending" vía submitReviewVerification(); nunca puede auto-aprobarse puntos.
 
     // --- MÓDULO DE SEGUIMIENTO EN INSTAGRAM ---
     let instagramClicked = false;
@@ -431,7 +405,6 @@
           await dbService.setDoc(userRef, updatedProfile);
           currentProfile = updatedProfile;
         } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const userDocRef = doc(dbService, "users", currentUser.uid);
           await setDoc(userDocRef, { 
             points: newPoints, 
@@ -483,7 +456,6 @@
           await dbService.setDoc(userRef, updatedProfile);
           currentProfile = updatedProfile;
         } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const userDocRef = doc(dbService, "users", currentUser.uid);
           await setDoc(userDocRef, { 
             igStoryStatus: "pending", 
@@ -533,7 +505,6 @@
           await dbService.setDoc(userRef, updatedProfile);
           currentProfile = updatedProfile;
         } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const userDocRef = doc(dbService, "users", currentUser.uid);
           await setDoc(userDocRef, { 
             igPostStatus: "pending", 
@@ -588,7 +559,6 @@
           await dbService.setDoc(userRef, updatedProfile);
           currentProfile = updatedProfile;
         } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const userDocRef = doc(dbService, "users", currentUser.uid);
           await setDoc(userDocRef, { 
             tiktokStatus: "pending", 
@@ -655,203 +625,59 @@
       { level: 5, name: "El Santo", reward: "Cena Secreta para 2 + 2 Bebidas", emoji: "👑", color: "#ffcc00", textColor: "var(--ink)", cogs: 3.00 }
     ];
 
-    // Rate limiter: máximo 1 sello cada 3 segundos para prevenir abuso
-    let _lastStampTime = 0;
-    window.simulateStampPurchase = async function() {
-      if (!currentUser) return;
-      const now = Date.now();
-      if (now - _lastStampTime < 3000) {
-        alert("⏳ Espera unos segundos antes de simular otra compra.");
-        return;
-      }
-      _lastStampTime = now;
-      
-      let stamps = currentProfile.stamps || 0;
-      let claimedRewards = currentProfile.claimedRewards || [];
-      
-      stamps += 1;
-      
-      let extraMessage = `¡Compra registrada! Sumaste 1 sello.\nTienes ${stamps} sellos acumulados en tu cuenta.`;
-      
-      if (stamps % 5 === 0) {
-        const completedTierIndex = Math.min((stamps / 5) - 1, 4);
-        const reward = window.TIER_REWARDS[completedTierIndex];
-        
-        // Guardar en Firestore antes de generar recompensa
-        try {
-          const updatedProfile = { ...currentProfile, stamps: stamps, claimedRewards: claimedRewards };
-          if (isMock) {
-            await dbService.setDoc({ collection: "users", id: currentUser.uid }, updatedProfile);
-            currentProfile = updatedProfile;
-          } else {
-            const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-            await setDoc(doc(dbService, "users", currentUser.uid), { stamps, claimedRewards }, { merge: true });
-            currentProfile = updatedProfile;
-          }
-          updateDashboardUI();
-        } catch(e) { console.error(e); }
+    // Los sellos se acreditan exclusivamente por compras reales verificadas por el
+    // administrador (ver checklist T06). No existe ninguna vía en el cliente para que
+    // un usuario se autoacredite sellos ni para reiniciar su propia tarjeta.
 
-        // Generar y reclamar el premio automáticamente
-        window.claimPendingReward();
-        return;
-      }
-
-      try {
-        const updatedProfile = { 
-          ...currentProfile, 
-          stamps: stamps,
-          claimedRewards: claimedRewards
-        };
-
-        if (isMock) {
-          const userRef = { collection: "users", id: currentUser.uid };
-          await dbService.setDoc(userRef, updatedProfile);
-          currentProfile = updatedProfile;
-        } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-          const userDocRef = doc(dbService, "users", currentUser.uid);
-          await setDoc(userDocRef, { 
-            stamps: stamps,
-            claimedRewards: claimedRewards
-          }, { merge: true });
-          currentProfile = updatedProfile;
-        }
-        
-        updateDashboardUI();
-        // Mostrar toast simple (sin modal completo) para sellos intermedios
-        const toastEl = document.createElement('div');
-        toastEl.style.cssText = `
-          position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-          background: var(--ink); border: 1px solid var(--lime); border-radius: 10px;
-          padding: 12px 24px; color: var(--lime); font-family: var(--syne);
-          font-weight: 700; font-size: 13px; z-index: 9999;
-          box-shadow: 0 4px 20px rgba(220,254,84,0.2);
-          animation: fadeInUp 0.3s ease;
-        `;
-        toastEl.innerHTML = `🟢 +1 Sello acumulado &mdash; Total: ${stamps} sello${stamps > 1 ? 's' : ''}`;
-        document.body.appendChild(toastEl);
-        setTimeout(() => toastEl.remove(), 3000);
-      } catch (err) {
-        console.error(err);
-        alert("Error al simular la compra.");
-      }
-    };
-
-    window.resetStamps = async function() {
-      if (!currentUser) return;
-      
-      try {
-        const updatedProfile = { 
-          ...currentProfile, 
-          stamps: 0,
-          claimedRewards: []
-        };
-
-        if (isMock) {
-          const userRef = { collection: "users", id: currentUser.uid };
-          await dbService.setDoc(userRef, updatedProfile);
-          currentProfile = updatedProfile;
-        } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-          const userDocRef = doc(dbService, "users", currentUser.uid);
-          await setDoc(userDocRef, { stamps: 0, claimedRewards: [] }, { merge: true });
-          currentProfile = updatedProfile;
-        }
-        
-        alert("Tarjeta de sellos y reclamos reiniciados.");
-        updateDashboardUI();
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    // Reclamar premio de ascenso
+    // Reclamar premio de ascenso: 'stamps' solo lo escribe un administrador (compra real
+    // verificada), así que aquí solo se hace la petición previa de saldo pendiente en UI;
+    // la validación real (¿hay un nivel completado y no reclamado?) y la escritura las
+    // hace functions/rewards.js -> claimTierReward, con Admin SDK.
     let _isClaimingReward = false;
     window.claimPendingReward = async function() {
       if (!currentUser) return;
       if (_isClaimingReward) return;
-      
+
       const totalStamps = currentProfile.stamps || 0;
-      const claimedRewards = currentProfile.claimedRewards || [];
-      const claimedCount = claimedRewards.length;
+      const claimedCount = (currentProfile.claimedRewards || []).length;
       const completedTiers = Math.floor(totalStamps / 5);
-      
+
       if (claimedCount >= completedTiers) {
         alert("No tienes premios de ascenso pendientes. Sigue sumando sellos para subir de Nivel.");
         return;
       }
-      
-      _isClaimingReward = true;
-      const tierIndex = Math.min(claimedCount, 4);
-      const level = tierIndex + 1;
-      const reward = window.TIER_REWARDS[tierIndex];
-      const couponCode = "SP-ASCENSO-" + level + "-" + Math.random().toString(36).substr(2, 6).toUpperCase();
-      
-      // Registrar reclamo
-      const newClaimed = [...claimedRewards, level];
-      const newActive = [...(currentProfile.activeRewards || []), {
-        id: Date.now().toString(),
-        name: reward.reward,
-        code: couponCode,
-        date: new Date().toISOString()
-      }];
-      
-      try {
-        const updatedProfile = { 
-          ...currentProfile, 
-          claimedRewards: newClaimed,
-          activeRewards: newActive
-        };
 
-        if (isMock) {
-          const userRef = { collection: "users", id: currentUser.uid };
-          await dbService.setDoc(userRef, updatedProfile);
-          currentProfile = updatedProfile;
-          
-          // Guardar orden de canje simulada
-          const mockOrder = {
-            userId: currentUser.uid,
-            items: [{ name: `Ascenso a ${reward.name}: ${reward.reward} (Código: ${couponCode})`, quantity: 1, price: 0 }],
-            total: 0,
-            status: "Completado",
-            date: new Date().toISOString()
-          };
-          const mockOrdersStr = localStorage.getItem('mockOrders') || '[]';
-          const mockOrders = JSON.parse(mockOrdersStr);
-          mockOrders.push(mockOrder);
-          localStorage.setItem('mockOrders', JSON.stringify(mockOrders));
-        } else {
-          const { doc, setDoc, addDoc, collection } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-          const userDocRef = doc(dbService, "users", currentUser.uid);
-          await setDoc(userDocRef, { claimedRewards: newClaimed, activeRewards: newActive }, { merge: true });
-          currentProfile = updatedProfile;
-          
-          // Crear un pedido de recompensa en la base de datos
-          await addDoc(collection(dbService, "orders"), {
-            userId: currentUser.uid,
-            items: [{ name: `Ascenso a ${reward.name}: ${reward.reward}`, couponCode: couponCode, quantity: 1, price: 0 }],
-            total: 0,
-            status: "Completado",
-            date: new Date().toISOString()
-          });
-        }
-        
-        // Mostrar modal de recompensa de ascenso
+      if (!functionsService) {
+        alert("No se pudo conectar con el servidor. Intenta de nuevo en unos segundos.");
+        return;
+      }
+
+      _isClaimingReward = true;
+
+      try {
+        const claim = httpsCallable(functionsService, 'claimTierReward');
+        const result = await claim();
+        const { level, reward: rewardName, couponCode } = result.data;
+        const tier = window.TIER_REWARDS[Math.max(0, level - 1)] || {};
+
         window.showRewardModal({
-          title: `¡Nivel Superado! ${reward.emoji}`,
-          message: `Has reclamado tu botín por ascender a <strong style="color:${reward.color || 'var(--lime)'}">${reward.name}</strong>.<br><br>🎁 <strong>${reward.reward} ${reward.emoji}</strong><br><br>Tu premio ha sido guardado en la pestaña <strong>Canjear</strong>. Puedes usarlo ahora o más tarde.`,
-          emoji: reward.emoji,
-          rewardName: reward.reward,
+          title: `¡Nivel Superado! ${tier.emoji || ''}`,
+          message: `Has reclamado tu botín por ascender a <strong style="color:${tier.color || 'var(--lime)'}">${tier.name || ''}</strong>.<br><br>🎁 <strong>${rewardName} ${tier.emoji || ''}</strong><br><br>Tu premio ha sido guardado en la pestaña <strong>Canjear</strong>. Puedes usarlo ahora o más tarde.`,
+          emoji: tier.emoji,
+          rewardName: rewardName,
           couponCode: couponCode,
-          color: reward.color
+          color: tier.color
         });
-        
-        updateDashboardUI();
+
         if (window.renderOrderHistory) window.renderOrderHistory();
-        _isClaimingReward = false;
       } catch (err) {
         console.error(err);
-        alert("Error al reclamar el premio.");
+        if (err.code === 'functions/failed-precondition') {
+          alert("No tienes premios de ascenso pendientes. Sigue sumando sellos para subir de Nivel.");
+        } else {
+          alert("Error al reclamar el premio.");
+        }
+      } finally {
         _isClaimingReward = false;
       }
     };
@@ -1038,7 +864,6 @@
           await dbService.setDoc(userRef, updatedProfile);
           currentProfile = updatedProfile;
         } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const userDocRef = doc(dbService, "users", currentUser.uid);
           await setDoc(userDocRef, updatedProfile, { merge: true });
           currentProfile = updatedProfile;
@@ -1068,127 +893,49 @@
       }
     }
 
-    // Acción de flujo
-    window.triggerFlowAction = async function() {
-      if (!currentUser) return;
-      
-      const pointsBonus = 150;
-      try {
-        const newPoints = (currentProfile.points || 0) + pointsBonus;
-        const isVip = newPoints >= 100;
-        
-        if (isMock) {
-          const userRef = { collection: "users", id: currentUser.uid };
-          const updatedProfile = { ...currentProfile, points: newPoints, isVip };
-          await dbService.setDoc(userRef, updatedProfile);
-          currentProfile = updatedProfile;
-        } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-          const userDocRef = doc(dbService, "users", currentUser.uid);
-          await setDoc(userDocRef, { points: newPoints, isVip }, { merge: true });
-          currentProfile = { ...currentProfile, points: newPoints, isVip };
-        }
-        
-        await logPointsTransaction("Misión de Flujo Completada", 150);
-        alert("¡Acción de flujo procesada! Sumaste 150 $PADRE.");
-        updateDashboardUI();
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
     // Canjear recompensa
+    // El costo y el nombre de cada recompensa los decide exclusivamente el servidor
+    // (functions/rewards.js -> REWARD_CATALOG). El "cost" que llega aquí es solo para
+    // el aviso rápido de saldo insuficiente en la UI; nunca se envía al servidor.
     let _isRedeeming = false;
     window.redeemReward = async function(rewardId, cost) {
       if (!currentUser) return;
       if (_isRedeeming) return;
-      
-      if ((currentProfile.points || 0) < cost) {
+
+      if (cost && (currentProfile.points || 0) < cost) {
         alert("No tienes suficientes $PADRE para canjear esta recompensa.");
         return;
       }
-      
+
+      if (!functionsService) {
+        alert("No se pudo conectar con el servidor. Intenta de nuevo en unos segundos.");
+        return;
+      }
+
       _isRedeeming = true;
-      
-      const newPoints = (currentProfile.points || 0) - cost;
-      const isVip = newPoints >= 100;
-      
+
       try {
-        const code = "SP-PT-" + Math.random().toString(36).substr(2, 6).toUpperCase();
-        
-        const REWARD_NAMES = {
-          'bebida': 'Bebida Refrescante Gratis',
-          'tacos-pastor': 'Tacos al Pastor Gratis',
-          'nachos': 'Nachos Clásicos Gratis',
-          'nachos-peq': 'Nachos Pequeños Gratis',
-          'tacos-birria': 'Tacos de Birria Gratis',
-          'flautas-pollo': 'Flautas de Pollo Gratis',
-          'tacos-carne': 'Tacos de Asada Gratis',
-          'tshirt-logo': 'Camiseta Classic SantoPadre',
-          'cap-trucker': 'Gorra Trucker La Parroquia',
-          'gift-card-25': 'Gift Card SantoPadre $25',
-          'gift-card-50': 'Gift Card SantoPadre $50',
-          'birria-ramen': 'Birria Ramen Gratis',
-          'burritos': 'Burrito El Santo Gratis'
-        };
-        let rewardName = REWARD_NAMES[rewardId] || rewardId;
+        const redeem = httpsCallable(functionsService, 'redeemReward');
+        const result = await redeem({ rewardId });
+        const { rewardName, couponCode } = result.data;
 
-
-        const newActive = [...(currentProfile.activeRewards || []), {
-          id: Date.now().toString(),
-          name: rewardName,
-          code: code,
-          date: new Date().toISOString()
-        }];
-        
-        if (isMock) {
-          const userRef = { collection: "users", id: currentUser.uid };
-          const updatedProfile = { ...currentProfile, points: newPoints, isVip, activeRewards: newActive };
-          await dbService.setDoc(userRef, updatedProfile);
-          currentProfile = updatedProfile;
-          
-          // Registrar en historial de órdenes simuladas
-          const mockOrder = {
-            userId: currentUser.uid,
-            items: [{ name: `Canje: ${rewardName} (Código: ${code})`, quantity: 1, price: 0 }],
-            total: 0,
-            pointsEarned: -cost,
-            createdAt: new Date().toISOString(),
-            status: "canjeado"
-          };
-          await dbService.addDoc({ name: "orders" }, mockOrder);
-        } else {
-          const { doc, setDoc, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-          const userDocRef = doc(dbService, "users", currentUser.uid);
-          await setDoc(userDocRef, { points: newPoints, isVip, activeRewards: newActive }, { merge: true });
-          currentProfile = { ...currentProfile, points: newPoints, isVip, activeRewards: newActive };
-          
-          // Registrar en historial de órdenes real
-          const mockOrder = {
-            userId: currentUser.uid,
-            items: [{ name: `Canje: ${rewardName} (Código: ${code})`, quantity: 1, price: 0 }],
-            total: 0,
-            pointsEarned: -cost,
-            createdAt: new Date().toISOString(),
-            status: "canjeado"
-          };
-          const ordersCol = collection(dbService, "orders");
-          await addDoc(ordersCol, mockOrder);
-        }
-        
         window.showRewardModal({
           title: `¡$PADRE Canjeados!`,
-          message: `Has canjeado ${cost} $PADRE por <strong>${rewardName}</strong>.<br><br>Tu premio ha sido guardado en la pestaña <strong>Canjear</strong>. Puedes usarlo ahora o más tarde.`,
+          message: `Has canjeado tus $PADRE por <strong>${rewardName}</strong>.<br><br>Tu premio ha sido guardado en la pestaña <strong>Canjear</strong>. Puedes usarlo ahora o más tarde.`,
           emoji: '🎉',
           rewardName: rewardName,
-          couponCode: code,
+          couponCode: couponCode,
           color: 'var(--lime)'
         });
-        
-        updateDashboardUI();
-        _isRedeeming = false;
+        // currentProfile se actualiza solo vía el listener onSnapshot de users/{uid}
       } catch (err) {
         console.error(err);
+        if (err.code === 'functions/failed-precondition') {
+          alert("No tienes suficientes $PADRE para canjear esta recompensa.");
+        } else {
+          alert("No se pudo procesar el canje. Intenta de nuevo.");
+        }
+      } finally {
         _isRedeeming = false;
       }
     };
@@ -1204,7 +951,6 @@
           await dbService.setDoc(userRef, { activeRewards: newActive });
           currentProfile.activeRewards = newActive;
         } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const userDocRef = doc(dbService, "users", currentUser.uid);
           await setDoc(userDocRef, { activeRewards: newActive }, { merge: true });
           currentProfile.activeRewards = newActive;
@@ -1263,7 +1009,6 @@
         if (isMock) {
           orders = await dbService.getOrdersByUser(userId);
         } else {
-          const { collection, query, where, orderBy, getDocs } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const ordersCol = collection(dbService, "orders");
           const q = query(ordersCol, where("userId", "==", userId), orderBy("createdAt", "desc"));
           const querySnapshot = await getDocs(q);
@@ -1280,16 +1025,48 @@
         let missingPoints = (currentProfile.points || 0) - sumPointsFromOrders;
         
         let extraRowHTML = "";
-        if (missingPoints > 0) {
-           const title = (missingPoints === 100) ? "Regalo de Bienvenida" : "Saldo Inicial";
-           const details = (missingPoints === 100) ? "Bono por registrar una cuenta" : "Misiones, referidos y regalos anteriores";
-           extraRowHTML = `
+        
+        // Desglosar missing points
+        if (missingPoints >= 100 && !orders.find(o => o.items && o.items.some(i => i.name === "Regalo de Bienvenida" || i.name === "Bono por registrar una cuenta"))) {
+            extraRowHTML += `
             <div class="order-card" style="margin-bottom: 12px; background: rgba(180, 255, 30, 0.05); border: 1px dashed rgba(180, 255, 30, 0.3);">
               <div class="order-meta">
                 <span class="order-date">Completado</span>
-                <span class="order-total" style="color: var(--lime);">${title}</span>
+                <span class="order-total" style="color: var(--lime);">Regalo de Bienvenida</span>
               </div>
-              <div class="order-details" style="color: var(--mute);">${details}</div>
+              <div class="order-details" style="color: var(--mute);">Bono por crear cuenta en SantoPadre®</div>
+              <div class="order-reward" style="color: var(--lime); font-weight: bold;">
+                +100 $PADRE
+              </div>
+            </div>
+            `;
+            missingPoints -= 100;
+        }
+        
+        if (missingPoints >= 100 && currentProfile.birthday && !orders.find(o => o.items && o.items.some(i => i.name === "Regalo de Cumpleaños"))) {
+            extraRowHTML += `
+            <div class="order-card" style="margin-bottom: 12px; background: rgba(180, 255, 30, 0.05); border: 1px dashed rgba(180, 255, 30, 0.3);">
+              <div class="order-meta">
+                <span class="order-date">Completado</span>
+                <span class="order-total" style="color: var(--lime);">Regalo de Cumpleaños</span>
+              </div>
+              <div class="order-details" style="color: var(--mute);">Bono por añadir fecha de cumpleaños</div>
+              <div class="order-reward" style="color: var(--lime); font-weight: bold;">
+                +100 $PADRE
+              </div>
+            </div>
+            `;
+            missingPoints -= 100;
+        }
+
+        if (missingPoints > 0) {
+           extraRowHTML += `
+            <div class="order-card" style="margin-bottom: 12px; background: rgba(180, 255, 30, 0.05); border: 1px dashed rgba(180, 255, 30, 0.3);">
+              <div class="order-meta">
+                <span class="order-date">Completado</span>
+                <span class="order-total" style="color: var(--lime);">Recompensas Anteriores</span>
+              </div>
+              <div class="order-details" style="color: var(--mute);">Misiones, referidos y regalos pasados</div>
               <div class="order-reward" style="color: var(--lime); font-weight: bold;">
                 +${missingPoints} $PADRE
               </div>
@@ -1297,8 +1074,11 @@
            `;
         }
 
-        if (orders.length === 0 && missingPoints <= 0) {
-          ordersListContainer.innerHTML = `<div class="empty-orders">Tus pedidos e historial de $PADRE aparecerán aquí.</div>`;
+        if (orders.length === 0 && extraRowHTML === "") {
+          const emptyHTML = `<div class="empty-orders">Tus pedidos e historial de $PADRE aparecerán aquí.</div>`;
+          ordersListContainer.innerHTML = emptyHTML;
+          const feedEl = document.getElementById('solana-transactions-feed');
+          if (feedEl) feedEl.innerHTML = emptyHTML;
           return;
         }
 
@@ -1322,7 +1102,12 @@
           `;
         }).join("");
 
-        ordersListContainer.innerHTML = extraRowHTML + ordersHTML;
+        const finalHTML = extraRowHTML + ordersHTML;
+        ordersListContainer.innerHTML = finalHTML;
+        
+        // También actualizar el feed de Cartera
+        const feedEl = document.getElementById('solana-transactions-feed');
+        if (feedEl) feedEl.innerHTML = finalHTML;
         
         // Sincronizar dirección de envío en la pestaña correspondiente
         const lastDeliveryOrder = orders.find(o => o.orderType === "delivery" && o.address1);
@@ -1335,17 +1120,20 @@
     }
 
     // Inicializar listeners de UI
-    document.getElementById("login-google-btn").addEventListener("click", async () => {
-      try {
-        if (isMock) {
-          await authService.signInWithPopup();
-        } else {
-          await signInWithPopupFunc(authService, googleProvider);
+    const googleBtn = document.getElementById("login-google-btn");
+    if (googleBtn) {
+      googleBtn.addEventListener("click", async () => {
+        try {
+          if (isMock) {
+            await authService.signInWithPopup();
+          } else {
+            await signInWithPopupFunc(authService, googleProvider);
+          }
+        } catch (err) {
+          console.error(err);
         }
-      } catch (err) {
-        console.error(err);
-      }
-    });
+      });
+    }
 
     // Lógica para Autenticación con Email y Contraseña (Real y Mock)
     let authMode = window.location.pathname.includes("signup.html") ? "signup" : "login";
@@ -1367,20 +1155,21 @@
       });
     }
 
-    submitBtn.addEventListener("click", async () => {
-      const email = document.getElementById("auth-email").value.trim();
-      const password = document.getElementById("auth-password").value.trim();
+    if (submitBtn) {
+      submitBtn.addEventListener("click", async () => {
+        const email = document.getElementById("auth-email").value.trim();
+        const password = document.getElementById("auth-password").value.trim();
 
-      if (!email || !password) {
-        alert("Por favor ingresa tu correo y contraseña.");
-        return;
-      }
-      if (password.length < 6) {
-        alert("La contraseña debe tener al menos 6 caracteres.");
-        return;
-      }
+        if (!email || !password) {
+          alert("Por favor ingresa tu correo y contraseña.");
+          return;
+        }
+        if (password.length < 6) {
+          alert("La contraseña debe tener al menos 6 caracteres.");
+          return;
+        }
 
-      try {
+        try {
         if (isMock) {
           const usersAuthData = JSON.parse(localStorage.getItem("santopadre_mock_auth_credentials") || "{}");
 
@@ -1434,7 +1223,6 @@
             authService.onAuthStateChangedListeners.forEach(l => l(mockUser));
           }
         } else {
-          const { signInWithEmailAndPassword, createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
 
           if (authMode === "login") {
             await signInWithEmailAndPassword(authService, email, password);
@@ -1446,7 +1234,8 @@
         console.error(err);
         alert("Error de autenticación: " + err.message);
       }
-    });
+      });
+    }
 
     document.getElementById("nav-logout-btn").addEventListener("click", async () => {
       try {
@@ -1470,6 +1259,7 @@
       
       if (user) {
         currentUser = user;
+        window.currentUser = user;
         // Obtener o crear perfil en BD
         currentProfile = await getOrCreateProfile(user);
         
@@ -1478,11 +1268,48 @@
           return;
         }
 
-        document.getElementById("login-container").style.display = "none";
-        document.getElementById("dashboard-container").style.display = "grid";
+        const loginContainer = document.getElementById("login-container");
+        if (loginContainer) loginContainer.style.display = "none";
+        const dashboardContainer = document.getElementById("dashboard-container");
+        if (dashboardContainer) dashboardContainer.style.display = "grid";
         
         // Activar el escuchador en tiempo real del perfil
         setupRealtimeProfileListener(user);
+
+        // Real-time wallet balances and transactions
+        if (typeof subscribeToBalance === 'function') {
+          subscribeToBalance(user.uid, ({ padreBalance, usdcBalance }) => {
+            window.padreBalance = padreBalance;
+            window.usdcBalance = usdcBalance;
+            if (typeof updateBalancesUI === 'function') updateBalancesUI();
+          });
+        }
+        
+        if (typeof subscribeToTransactions === 'function') {
+          subscribeToTransactions(user.uid, (txs) => {
+            const feed = document.getElementById('solana-transactions-feed');
+            if (feed) {
+              feed.innerHTML = '';
+              txs.forEach(tx => {
+                const date = tx.timestamp ? new Date(tx.timestamp.toDate()).toLocaleDateString() : new Date().toLocaleDateString();
+                const sign = tx.amount > 0 ? '+' : '';
+                feed.innerHTML += `
+                  <div class="tx-item">
+                    <div class="tx-icon"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="tx-details">
+                      <p class="tx-title">${tx.type.toUpperCase()}</p>
+                      <p class="tx-subtitle">${date} • ${tx.status}</p>
+                    </div>
+                    <div class="tx-amount ${tx.amount > 0 ? 'positive' : 'negative'}">
+                      ${sign}${tx.amount} ${tx.currency}
+                    </div>
+                  </div>
+                `;
+              });
+            }
+          });
+        }
+
       } else {
         currentUser = null;
         currentProfile = null;
@@ -1490,10 +1317,21 @@
           unsubscribeProfile();
           unsubscribeProfile = null;
         }
-        document.getElementById("dashboard-container").style.display = "none";
-        document.getElementById("login-container").style.display = "flex";
-        if (isMock) {
-          document.getElementById("login-mock-banner").style.display = "block";
+        const dashboardContainer = document.getElementById("dashboard-container");
+        if (dashboardContainer) dashboardContainer.style.display = "none";
+        
+        if (window.location.pathname.includes("cuenta.html")) {
+          window.location.href = "signup.html";
+          return;
+        }
+
+        const loginContainer = document.getElementById("login-container");
+        if (loginContainer) {
+          loginContainer.style.display = "flex";
+          if (isMock) {
+            const mockBanner = document.getElementById("login-mock-banner");
+            if (mockBanner) mockBanner.style.display = "block";
+          }
         }
       }
     });
@@ -1530,7 +1368,6 @@
         updateDashboardUI();
       } else {
         try {
-          const { doc, onSnapshot } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const docRef = doc(dbService, "users", user.uid);
 
           unsubscribeProfile = onSnapshot(docRef, (snapshot) => {
@@ -1594,7 +1431,6 @@
         if (dbService) {
           clearInterval(checkDb);
           try {
-            const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
             const docRef = doc(dbService, "users", refId);
             const snap = await getDoc(docRef);
             if (snap.exists()) {
@@ -1714,7 +1550,6 @@
           return newProfile;
         }
       } else {
-        const { doc, getDoc, setDoc, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
         const docRef = doc(dbService, "users", user.uid);
         const snap = await getDoc(docRef);
         if (snap.exists()) {
@@ -1765,7 +1600,6 @@
       
       if (!isMock) {
         try {
-          const { collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const q = query(collection(dbService, "users"), where("referredBy", "==", currentUser.uid));
           const snapshot = await getDocs(q);
           
@@ -1814,7 +1648,6 @@
         if (isMock) {
           await dbService.addDoc({ name: "orders" }, mockOrder);
         } else {
-          const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const ordersCol = collection(dbService, "orders");
           await addDoc(ordersCol, mockOrder);
         }
@@ -1867,35 +1700,7 @@
       let points = currentProfile.points || 0;
       const isVip = currentProfile.isVip || false;
 
-      // Autocorrección de puntos de bienvenida heredados (de 10 a 100)
-      if (points === 10 || points === 110) {
-        const newPoints = points + 90;
-        currentProfile.points = newPoints; // Actualización local inmediata
-        points = newPoints;
-        
-        // Ejecutar actualización en segundo plano
-        (async () => {
-          try {
-            if (isMock) {
-              const userRef = { collection: "users", id: currentUser.uid };
-              const usersData = JSON.parse(localStorage.getItem("santopadre_mock_db_users") || "{}");
-              if (usersData[currentUser.uid]) {
-                usersData[currentUser.uid].points = newPoints;
-                localStorage.setItem("santopadre_mock_db_users", JSON.stringify(usersData));
-              }
-            } else {
-              const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-              const userDocRef = doc(dbService, "users", currentUser.uid);
-              await setDoc(userDocRef, { points: newPoints }, { merge: true });
-            }
-            console.log(`Puntos de bienvenida corregidos a ${newPoints}`);
-          } catch (e) {
-            console.error("Error al corregir puntos de bienvenida:", e);
-          }
-        })();
-      }
-
-      // 1. Datos en Sidebar y Tarjeta de Perfil Izquierda (Actualizado de inmediato)
+      // 1. Datos en Sidebar y Tarjeta de Perfil Izquierda (Actualizado de inmediato, movido arriba para evitar que errores detengan el proceso)
       const userFullName = currentProfile.name || currentUser.displayName || "Cliente";
       
       const elSidebarName = document.getElementById("user-display-name");
@@ -1912,9 +1717,37 @@
 
       const elSummaryPoints = document.getElementById("summary-card-points");
       if (elSummaryPoints) elSummaryPoints.innerText = `${points} $PADRE`;
-
+      
       const elAvatarBadge = document.getElementById("profile-avatar-badge");
       if (elAvatarBadge) elAvatarBadge.innerText = userFullName.charAt(0).toUpperCase();
+
+      // Autocorrección de puntos de bienvenida heredados (de 10 a 100)
+      if (points === 10 || points === 110) {
+        const newPoints = points + 90;
+        currentProfile.points = newPoints; // Actualización local inmediata
+        points = newPoints;
+        if (elSummaryPoints) elSummaryPoints.innerText = `${points} $PADRE`;
+        
+        // Ejecutar actualización en segundo plano
+        (async () => {
+          try {
+            if (isMock) {
+              const userRef = { collection: "users", id: currentUser.uid };
+              const usersData = JSON.parse(localStorage.getItem("santopadre_mock_db_users") || "{}");
+              if (usersData[currentUser.uid]) {
+                usersData[currentUser.uid].points = newPoints;
+                localStorage.setItem("santopadre_mock_db_users", JSON.stringify(usersData));
+              }
+            } else {
+              const userDocRef = doc(dbService, "users", currentUser.uid);
+              await setDoc(userDocRef, { points: newPoints }, { merge: true });
+            }
+            console.log(`Puntos de bienvenida corregidos a ${newPoints}`);
+          } catch (e) {
+            console.error("Error al corregir puntos de bienvenida:", e);
+          }
+        })();
+      }
 
       const userPhotoURL = currentUser.photoURL || currentProfile.photoURL;
       const avatarImg = document.getElementById("user-display-avatar");
@@ -2097,9 +1930,6 @@
         document.getElementById("quest-review-details").innerHTML = `
           <div style="display: flex; flex-direction: column; gap: 8px;">
             <p style="color: orange; font-weight: bold; font-size: 13px; margin-bottom: 4px;">⏳ Tu reseña con el nombre "${currentProfile.reviewGoogleUsername || ""}" está en verificación por el administrador.</p>
-            <button class="quest-btn" onclick="window.simulateAdminReviewApprove()" style="font-size: 11px; height: 32px; background: var(--lime); color: var(--ink-3); font-weight: 700; width: 100%; max-width: 250px;">
-              [PROBAR] Simular aprobación de admin
-            </button>
           </div>
         `;
       }
@@ -2410,7 +2240,6 @@
           const userRef = { collection: "users", id: currentUser.uid };
           await dbService.setDoc(userRef, currentProfile);
         } else {
-          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const userDocRef = doc(dbService, "users", currentUser.uid);
           await setDoc(userDocRef, { wishlist: wishlist }, { merge: true });
         }

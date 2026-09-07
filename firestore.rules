@@ -13,11 +13,44 @@ service cloud.firestore {
     // NOTA: la colección 'usuarios/{uid}' del feature de wallet no se usa en ningún
     // lugar del código (js/modules/wallet.js, functions/rewards.js y functions/referrals.js
     // leen y escriben todos en 'users/{uid}'). Se elimina para no dejar una colección
-    // abierta sin protección. Ver checklist T01b para la validación granular pendiente
-    // de 'users/{userId}' (delta de points/stamps/isVip/activeRewards).
+    // abierta sin protección.
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
       allow read, write: if isAdmin();
+
+      // Alta de cuenta: solo el propio usuario, y solo con el saldo inicial exacto
+      // que otorga js/dashboard.js (getOrCreateProfile -> createNewProfileObj()).
+      allow create: if request.auth != null && request.auth.uid == userId &&
+        request.resource.data.uid == userId &&
+        request.resource.data.points == 100 &&
+        request.resource.data.isVip == false &&
+        (!request.resource.data.keys().hasAny(['stamps']) || request.resource.data.stamps == 0);
+
+      // Un usuario normal solo puede modificar su propio documento si:
+      //   (a) no toca ningún campo de saldo/recompensa protegido, o
+      //   (b) el cambio es exactamente una de las misiones "instantáneas" que el
+      //       propio cliente puede autoacreditarse una sola vez (cumpleaños +100,
+      //       seguir Instagram +50). Todo lo demás (canjes, sellos, aprobación de
+      //       reseñas/redes, ascensos de nivel) pasa por Cloud Functions con
+      //       Admin SDK, que no están sujetas a estas reglas.
+      allow update: if isAdmin() || (
+        request.auth != null && request.auth.uid == userId &&
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['stamps', 'claimedRewards', 'activeRewards', 'uid']) &&
+        (
+          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['points', 'isVip'])) ||
+
+          (request.resource.data.points == resource.data.points + 100 &&
+           request.resource.data.birthdayClaimed == true &&
+           (!('birthdayClaimed' in resource.data) || resource.data.birthdayClaimed == false)) ||
+
+          (request.resource.data.points == resource.data.points + 50 &&
+           request.resource.data.instagramClaimed == true &&
+           (!('instagramClaimed' in resource.data) || resource.data.instagramClaimed == false))
+        )
+      );
+
+      allow delete: if isAdmin();
 
       match /transactions/{txId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;

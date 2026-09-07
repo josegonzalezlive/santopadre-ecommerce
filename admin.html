@@ -941,24 +941,47 @@
       }
     }
 
-    async function checkIsAdmin(user) {
-      if (!user) return false;
-      if (ALLOWED_ADMIN_EMAILS.includes(user.email)) return true;
+    const ADMIN_ROLES = ["superadmin", "admin", "cashier", "marketing"];
+
+    // Rol actual del admin autenticado. null hasta que resolveAdminRole() corre.
+    // Refleja exactamente la logica de functions/authz.js:getAdminRole() para que el
+    // panel nunca muestre una accion que el backend vaya a rechazar por rol.
+    let currentAdminRole = null;
+
+    async function resolveAdminRole(user) {
+      if (!user) return null;
+      if (ALLOWED_ADMIN_EMAILS.includes(user.email)) return "superadmin";
 
       try {
         if (isMock) {
           const mockAdmins = JSON.parse(localStorage.getItem("santopadre_mock_db_admins") || "[]");
-          return mockAdmins.includes(user.email);
+          return mockAdmins.includes(user.email) ? "admin" : null;
         } else {
           const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
           const adminDocRef = doc(db, "admins", user.email);
           const snap = await getDoc(adminDocRef);
-          return snap.exists();
+          if (!snap.exists()) return null;
+          const role = snap.data()?.role;
+          return ADMIN_ROLES.includes(role) ? role : "admin";
         }
       } catch (e) {
         console.error("Error checking admin status:", e);
-        return false;
+        return null;
       }
+    }
+
+    async function checkIsAdmin(user) {
+      currentAdminRole = await resolveAdminRole(user);
+      return Boolean(currentAdminRole);
+    }
+
+    // Bloquea una accion en el cliente si el rol actual no esta en allowedRoles - evita
+    // que cashier/marketing disparen callables que el backend (requireRole en rewards.js)
+    // va a rechazar de todas formas, con un mensaje claro en vez de un error crudo de Firebase.
+    function requireUiRole(allowedRoles, actionLabel) {
+      if (currentAdminRole && allowedRoles.includes(currentAdminRole)) return true;
+      alert(`Tu rol actual (${currentAdminRole || "sin rol"}) no tiene permiso para ${actionLabel}.`);
+      return false;
     }
 
     async function callFunction(name, payload = {}) {
@@ -1412,6 +1435,7 @@
 
     // Quick Add 1 Stamp + 100 PTS
     window.quickAddStamp = async function(userId) {
+      if (!requireUiRole(["superadmin", "admin", "cashier"], "sumar sellos rapido")) return;
       const u = allUsers.find(x => x.id === userId);
       if (!u) return;
 
@@ -1716,6 +1740,7 @@
 
     // Save points and stamps with audit logging
     window.saveUserPointsAndStamps = async function(userId) {
+      if (!requireUiRole(["superadmin", "admin"], "ajustar puntos/sellos manualmente")) return;
       const u = allUsers.find(x => x.id === userId);
       if (!u) return;
 
@@ -1826,6 +1851,7 @@
 
     // --- APROBACIÓN Y RECHAZO DE MISIONES DE REDES SOCIALES ---
     window.approveSocialQuest = async function(userId, questType, pointsBonus) {
+      if (!requireUiRole(["superadmin", "admin", "marketing"], "aprobar misiones de redes sociales")) return;
       const u = allUsers.find(x => x.id === userId);
       if (!u) return;
       if (!confirm(`¿Aprobar esta misión de redes sociales y otorgar ${pointsBonus} puntos a ${u.name}?`)) return;
@@ -1904,6 +1930,7 @@
     };
 
     window.rejectSocialQuest = async function(userId, questType) {
+      if (!requireUiRole(["superadmin", "admin", "marketing"], "rechazar misiones de redes sociales")) return;
       const u = allUsers.find(x => x.id === userId);
       if (!u) return;
       if (!confirm("¿Seguro que deseas rechazar esta misión?")) return;
@@ -2061,6 +2088,7 @@
     }
 
     window.saveTierRewardSetting = async function(level) {
+      if (!requireUiRole(["superadmin", "admin"], "editar recompensas por nivel")) return;
       const current = tierRewardsSettings.find(t => Number(t.level) === Number(level)) || DEFAULT_TIER_REWARDS[level - 1];
       const payload = {
         level,
@@ -2122,6 +2150,7 @@
     }
 
     window.saveLoyaltyCampaignSettings = async function() {
+      if (!requireUiRole(["superadmin", "admin", "marketing"], "editar campañas de loyalty")) return;
       const payload = {
         active: document.getElementById("campaign-active").checked,
         name: document.getElementById("campaign-name").value.trim(),
@@ -2173,6 +2202,7 @@
 
     // Validar y Consumir Canje en Caja
     window.consumeReward = async function(userId, rewardId, rewardCode, rewardName) {
+      if (!requireUiRole(["superadmin", "admin", "cashier"], "validar/consumir premios")) return;
       const u = allUsers.find(x => x.id === userId);
       if (!u) return;
 
@@ -2312,6 +2342,7 @@
     };
 
     window.saveNewManualUser = async function() {
+      if (!requireUiRole(["superadmin", "admin", "cashier"], "crear usuarios manuales")) return;
       const name = document.getElementById("create-user-name").value.trim();
       const email = document.getElementById("create-user-email").value.trim();
       const phone = document.getElementById("create-user-phone").value.trim();

@@ -1,5 +1,5 @@
     import { getActiveServices } from "./firebase-config.js";
-import { doc, setDoc, getDoc, collection, addDoc, query, where, orderBy, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, setDoc, getDoc, collection, addDoc, query, where, orderBy, limit, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { subscribeToBalance, subscribeToTransactions, processRecarga, processCanje } from "./modules/wallet.js";
@@ -32,9 +32,29 @@ window.showLoadingState = showLoadingState;
     let currentProfile = null;
     let unsubscribeProfile = null;
 
-    // Configuración de Integración con n8n/Google Sheets (Fase de Marketing)
-    // Se puede configurar de forma dinámica desde el LocalStorage o panel
-    const MARKETING_WEBHOOK_URL = localStorage.getItem("santopadre_marketing_webhook") || "https://script.google.com/macros/s/AKfycbxdF_s4N0zvwaLzw9b07ejWQgpKnuzl9oJ6L0fJUh7oiB6ZfdHFE3PvgWx2A5a_vIfS9w/exec";
+    // Configuración de Integración con n8n/Google Sheets (Fase de Marketing).
+    // admin.html ya lee/escribe esto en el doc config/marketing de Firestore
+    // (ver loadMarketingWebhook allá), pero dashboard.js nunca lo consultaba: solo
+    // usaba localStorage (por navegador) o el valor por defecto fijo de abajo, así
+    // que un cambio hecho desde el panel nunca llegaba a los clientes. Se resuelve
+    // una vez al cargar, con localStorage como caché y el literal como último
+    // recurso si Firestore no responde.
+    const DEFAULT_MARKETING_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxdF_s4N0zvwaLzw9b07ejWQgpKnuzl9oJ6L0fJUh7oiB6ZfdHFE3PvgWx2A5a_vIfS9w/exec";
+    let MARKETING_WEBHOOK_URL = localStorage.getItem("santopadre_marketing_webhook") || DEFAULT_MARKETING_WEBHOOK_URL;
+
+    (async function loadMarketingWebhookFromConfig() {
+      if (isMock) return;
+      try {
+        const configDocRef = doc(dbService, "config", "marketing");
+        const snap = await getDoc(configDocRef);
+        if (snap.exists() && snap.data().webhookUrl) {
+          MARKETING_WEBHOOK_URL = snap.data().webhookUrl;
+          localStorage.setItem("santopadre_marketing_webhook", MARKETING_WEBHOOK_URL);
+        }
+      } catch (e) {
+        console.error("No se pudo cargar la config de marketing, usando el valor en caché:", e);
+      }
+    })();
 
     async function triggerMarketingWebhook(profile, eventType) {
       if (!MARKETING_WEBHOOK_URL) {
@@ -1017,7 +1037,11 @@ window.showLoadingState = showLoadingState;
           orders = await dbService.getOrdersByUser(userId);
         } else {
           const ordersCol = collection(dbService, "orders");
-          const q = query(ordersCol, where("userId", "==", userId), orderBy("createdAt", "desc"));
+          // Límite de 50: sin esto la consulta traía TODO el historial de órdenes del
+          // usuario en cada refresh de la pestaña Actividad (cada canje/misión la
+          // dispara), un costo de lecturas de Firestore que crece sin tope con el
+          // tiempo de vida de la cuenta.
+          const q = query(ordersCol, where("userId", "==", userId), orderBy("createdAt", "desc"), limit(50));
           const querySnapshot = await getDocs(q);
           querySnapshot.forEach(doc => {
             orders.push({ id: doc.id, ...doc.data() });

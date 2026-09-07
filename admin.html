@@ -2372,13 +2372,15 @@
           localStorage.setItem("santopadre_mock_db_users", JSON.stringify(usersData));
           await dbService.addDoc({ name: "orders" }, welcomeOrder);
         } else {
+          // Nota: "meat" (preferencia de proteína) no se envía - adminCreateManualUser
+          // nunca la persiste server-side (solo el perfil "gastronomy" del modo mock la
+          // tenía), y el validador de campos del backend ahora rechaza claves inesperadas.
           const result = await callFunction("adminCreateManualUser", {
             name,
             email,
             phone,
             gender,
-            birthday,
-            meat
+            birthday
           });
           newUid = result.userId;
         }

@@ -829,16 +829,17 @@ exports.adminConsumeReward = onCall(CALLABLE_OPTIONS, async (request) => {
       claimedRewards: [...claimedRewards, { ...reward, claimedAt: new Date().toISOString(), status: 'used' }],
       updatedAt: FieldValue.serverTimestamp()
     });
-    tx.set(userRef.collection('transactions').doc(`consume_${auditId}`), {
+    writePointLedger(tx, db, userRef, userRef.collection('transactions').doc(`consume_${auditId}`), buildPointLedgerEntry({
+      userId,
       type: 'reward_consumed',
-      rewardId,
-      amount: 0,
+      sourceId: rewardId,
       pointsDelta: 0,
-      currency: 'PADRE',
       reason: `Validación de canje: ${reward.name}`,
-      timestamp: FieldValue.serverTimestamp(),
-      status: 'completed'
-    });
+      balanceBefore: user.points || 0,
+      balanceAfter: user.points || 0,
+      actor: { uid: auth.uid, email: auth.token.email || null, role },
+      metadata: { auditId, rewardId, rewardName: reward.name, couponCode: reward.code || null }
+    }));
     result = { userId, rewardId, consumed: true, auditId };
   });
   return result;

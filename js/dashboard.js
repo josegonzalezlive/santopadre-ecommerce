@@ -42,8 +42,13 @@ window.showLoadingState = showLoadingState;
     const DEFAULT_MARKETING_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxdF_s4N0zvwaLzw9b07ejWQgpKnuzl9oJ6L0fJUh7oiB6ZfdHFE3PvgWx2A5a_vIfS9w/exec";
     let MARKETING_WEBHOOK_URL = localStorage.getItem("santopadre_marketing_webhook") || DEFAULT_MARKETING_WEBHOOK_URL;
 
-    (async function loadMarketingWebhookFromConfig() {
-      if (isMock) return;
+    // OJO: request.auth es null en firestore.rules hasta que el usuario esté
+    // autenticado, así que esto solo puede llamarse DESPUÉS de que
+    // authService.onAuthStateChanged confirme un usuario (si no, permission-denied).
+    let _marketingConfigLoaded = false;
+    async function loadMarketingWebhookFromConfig() {
+      if (isMock || _marketingConfigLoaded) return;
+      _marketingConfigLoaded = true;
       try {
         const configDocRef = doc(dbService, "config", "marketing");
         const snap = await getDoc(configDocRef);
@@ -54,7 +59,7 @@ window.showLoadingState = showLoadingState;
       } catch (e) {
         console.error("No se pudo cargar la config de marketing, usando el valor en caché:", e);
       }
-    })();
+    }
 
     async function triggerMarketingWebhook(profile, eventType) {
       if (!MARKETING_WEBHOOK_URL) {
@@ -1301,7 +1306,8 @@ window.showLoadingState = showLoadingState;
         window.currentUser = user;
         // Obtener o crear perfil en BD
         currentProfile = await getOrCreateProfile(user);
-        
+        loadMarketingWebhookFromConfig();
+
         if (window.location.pathname.includes("signup.html")) {
           window.location.href = "cuenta.html";
           return;

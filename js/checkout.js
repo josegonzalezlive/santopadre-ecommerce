@@ -628,7 +628,7 @@ async function processPhantomPayment(usdAmount) {
   }
 
   // TODO: Reemplaza esto con tu Wallet real de Solana
-  const RECEIVER_WALLET = "7pHnSvY3ki2SZ9YgXUt2ZxeS2F3cS5j2qNwgdHTQLFk3"; // SantoPadre Wallet
+  const RECEIVER_WALLET = window.PAYMENT_INFO.solanaWallet;
 
   await provider.connect();
   const payerKey = provider.publicKey;

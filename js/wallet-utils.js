@@ -281,7 +281,7 @@ async function payWithPhantomModalDirect() {
     const solAmount = amount / solPrice;
     const lamports = Math.round(solAmount * solanaWeb3.LAMPORTS_PER_SOL);
     
-    const receiverPubkey = new solanaWeb3.PublicKey('7pHnSvY3ki2SZ9YgXUt2ZxeS2F3cS5j2qNwgdHTQLFk3');
+    const receiverPubkey = new solanaWeb3.PublicKey(window.PAYMENT_INFO.solanaWallet);
     
     const transaction = new solanaWeb3.Transaction().add(
       solanaWeb3.SystemProgram.transfer({

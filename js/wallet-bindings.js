@@ -393,31 +393,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const el_evt_20419c = document.getElementById('evt-20419c');
   if (el_evt_20419c) {
     el_evt_20419c.addEventListener('click', function(event) {
-      copyToClipboard('BNC - 0191', this)
+      copyToClipboard(window.PAYMENT_INFO.bank, this)
     });
   }
   const el_evt_6cb266 = document.getElementById('evt-6cb266');
   if (el_evt_6cb266) {
     el_evt_6cb266.addEventListener('click', function(event) {
-      copyToClipboard('21564286', this)
+      copyToClipboard(window.PAYMENT_INFO.ci, this)
     });
   }
   const el_evt_0c1e15 = document.getElementById('evt-0c1e15');
   if (el_evt_0c1e15) {
     el_evt_0c1e15.addEventListener('click', function(event) {
-      copyToClipboard('04125540246', this)
+      copyToClipboard(window.PAYMENT_INFO.phone, this)
     });
   }
   const el_evt_be57b9 = document.getElementById('evt-be57b9');
   if (el_evt_be57b9) {
     el_evt_be57b9.addEventListener('click', function(event) {
-      copyToClipboard('luisgonzalez372f@gmail.com', this)
+      copyToClipboard(window.PAYMENT_INFO.email, this)
     });
   }
   const el_evt_78fa7a = document.getElementById('evt-78fa7a');
   if (el_evt_78fa7a) {
     el_evt_78fa7a.addEventListener('click', function(event) {
-      copyToClipboard('7pHnSvY3ki2SZ9YgXUt2ZxeS2F3cS5j2qNwgdHTQLFk3', this)
+      copyToClipboard(window.PAYMENT_INFO.solanaWallet, this)
     });
   }
   const el_modal_submit_whatsapp = document.getElementById('modal-submit-whatsapp');
@@ -675,31 +675,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const el_evt_8b2f0b = document.getElementById('evt-8b2f0b');
   if (el_evt_8b2f0b) {
     el_evt_8b2f0b.addEventListener('click', function(event) {
-      copyToClipboard('BNC - 0191', this)
+      copyToClipboard(window.PAYMENT_INFO.bank, this)
     });
   }
   const el_evt_bbbe30 = document.getElementById('evt-bbbe30');
   if (el_evt_bbbe30) {
     el_evt_bbbe30.addEventListener('click', function(event) {
-      copyToClipboard('21564286', this)
+      copyToClipboard(window.PAYMENT_INFO.ci, this)
     });
   }
   const el_evt_4d0f7d = document.getElementById('evt-4d0f7d');
   if (el_evt_4d0f7d) {
     el_evt_4d0f7d.addEventListener('click', function(event) {
-      copyToClipboard('04125540246', this)
+      copyToClipboard(window.PAYMENT_INFO.phone, this)
     });
   }
   const el_evt_61a26e = document.getElementById('evt-61a26e');
   if (el_evt_61a26e) {
     el_evt_61a26e.addEventListener('click', function(event) {
-      copyToClipboard('luisgonzalez372f@gmail.com', this)
+      copyToClipboard(window.PAYMENT_INFO.email, this)
     });
   }
   const el_evt_b274a6 = document.getElementById('evt-b274a6');
   if (el_evt_b274a6) {
     el_evt_b274a6.addEventListener('click', function(event) {
-      copyToClipboard('7pHnSvY3ki2SZ9YgXUt2ZxeS2F3cS5j2qNwgdHTQLFk3', this)
+      copyToClipboard(window.PAYMENT_INFO.solanaWallet, this)
     });
   }
 });

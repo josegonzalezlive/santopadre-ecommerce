@@ -25,7 +25,9 @@ service cloud.firestore {
         'claimedRewards',
         'usdcBalance',
         'pointsExpiresAt',
-        'pointsLastActivityAt'
+        'pointsLastActivityAt',
+        'reconciliationStatus',
+        'lastReconciledAt'
       ];
     }
 
@@ -91,6 +93,16 @@ service cloud.firestore {
     }
 
     match /loyalty_events/{eventId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /loyaltyLedger/{entryId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /loyaltyReconciliations/{entryId} {
       allow read: if isAdmin();
       allow write: if false;
     }

@@ -136,6 +136,22 @@ describe('internal loyalty collections', () => {
     await assertFails(setDoc(doc(adminDb, 'referralClaims', 'alice'), { referrerId: 'admin' }));
     await assertFails(setDoc(doc(adminDb, 'rateLimits', 'alice_redeemReward'), { lastAt: Date.now() }));
     await assertFails(addDoc(collection(adminDb, 'loyalty_events'), { event: 'redeem_success' }));
+    await assertFails(setDoc(doc(adminDb, 'loyaltyLedger', 'entry1'), { userId: 'alice', pointsDelta: 100 }));
+    await assertFails(setDoc(doc(adminDb, 'loyaltyReconciliations', 'entry1'), { userId: 'alice', delta: 100 }));
+  });
+
+  test('allows admins to read global ledger and reconciliation records', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'loyaltyLedger', 'entry1'), { userId: 'alice', pointsDelta: 100 });
+      await setDoc(doc(context.firestore(), 'loyaltyReconciliations', 'entry1'), { userId: 'alice', delta: 0 });
+    });
+    const adminDb = authedDb('admin', 'josegonzalez.private@gmail.com');
+    const userDb = authedDb('alice');
+
+    await assertSucceeds(getDoc(doc(adminDb, 'loyaltyLedger', 'entry1')));
+    await assertSucceeds(getDoc(doc(adminDb, 'loyaltyReconciliations', 'entry1')));
+    await assertFails(getDoc(doc(userDb, 'loyaltyLedger', 'entry1')));
+    await assertFails(getDoc(doc(userDb, 'loyaltyReconciliations', 'entry1')));
   });
 
   test('allows tier reads but blocks direct writes', async () => {

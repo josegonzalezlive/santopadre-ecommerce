@@ -4,6 +4,7 @@ const axios = require('axios');
 
 const waToken = defineSecret('WHATSAPP_TOKEN');
 const waPhoneId = defineSecret('WHATSAPP_PHONE_NUMBER_ID');
+const CALLABLE_OPTIONS = { maxInstances: 10, ...(process.env.ENFORCE_APP_CHECK === 'true' ? { enforceAppCheck: true } : {}) };
 
 function normalizeWhatsappTo(value) {
   const digits = String(value || '').replace(/\D/g, '');
@@ -62,7 +63,7 @@ async function sendComprobanteWhatsapp({ recipientPhone, userName, amount, point
 }
 
 exports.sendComprobanteNotification = onCall(
-  { secrets: [waToken, waPhoneId] },
+  { ...CALLABLE_OPTIONS, secrets: [waToken, waPhoneId] },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Login required');

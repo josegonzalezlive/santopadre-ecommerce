@@ -13,6 +13,12 @@ const {
   normalizeTierReward,
   normalizeLoyaltyCampaign
 } = require('../functions/loyalty');
+const {
+  assertLedgerPointsDelta,
+  ledgerDocId,
+  compactLedgerMetadata,
+  buildPointLedgerEntry
+} = require('../functions/ledger');
 
 describe('loyalty config', () => {
   test('uses the server-side welcome bonus required by the program', () => {
@@ -92,5 +98,44 @@ describe('ledger helpers', () => {
   test('caps generated transaction ids to firestore-friendly length', () => {
     const id = transactionDocId('deposit', 'x'.repeat(300));
     assert.ok(id.length <= 'deposit_'.length + 120);
+  });
+
+  test('creates stable ledger ids per user, type and source', () => {
+    assert.equal(ledgerDocId('user/1', 'purchase', 'order/123'), 'user_1_purchase_order_123');
+  });
+
+  test('rejects non-integer or oversized point deltas', () => {
+    assert.equal(assertLedgerPointsDelta(100), 100);
+    assert.throws(() => assertLedgerPointsDelta(1.5), /Invalid ledger points delta/);
+    assert.throws(() => assertLedgerPointsDelta(1000001), /Invalid ledger points delta/);
+  });
+
+  test('compacts ledger metadata without preserving unsafe keys', () => {
+    const metadata = compactLedgerMetadata({ 'bad.key': 'x'.repeat(300), nested: { ok: true } });
+    assert.equal(metadata.bad_key.length, 240);
+    assert.deepEqual(metadata.nested, { ok: true });
+  });
+
+  test('builds point ledger entries with immutable accounting fields', () => {
+    const entry = buildPointLedgerEntry({
+      userId: 'alice',
+      type: 'purchase',
+      sourceId: 'order-1',
+      pointsDelta: 25,
+      reason: 'Compra verificada',
+      balanceBefore: 10,
+      balanceAfter: 35,
+      actor: { uid: 'admin-1', email: 'admin@example.com', role: 'admin' },
+      attributes: { couponCode: 'SP-PT-ABC123' }
+    });
+
+    assert.equal(entry.userId, 'alice');
+    assert.equal(entry.pointsDelta, 25);
+    assert.equal(entry.amount, 25);
+    assert.equal(entry.currency, 'PADRE');
+    assert.equal(entry.balanceBefore, 10);
+    assert.equal(entry.balanceAfter, 35);
+    assert.equal(entry.actorRole, 'admin');
+    assert.equal(entry.couponCode, 'SP-PT-ABC123');
   });
 });

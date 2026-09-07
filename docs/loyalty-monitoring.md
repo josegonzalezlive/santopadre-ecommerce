@@ -6,6 +6,7 @@
 2. Crear `WHATSAPP_TOKEN`.
 3. Crear `WHATSAPP_PHONE_NUMBER_ID`.
 4. Confirmar que existe una plantilla aprobada de WhatsApp para `comprobante_recibido` o configurar `WHATSAPP_COMPROBANTE_TEMPLATE`.
+5. Configurar Firebase App Check en consola/frontend antes de activar `ENFORCE_APP_CHECK=true`.
 
 ```bash
 firebase functions:secrets:set WHATSAPP_TOKEN
@@ -32,6 +33,8 @@ Eventos principales:
 - `comprobante_notification_skipped`
 - `comprobante_notification_failed`
 - `points_expired_batch`
+- `loyalty_reconciliation_batch`
+- `loyalty_balance_reconciled`
 
 ## Filtros Recomendados
 
@@ -71,6 +74,19 @@ Crear alert policies en Cloud Monitoring sobre:
 
 - `logging.googleapis.com/user/loyalty_rewards_function_errors` > 0 durante 5 minutos.
 - `logging.googleapis.com/user/loyalty_comprobante_failures` > 0 durante 5 minutos.
+- `loyalty_reconciliation_batch` con `mismatches > 0` debe abrir revisión operativa.
+
+## Reconciliación
+
+`loyaltyLedger` es la fuente auditable de movimientos PADRE. `users/{uid}.points` es
+un saldo cacheado para lectura rápida de dashboard.
+
+- Job automático: `reconcileLoyaltyBalances`, cada 6 horas, revisa hasta 200 usuarios
+  por ejecución y escribe diferencias en `loyaltyReconciliations`.
+- Reparación manual: `adminReconcileUserLoyalty({ userId, repair: true })`, disponible
+  solo para `admin`/`superadmin`.
+- La reparación ajusta el saldo cacheado contra el ledger y registra `audit_logs`; no
+  crea un movimiento artificial en el ledger.
 
 ## Analitica de Embudo
 

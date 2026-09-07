@@ -1,17 +1,39 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
-const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
 const { nanoid } = require('nanoid');
+const { nextPointsExpiry } = require('./loyalty');
+const { buildPointLedgerEntry, writePointLedger } = require('./ledger');
 
 const REFERRAL_BONUS_POINTS = 200;
 const REFERRAL_DOMAIN = 'https://www.santopadre.store';
+const CALLABLE_OPTIONS = { maxInstances: 10, ...(process.env.ENFORCE_APP_CHECK === 'true' ? { enforceAppCheck: true } : {}) };
 
 async function _isAdmin(request) {
+  return Boolean(await _getAdminRole(request));
+}
+
+async function _getAdminRole(request) {
   const email = request.auth?.token?.email;
-  if (!email) return false;
-  if (email === 'josegonzalez.private@gmail.com' || email === 'santopadrevzla@gmail.com') return true;
+  const tokenRole = request.auth?.token?.role;
+  const tokenRoles = Array.isArray(request.auth?.token?.roles) ? request.auth.token.roles : [];
+
+  if (tokenRole === 'superadmin' || tokenRoles.includes('superadmin')) return 'superadmin';
+  if (tokenRole === 'admin' || tokenRoles.includes('admin')) return 'admin';
+  if (tokenRole === 'cashier' || tokenRoles.includes('cashier')) return 'cashier';
+  if (tokenRole === 'marketing' || tokenRoles.includes('marketing')) return 'marketing';
+  if (!email) return null;
+  if (email === 'josegonzalez.private@gmail.com' || email === 'santopadrevzla@gmail.com') return 'superadmin';
+
   const db = getFirestore();
   const snap = await db.doc(`admins/${email}`).get();
-  return snap.exists;
+  if (!snap.exists) return null;
+  const role = snap.data()?.role;
+  return ['superadmin', 'admin', 'cashier', 'marketing'].includes(role) ? role : 'admin';
+}
+
+async function _hasAdminRole(request, allowedRoles = ['superadmin', 'admin']) {
+  const role = await _getAdminRole(request);
+  return role && allowedRoles.includes(role);
 }
 
 async function _claimReferralForUser(referredUid, codeOrUid) {
@@ -78,18 +100,22 @@ async function _completeReferralForPurchase(referredUid, orderId) {
     tx.set(referrerRef, {
       points: nextPoints,
       isVip: nextPoints >= 100,
+      pointsLastActivityAt: FieldValue.serverTimestamp(),
+      pointsExpiresAt: nextPoints > 0 ? Timestamp.fromDate(nextPointsExpiry()) : null,
       updatedAt: FieldValue.serverTimestamp()
     }, { merge: true });
-    tx.set(txRef, {
+    writePointLedger(tx, db, referrerRef, txRef, buildPointLedgerEntry({
+      userId: claim.referrerId,
       type: 'referral_bonus',
       sourceId: referredUid,
       orderId,
-      amount: REFERRAL_BONUS_POINTS,
       pointsDelta: REFERRAL_BONUS_POINTS,
-      currency: 'PADRE',
-      timestamp: FieldValue.serverTimestamp(),
-      status: 'completed'
-    });
+      reason: 'Bono por referido verificado',
+      balanceBefore: referrerSnap.data().points || 0,
+      balanceAfter: nextPoints,
+      actor: { role: 'system' },
+      metadata: { referredUid }
+    }));
     tx.set(claimRef, {
       status: 'completed',
       completedAt: FieldValue.serverTimestamp(),
@@ -111,7 +137,7 @@ async function _completeReferralForPurchase(referredUid, orderId) {
   return { completed: true, referrerId: claim.referrerId, pointsAwarded: REFERRAL_BONUS_POINTS };
 }
 
-exports.generateReferralLink = onCall({ maxInstances: 10 }, async (request) => {
+exports.generateReferralLink = onCall(CALLABLE_OPTIONS, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Login required');
 
   const uid = request.auth.uid;
@@ -129,7 +155,7 @@ exports.generateReferralLink = onCall({ maxInstances: 10 }, async (request) => {
   return { code, url: `${REFERRAL_DOMAIN}/ref?id=${code}` };
 });
 
-exports.claimReferral = onCall({ maxInstances: 10 }, async (request) => {
+exports.claimReferral = onCall(CALLABLE_OPTIONS, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Login required');
   return _claimReferralForUser(request.auth.uid, request.data?.code || request.data?.referrerId);
 });
@@ -137,3 +163,5 @@ exports.claimReferral = onCall({ maxInstances: 10 }, async (request) => {
 exports._claimReferralForUser = _claimReferralForUser;
 exports._completeReferralForPurchase = _completeReferralForPurchase;
 exports._isAdmin = _isAdmin;
+exports._getAdminRole = _getAdminRole;
+exports._hasAdminRole = _hasAdminRole;

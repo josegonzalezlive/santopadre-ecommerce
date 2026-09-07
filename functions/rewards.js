@@ -7,7 +7,7 @@ const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestor
 // TEMPORAL: ver notas de deploy - no requerir './notifications' evita que defineSecret()
 // bloquee el analisis de deploy sin WHATSAPP_TOKEN/WHATSAPP_PHONE_NUMBER_ID en Secret Manager.
 const sendComprobanteWhatsapp = null, waToken = null, waPhoneId = null;
-const { _claimReferralForUser, _completeReferralForPurchase, _isAdmin } = require('./referrals');
+const { _claimReferralForUser, _completeReferralForPurchase, _isAdmin, _getAdminRole } = require('./referrals');
 const {
   WELCOME_POINTS,
   REWARD_CATALOG,
@@ -23,22 +23,32 @@ const {
   normalizeLoyaltyCampaign,
   nextPointsExpiry
 } = require('./loyalty');
+const {
+  LEDGER_COLLECTION,
+  RECONCILIATION_COLLECTION,
+  buildPointLedgerEntry,
+  writePointLedger,
+  ledgerDocId,
+  calculateLedgerBalance
+} = require('./ledger');
 
 if (!getApps().length) initializeApp();
 
 const db = getFirestore();
+const CALLABLE_OPTIONS = { maxInstances: 10, ...(process.env.ENFORCE_APP_CHECK === 'true' ? { enforceAppCheck: true } : {}) };
 
 function requireAuth(request) {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Login required');
   return request.auth;
 }
 
-async function requireAdmin(request) {
+async function requireAdminRole(request, allowedRoles) {
   const auth = requireAuth(request);
-  if (!await _isAdmin(request)) {
-    throw new HttpsError('permission-denied', 'Solo administradores pueden ejecutar esta accion');
+  const role = await _getAdminRole(request);
+  if (!role || !allowedRoles.includes(role)) {
+    throw new HttpsError('permission-denied', 'Permisos insuficientes para esta operacion');
   }
-  return auth;
+  return { auth, role };
 }
 
 function assertPositiveAmount(value, label) {
@@ -71,6 +81,16 @@ function assertReason(value) {
   return reason;
 }
 
+function assertKnownKeys(data, allowedKeys, operation) {
+  const payload = data || {};
+  const allowed = new Set(allowedKeys);
+  const unknown = Object.keys(payload).filter((key) => !allowed.has(key));
+  if (unknown.length) {
+    throw new HttpsError('invalid-argument', `Campos no permitidos en ${operation}: ${unknown.join(', ')}`);
+  }
+  return payload;
+}
+
 function logLoyalty(event, payload = {}) {
   functions.logger.info(event, { component: 'loyalty_rewards', ...payload });
 }
@@ -95,14 +115,41 @@ async function enforceRateLimit(tx, uid, action, intervalMs) {
   tx.set(ref, { uid, action, lastAt: now, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
 }
 
-async function creditUserPoints({ userId, pointsDelta, type, sourceId, reason, orderId, amountUsd, extraUserUpdate }) {
+async function enforceCallableRateLimit(uid, action, intervalMs) {
+  await db.runTransaction(async (tx) => {
+    await enforceRateLimit(tx, uid, action, intervalMs);
+  });
+}
+
+async function creditUserPoints({ userId, pointsDelta, type, sourceId, reason, orderId, amountUsd, extraUserUpdate, actor, metadata }) {
   const userRef = db.collection('users').doc(userId);
   const txRef = userRef.collection('transactions').doc(transactionDocId(type, sourceId));
+  const ledgerRef = db.collection(LEDGER_COLLECTION).doc(ledgerDocId(userId, type, sourceId));
 
   return db.runTransaction(async (tx) => {
-    const [userSnap, txSnap] = await Promise.all([tx.get(userRef), tx.get(txRef)]);
+    const [userSnap, txSnap, ledgerSnap] = await Promise.all([tx.get(userRef), tx.get(txRef), tx.get(ledgerRef)]);
     if (!userSnap.exists) throw new HttpsError('not-found', 'Usuario no encontrado');
     if (txSnap.exists) {
+      if (!ledgerSnap.exists) {
+        const existingDelta = Number(txSnap.data().pointsDelta || txSnap.data().amount || 0);
+        const ledgerEntry = buildPointLedgerEntry({
+          userId,
+          type: txSnap.data().type || type,
+          sourceId: txSnap.data().sourceId || sourceId,
+          orderId: txSnap.data().orderId || orderId || null,
+          pointsDelta: existingDelta,
+          reason: txSnap.data().reason || reason,
+          balanceBefore: null,
+          balanceAfter: userSnap.data().points || 0,
+          actor: actor || { role: 'system' },
+          metadata: { ...(metadata || {}), backfilledFromUserTransaction: true }
+        });
+        tx.set(ledgerRef, {
+          ...ledgerEntry,
+          transactionPath: txRef.path,
+          userPath: userRef.path
+        });
+      }
       return {
         alreadyProcessed: true,
         transactionId: txRef.id,
@@ -112,7 +159,8 @@ async function creditUserPoints({ userId, pointsDelta, type, sourceId, reason, o
     }
 
     const user = userSnap.data();
-    const nextPoints = Math.max(0, (user.points || 0) + pointsDelta);
+    const prevPoints = user.points || 0;
+    const nextPoints = Math.max(0, prevPoints + pointsDelta);
     const expiresAt = nextPoints > 0 ? Timestamp.fromDate(nextPointsExpiry()) : null;
     tx.set(userRef, {
       points: nextPoints,
@@ -124,17 +172,18 @@ async function creditUserPoints({ userId, pointsDelta, type, sourceId, reason, o
       ...(extraUserUpdate || {})
     }, { merge: true });
 
-    tx.set(txRef, {
+    writePointLedger(tx, db, userRef, txRef, buildPointLedgerEntry({
+      userId,
       type,
       sourceId: String(sourceId),
       orderId: orderId || null,
-      amount: pointsDelta,
       pointsDelta,
-      currency: 'PADRE',
       reason,
-      timestamp: FieldValue.serverTimestamp(),
-      status: 'completed'
-    });
+      balanceBefore: prevPoints,
+      balanceAfter: nextPoints,
+      actor: actor || { role: 'system' },
+      metadata
+    }));
 
     return { alreadyProcessed: false, transactionId: txRef.id, pointsDelta, newPoints: nextPoints };
   });
@@ -222,9 +271,12 @@ async function getConfiguredTierRewards() {
   return mergeTierRewards(overrides);
 }
 
-function auditPayload({ auth, userId, user, prevPoints, newPoints, prevStamps, newStamps, reason }) {
+function auditPayload({ auth, role, userId, user, prevPoints, newPoints, prevStamps, newStamps, reason, action, metadata }) {
   return {
+    action: action || 'admin_update',
+    actorUid: auth.uid,
     adminEmail: auth.token.email || auth.uid,
+    adminRole: role || 'admin',
     userId,
     userName: user.name || user.email || 'Cliente SantoPadre',
     prevPoints,
@@ -234,6 +286,7 @@ function auditPayload({ auth, userId, user, prevPoints, newPoints, prevStamps, n
     prevStamps,
     newStamps,
     reason,
+    metadata: compactMetadata(metadata || {}),
     timestamp: new Date().toISOString()
   };
 }
@@ -261,24 +314,25 @@ exports.initializeUserRewards = functions.auth.user().onCreate(async (user) => {
       updatedAt: FieldValue.serverTimestamp()
     }, { merge: true });
     if (!txSnap.exists) {
-      tx.set(txRef, {
+      writePointLedger(tx, db, userRef, txRef, buildPointLedgerEntry({
+        userId: user.uid,
         type: 'welcome_bonus',
         sourceId: user.uid,
-        amount: WELCOME_POINTS,
         pointsDelta: WELCOME_POINTS,
-        currency: 'PADRE',
         reason: 'Bono de bienvenida',
-        timestamp: FieldValue.serverTimestamp(),
-        status: 'completed'
-      });
+        balanceBefore: 0,
+        balanceAfter: WELCOME_POINTS,
+        actor: { role: 'system' }
+      }));
     }
   });
 
   logLoyalty('welcome_bonus_initialized', { userId: user.uid, pointsAwarded: WELCOME_POINTS });
 });
 
-exports.syncUserProfile = onCall({ maxInstances: 10 }, async (request) => {
+exports.syncUserProfile = onCall(CALLABLE_OPTIONS, async (request) => {
   const auth = requireAuth(request);
+  assertKnownKeys(request.data, ['name', 'referrerId'], 'syncUserProfile');
   const profile = publicProfileFromAuth(auth, request.data || {});
   const userRef = db.collection('users').doc(auth.uid);
 
@@ -300,16 +354,17 @@ exports.syncUserProfile = onCall({ maxInstances: 10 }, async (request) => {
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp()
     });
-    tx.set(userRef.collection('transactions').doc('welcome_bonus'), {
+    writePointLedger(tx, db, userRef, userRef.collection('transactions').doc('welcome_bonus'), buildPointLedgerEntry({
+      userId: auth.uid,
       type: 'welcome_bonus',
       sourceId: auth.uid,
-      amount: WELCOME_POINTS,
       pointsDelta: WELCOME_POINTS,
-      currency: 'PADRE',
       reason: 'Bono de bienvenida',
-      timestamp: FieldValue.serverTimestamp(),
-      status: 'completed'
-    });
+      balanceBefore: 0,
+      balanceAfter: WELCOME_POINTS,
+      actor: { role: 'system' },
+      metadata: { createdBySyncUserProfile: true }
+    }));
   });
 
   let referral = null;
@@ -325,8 +380,10 @@ exports.syncUserProfile = onCall({ maxInstances: 10 }, async (request) => {
   return { profile: snap.data(), referral };
 });
 
-exports.confirmPurchaseAndAwardPoints = onCall({ maxInstances: 5 }, async (request) => {
+exports.confirmPurchaseAndAwardPoints = onCall(CALLABLE_OPTIONS, async (request) => {
   const auth = requireAuth(request);
+  assertKnownKeys(request.data, ['orderId', 'solanaSignature', 'cluster'], 'confirmPurchaseAndAwardPoints');
+  await enforceCallableRateLimit(auth.uid, 'confirmPurchaseAndAwardPoints', 5000);
   const orderId = typeof request.data?.orderId === 'string' ? request.data.orderId.trim() : '';
   if (!orderId) throw new HttpsError('invalid-argument', 'orderId es requerido');
 
@@ -358,7 +415,18 @@ exports.confirmPurchaseAndAwardPoints = onCall({ maxInstances: 5 }, async (reque
     type: 'purchase',
     sourceId: orderId,
     reason: 'Compra verificada',
-    orderId
+    orderId,
+    actor: {
+      uid: auth.uid,
+      email: auth.token.email || null,
+      role: adminCaller ? await _getAdminRole(request) : 'customer'
+    },
+    metadata: {
+      payment: order.payment || null,
+      verificationType: solanaSignature ? 'solana' : 'admin',
+      basePoints,
+      campaign: campaign ? { name: campaign.name, pointsMultiplier: campaign.pointsMultiplier } : null
+    }
   });
 
   const orderUpdate = {
@@ -380,8 +448,10 @@ exports.confirmPurchaseAndAwardPoints = onCall({ maxInstances: 5 }, async (reque
   return { ...result, success: true, orderId, pointsAwarded: result.pointsDelta || points, referral };
 });
 
-exports.confirmSolanaDeposit = onCall({ maxInstances: 5 }, async (request) => {
+exports.confirmSolanaDeposit = onCall(CALLABLE_OPTIONS, async (request) => {
   const auth = requireAuth(request);
+  assertKnownKeys(request.data, ['amountUsd', 'signature', 'cluster'], 'confirmSolanaDeposit');
+  await enforceCallableRateLimit(auth.uid, 'confirmSolanaDeposit', 10000);
   const amountUsd = assertPositiveAmount(request.data?.amountUsd, 'Monto');
   const verification = await verifySolanaTransfer({
     signature: request.data?.signature,
@@ -395,7 +465,9 @@ exports.confirmSolanaDeposit = onCall({ maxInstances: 5 }, async (request) => {
     type: 'solana_deposit',
     sourceId: verification.signature,
     reason: 'Deposito Solana verificado',
-    amountUsd
+    amountUsd,
+    actor: { uid: auth.uid, email: auth.token.email || null, role: 'customer' },
+    metadata: { amountUsd, cluster: verification.cluster, lamports: verification.lamports }
   });
 
   let notification = null;
@@ -424,8 +496,9 @@ exports.confirmSolanaDeposit = onCall({ maxInstances: 5 }, async (request) => {
   return { ...result, success: true, amountUsd, pointsAwarded: points, solana: verification, notification };
 });
 
-exports.redeemReward = onCall({ maxInstances: 10 }, async (request) => {
+exports.redeemReward = onCall(CALLABLE_OPTIONS, async (request) => {
   const auth = requireAuth(request);
+  assertKnownKeys(request.data, ['rewardId'], 'redeemReward');
   const rewardId = request.data?.rewardId;
   const catalogEntry = REWARD_CATALOG[rewardId];
   if (!catalogEntry) throw new HttpsError('invalid-argument', 'Recompensa inválida');
@@ -458,17 +531,21 @@ exports.redeemReward = onCall({ maxInstances: 10 }, async (request) => {
       pointsLastActivityAt: FieldValue.serverTimestamp(),
       pointsExpiresAt: newPoints > 0 ? Timestamp.fromDate(nextPointsExpiry()) : null
     });
-    tx.set(userRef.collection('transactions').doc(`redeem_${rewardDocId}`), {
+    writePointLedger(tx, db, userRef, userRef.collection('transactions').doc(`redeem_${rewardDocId}`), buildPointLedgerEntry({
+      userId: uid,
       type: 'canje',
+      sourceId: rewardDocId,
       rewardId,
-      amount: -catalogEntry.cost,
       pointsDelta: -catalogEntry.cost,
-      currency: 'PADRE',
       reward: catalogEntry.name,
       couponCode,
-      timestamp: FieldValue.serverTimestamp(),
-      status: 'completed'
-    });
+      reason: `Canje de recompensa: ${catalogEntry.name}`,
+      balanceBefore: balance,
+      balanceAfter: newPoints,
+      actor: { uid: auth.uid, email: auth.token.email || null, role: 'customer' },
+      metadata: { rewardId, rewardName: catalogEntry.name, couponCode },
+      attributes: { rewardId, reward: catalogEntry.name, couponCode }
+    }));
     tx.set(db.collection('orders').doc(), {
       userId: uid,
       items: [{ name: `Canje: ${catalogEntry.name} (Código: ${couponCode})`, quantity: 1, price: 0 }],
@@ -485,8 +562,9 @@ exports.redeemReward = onCall({ maxInstances: 10 }, async (request) => {
   return { success: true, rewardName: catalogEntry.name, couponCode, cost: catalogEntry.cost, reward: result.reward, newPoints: result.newPoints };
 });
 
-exports.claimTierReward = onCall({ maxInstances: 10 }, async (request) => {
+exports.claimTierReward = onCall(CALLABLE_OPTIONS, async (request) => {
   const auth = requireAuth(request);
+  assertKnownKeys(request.data, [], 'claimTierReward');
   const uid = auth.uid;
   const userRef = db.doc(`users/${uid}`);
   let response;
@@ -540,23 +618,27 @@ const SOCIAL_QUESTS = {
   tiktok: { statusField: 'tiktokStatus', claimedField: 'tiktokClaimed', points: 300, reason: 'Aprobación de Video de TikTok' }
 };
 
-async function writeAdminAudit(tx, auth, userRef, user, newPoints, newStamps, reason) {
+async function writeAdminAudit(tx, auth, userRef, user, newPoints, newStamps, reason, options = {}) {
   const auditRef = db.collection('audit_logs').doc();
   tx.set(auditRef, auditPayload({
     auth,
+    role: options.role,
     userId: userRef.id,
     user,
     prevPoints: user.points || 0,
     newPoints,
     prevStamps: user.stamps || 0,
     newStamps,
-    reason
+    reason,
+    action: options.action,
+    metadata: options.metadata
   }));
   return auditRef.id;
 }
 
-exports.adminQuickAddStamp = onCall({ maxInstances: 10 }, async (request) => {
-  const auth = await requireAdmin(request);
+exports.adminQuickAddStamp = onCall(CALLABLE_OPTIONS, async (request) => {
+  const { auth, role } = await requireAdminRole(request, ['superadmin', 'admin', 'cashier']);
+  assertKnownKeys(request.data, ['userId'], 'adminQuickAddStamp');
   const userId = assertUserId(request.data?.userId);
   const userRef = db.doc(`users/${userId}`);
   let result;
@@ -570,7 +652,10 @@ exports.adminQuickAddStamp = onCall({ maxInstances: 10 }, async (request) => {
     if (newStamps > 25) throw new HttpsError('failed-precondition', 'El cliente ya alcanzo el limite de 25 sellos');
     const newPoints = (user.points || 0) + 100;
     const reason = 'Escaneo de tarjeta de sellos rápido (+1 sello, +100 PTS)';
-    const auditId = await writeAdminAudit(tx, auth, userRef, user, newPoints, newStamps, reason);
+    const auditId = await writeAdminAudit(tx, auth, userRef, user, newPoints, newStamps, reason, {
+      role,
+      action: 'admin_quick_add_stamp'
+    });
     tx.update(userRef, {
       points: newPoints,
       stamps: newStamps,
@@ -579,22 +664,25 @@ exports.adminQuickAddStamp = onCall({ maxInstances: 10 }, async (request) => {
       pointsExpiresAt: Timestamp.fromDate(nextPointsExpiry()),
       updatedAt: FieldValue.serverTimestamp()
     });
-    tx.set(userRef.collection('transactions').doc(`quick_stamp_${auditId}`), {
+    writePointLedger(tx, db, userRef, userRef.collection('transactions').doc(`quick_stamp_${auditId}`), buildPointLedgerEntry({
+      userId,
       type: 'stamp_scan',
-      amount: 100,
+      sourceId: auditId,
       pointsDelta: 100,
-      currency: 'PADRE',
       reason,
-      timestamp: FieldValue.serverTimestamp(),
-      status: 'completed'
-    });
+      balanceBefore: user.points || 0,
+      balanceAfter: newPoints,
+      actor: { uid: auth.uid, email: auth.token.email || null, role },
+      metadata: { auditId, stampsDelta: 1 }
+    }));
     result = { userId, points: newPoints, stamps: newStamps, auditId };
   });
   return result;
 });
 
-exports.adminAdjustUserLoyalty = onCall({ maxInstances: 10 }, async (request) => {
-  const auth = await requireAdmin(request);
+exports.adminAdjustUserLoyalty = onCall(CALLABLE_OPTIONS, async (request) => {
+  const { auth, role } = await requireAdminRole(request, ['superadmin', 'admin']);
+  assertKnownKeys(request.data, ['userId', 'points', 'stamps', 'reason'], 'adminAdjustUserLoyalty');
   const userId = assertUserId(request.data?.userId);
   const newPoints = assertIntegerInRange(request.data?.points, 'points', 0, 100000);
   const newStamps = assertIntegerInRange(request.data?.stamps, 'stamps', 0, 25);
@@ -608,7 +696,10 @@ exports.adminAdjustUserLoyalty = onCall({ maxInstances: 10 }, async (request) =>
     if (!snap.exists) throw new HttpsError('not-found', 'Usuario no encontrado');
     const user = snap.data();
     const pointsDelta = newPoints - (user.points || 0);
-    const auditId = await writeAdminAudit(tx, auth, userRef, user, newPoints, newStamps, reason);
+    const auditId = await writeAdminAudit(tx, auth, userRef, user, newPoints, newStamps, reason, {
+      role,
+      action: 'admin_adjust_loyalty'
+    });
     tx.update(userRef, {
       points: newPoints,
       stamps: newStamps,
@@ -620,23 +711,26 @@ exports.adminAdjustUserLoyalty = onCall({ maxInstances: 10 }, async (request) =>
       } : {})
     });
     if (pointsDelta !== 0) {
-      tx.set(userRef.collection('transactions').doc(`admin_adjust_${auditId}`), {
+      writePointLedger(tx, db, userRef, userRef.collection('transactions').doc(`admin_adjust_${auditId}`), buildPointLedgerEntry({
+        userId,
         type: 'admin_adjustment',
-        amount: pointsDelta,
+        sourceId: auditId,
         pointsDelta,
-        currency: 'PADRE',
         reason: `Ajuste Admin: ${reason}`,
-        timestamp: FieldValue.serverTimestamp(),
-        status: 'completed'
-      });
+        balanceBefore: user.points || 0,
+        balanceAfter: newPoints,
+        actor: { uid: auth.uid, email: auth.token.email || null, role },
+        metadata: { auditId, stampsBefore: user.stamps || 0, stampsAfter: newStamps }
+      }));
     }
     result = { userId, points: newPoints, stamps: newStamps, pointsDelta, auditId };
   });
   return result;
 });
 
-exports.adminApproveSocialQuest = onCall({ maxInstances: 10 }, async (request) => {
-  const auth = await requireAdmin(request);
+exports.adminApproveSocialQuest = onCall(CALLABLE_OPTIONS, async (request) => {
+  const { auth, role } = await requireAdminRole(request, ['superadmin', 'admin', 'marketing']);
+  assertKnownKeys(request.data, ['userId', 'questType'], 'adminApproveSocialQuest');
   const userId = assertUserId(request.data?.userId);
   const quest = SOCIAL_QUESTS[request.data?.questType];
   if (!quest) throw new HttpsError('invalid-argument', 'Mision invalida');
@@ -653,7 +747,11 @@ exports.adminApproveSocialQuest = onCall({ maxInstances: 10 }, async (request) =
       return;
     }
     const newPoints = (user.points || 0) + quest.points;
-    const auditId = await writeAdminAudit(tx, auth, userRef, user, newPoints, user.stamps || 0, quest.reason);
+    const auditId = await writeAdminAudit(tx, auth, userRef, user, newPoints, user.stamps || 0, quest.reason, {
+      role,
+      action: 'admin_approve_social_quest',
+      metadata: { questType: request.data.questType }
+    });
     tx.update(userRef, {
       points: newPoints,
       isVip: newPoints >= 100,
@@ -663,22 +761,25 @@ exports.adminApproveSocialQuest = onCall({ maxInstances: 10 }, async (request) =
       pointsExpiresAt: Timestamp.fromDate(nextPointsExpiry()),
       updatedAt: FieldValue.serverTimestamp()
     });
-    tx.set(userRef.collection('transactions').doc(`social_${request.data.questType}_${auditId}`), {
+    writePointLedger(tx, db, userRef, userRef.collection('transactions').doc(`social_${request.data.questType}_${auditId}`), buildPointLedgerEntry({
+      userId,
       type: 'quest_reward',
-      amount: quest.points,
+      sourceId: `${request.data.questType}_${auditId}`,
       pointsDelta: quest.points,
-      currency: 'PADRE',
       reason: quest.reason,
-      timestamp: FieldValue.serverTimestamp(),
-      status: 'completed'
-    });
+      balanceBefore: user.points || 0,
+      balanceAfter: newPoints,
+      actor: { uid: auth.uid, email: auth.token.email || null, role },
+      metadata: { auditId, questType: request.data.questType }
+    }));
     result = { userId, points: newPoints, pointsDelta: quest.points, auditId };
   });
   return result;
 });
 
-exports.adminRejectSocialQuest = onCall({ maxInstances: 10 }, async (request) => {
-  const auth = await requireAdmin(request);
+exports.adminRejectSocialQuest = onCall(CALLABLE_OPTIONS, async (request) => {
+  const { auth, role } = await requireAdminRole(request, ['superadmin', 'admin', 'marketing']);
+  assertKnownKeys(request.data, ['userId', 'questType'], 'adminRejectSocialQuest');
   const userId = assertUserId(request.data?.userId);
   const quest = SOCIAL_QUESTS[request.data?.questType];
   if (!quest) throw new HttpsError('invalid-argument', 'Mision invalida');
@@ -690,15 +791,20 @@ exports.adminRejectSocialQuest = onCall({ maxInstances: 10 }, async (request) =>
     if (!snap.exists) throw new HttpsError('not-found', 'Usuario no encontrado');
     const user = snap.data();
     const reason = `Rechazo de misión: ${quest.reason}`;
-    const auditId = await writeAdminAudit(tx, auth, userRef, user, user.points || 0, user.stamps || 0, reason);
+    const auditId = await writeAdminAudit(tx, auth, userRef, user, user.points || 0, user.stamps || 0, reason, {
+      role,
+      action: 'admin_reject_social_quest',
+      metadata: { questType: request.data.questType }
+    });
     tx.update(userRef, { [quest.statusField]: 'rejected', updatedAt: FieldValue.serverTimestamp() });
     result = { userId, rejected: true, auditId };
   });
   return result;
 });
 
-exports.adminConsumeReward = onCall({ maxInstances: 10 }, async (request) => {
-  const auth = await requireAdmin(request);
+exports.adminConsumeReward = onCall(CALLABLE_OPTIONS, async (request) => {
+  const { auth, role } = await requireAdminRole(request, ['superadmin', 'admin', 'cashier']);
+  assertKnownKeys(request.data, ['userId', 'rewardId'], 'adminConsumeReward');
   const userId = assertUserId(request.data?.userId);
   const rewardId = typeof request.data?.rewardId === 'string' ? request.data.rewardId.trim() : '';
   if (!rewardId) throw new HttpsError('invalid-argument', 'rewardId es requerido');
@@ -713,7 +819,11 @@ exports.adminConsumeReward = onCall({ maxInstances: 10 }, async (request) => {
     const reward = activeRewards.find((item) => item.id === rewardId);
     if (!reward) throw new HttpsError('not-found', 'Premio activo no encontrado');
     const claimedRewards = user.claimedRewards || [];
-    const auditId = await writeAdminAudit(tx, auth, userRef, user, user.points || 0, user.stamps || 0, `Validación de canje: ${reward.name}`);
+    const auditId = await writeAdminAudit(tx, auth, userRef, user, user.points || 0, user.stamps || 0, `Validación de canje: ${reward.name}`, {
+      role,
+      action: 'admin_consume_reward',
+      metadata: { rewardId, rewardName: reward.name, couponCode: reward.code || null }
+    });
     tx.update(userRef, {
       activeRewards: activeRewards.filter((item) => item.id !== rewardId),
       claimedRewards: [...claimedRewards, { ...reward, claimedAt: new Date().toISOString(), status: 'used' }],
@@ -734,8 +844,9 @@ exports.adminConsumeReward = onCall({ maxInstances: 10 }, async (request) => {
   return result;
 });
 
-exports.adminCreateManualUser = onCall({ maxInstances: 10 }, async (request) => {
-  const auth = await requireAdmin(request);
+exports.adminCreateManualUser = onCall(CALLABLE_OPTIONS, async (request) => {
+  const { auth, role } = await requireAdminRole(request, ['superadmin', 'admin', 'cashier']);
+  assertKnownKeys(request.data, ['name', 'email', 'phone', 'gender', 'birthday'], 'adminCreateManualUser');
   const name = String(request.data?.name || '').trim().slice(0, 120);
   const email = String(request.data?.email || '').trim().toLowerCase();
   if (!name || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
@@ -763,23 +874,28 @@ exports.adminCreateManualUser = onCall({ maxInstances: 10 }, async (request) => 
   const userRef = db.doc(`users/${userId}`);
   await db.runTransaction(async (tx) => {
     tx.set(userRef, profile);
-    tx.set(userRef.collection('transactions').doc('welcome_bonus'), {
+    writePointLedger(tx, db, userRef, userRef.collection('transactions').doc('welcome_bonus'), buildPointLedgerEntry({
+      userId,
       type: 'welcome_bonus',
       sourceId: userId,
-      amount: WELCOME_POINTS,
       pointsDelta: WELCOME_POINTS,
-      currency: 'PADRE',
       reason: 'Bono de bienvenida',
-      timestamp: FieldValue.serverTimestamp(),
-      status: 'completed'
+      balanceBefore: 0,
+      balanceAfter: WELCOME_POINTS,
+      actor: { uid: auth.uid, email: auth.token.email || null, role },
+      metadata: { manualUser: true }
+    }));
+    await writeAdminAudit(tx, auth, userRef, profile, WELCOME_POINTS, 0, 'Registro manual de cliente', {
+      role,
+      action: 'admin_create_manual_user'
     });
-    await writeAdminAudit(tx, auth, userRef, profile, WELCOME_POINTS, 0, 'Registro manual de cliente');
   });
   return { userId, profile };
 });
 
-exports.claimBirthdayBonus = onCall({ maxInstances: 10 }, async (request) => {
+exports.claimBirthdayBonus = onCall(CALLABLE_OPTIONS, async (request) => {
   const auth = requireAuth(request);
+  assertKnownKeys(request.data, ['birthday'], 'claimBirthdayBonus');
   const birthday = typeof request.data?.birthday === 'string' ? request.data.birthday.trim() : '';
   if (!/^\d{2}-\d{2}-\d{4}$/.test(birthday)) throw new HttpsError('invalid-argument', 'Fecha de cumpleaños invalida');
   const result = await creditUserPoints({
@@ -788,13 +904,16 @@ exports.claimBirthdayBonus = onCall({ maxInstances: 10 }, async (request) => {
     type: 'birthday_bonus',
     sourceId: 'birthday',
     reason: 'Regalo de Cumpleaños',
-    extraUserUpdate: { birthday, birthdayClaimed: true }
+    extraUserUpdate: { birthday, birthdayClaimed: true },
+    actor: { uid: auth.uid, email: auth.token.email || null, role: 'customer' },
+    metadata: { birthday }
   });
   return { ...result, success: true };
 });
 
-exports.claimInstagramFollowBonus = onCall({ maxInstances: 10 }, async (request) => {
+exports.claimInstagramFollowBonus = onCall(CALLABLE_OPTIONS, async (request) => {
   const auth = requireAuth(request);
+  assertKnownKeys(request.data, [], 'claimInstagramFollowBonus');
   const userRef = db.doc(`users/${auth.uid}`);
   let result;
 
@@ -815,29 +934,30 @@ exports.claimInstagramFollowBonus = onCall({ maxInstances: 10 }, async (request)
       pointsExpiresAt: Timestamp.fromDate(nextPointsExpiry()),
       updatedAt: FieldValue.serverTimestamp()
     });
-    tx.set(userRef.collection('transactions').doc('instagram_follow_bonus'), {
+    writePointLedger(tx, db, userRef, userRef.collection('transactions').doc('instagram_follow_bonus'), buildPointLedgerEntry({
+      userId: auth.uid,
       type: 'quest_reward',
       sourceId: 'instagram_follow',
-      amount: 50,
       pointsDelta: 50,
-      currency: 'PADRE',
       reason: 'Seguir en Instagram',
-      timestamp: FieldValue.serverTimestamp(),
-      status: 'completed'
-    });
+      balanceBefore: user.points || 0,
+      balanceAfter: newPoints,
+      actor: { uid: auth.uid, email: auth.token.email || null, role: 'customer' }
+    }));
     result = { success: true, pointsDelta: 50, newPoints };
   });
 
   return result;
 });
 
-exports.getTierRewards = onCall({ maxInstances: 10 }, async (request) => {
+exports.getTierRewards = onCall(CALLABLE_OPTIONS, async (request) => {
   requireAuth(request);
   return { tiers: await getConfiguredTierRewards() };
 });
 
-exports.adminSaveTierReward = onCall({ maxInstances: 10 }, async (request) => {
-  const auth = await requireAdmin(request);
+exports.adminSaveTierReward = onCall(CALLABLE_OPTIONS, async (request) => {
+  const { auth, role } = await requireAdminRole(request, ['superadmin', 'admin']);
+  assertKnownKeys(request.data, ['level', 'name', 'reward', 'emoji', 'color', 'textColor', 'cogs', 'active'], 'adminSaveTierReward');
   const level = assertIntegerInRange(request.data?.level, 'level', 1, DEFAULT_TIER_REWARDS.length);
   let tier;
   try {
@@ -848,30 +968,33 @@ exports.adminSaveTierReward = onCall({ maxInstances: 10 }, async (request) => {
   await db.collection('tierRewards').doc(String(level)).set({
     ...tier,
     updatedAt: FieldValue.serverTimestamp(),
-    updatedBy: auth.token.email || auth.uid
+    updatedBy: auth.token.email || auth.uid,
+    updatedByRole: role
   }, { merge: true });
   return { tier };
 });
 
-exports.getLoyaltyCampaignSettings = onCall({ maxInstances: 10 }, async (request) => {
-  await requireAdmin(request);
+exports.getLoyaltyCampaignSettings = onCall(CALLABLE_OPTIONS, async (request) => {
+  await requireAdminRole(request, ['superadmin', 'admin', 'marketing']);
   return { campaign: await getCurrentCampaign() };
 });
 
-exports.getActiveLoyaltyCampaigns = onCall({ maxInstances: 10 }, async (request) => {
+exports.getActiveLoyaltyCampaigns = onCall(CALLABLE_OPTIONS, async (request) => {
   requireAuth(request);
   const campaign = await getActiveCampaign();
   return { campaigns: campaign ? [campaign] : [] };
 });
 
-exports.adminSaveLoyaltyCampaign = onCall({ maxInstances: 10 }, async (request) => {
-  const auth = await requireAdmin(request);
+exports.adminSaveLoyaltyCampaign = onCall(CALLABLE_OPTIONS, async (request) => {
+  const { auth, role } = await requireAdminRole(request, ['superadmin', 'admin', 'marketing']);
+  assertKnownKeys(request.data, ['active', 'name', 'pointsMultiplier', 'startsAt', 'endsAt'], 'adminSaveLoyaltyCampaign');
   const campaign = normalizeLoyaltyCampaign(request.data || {});
   if (campaign.active && !campaign.name) throw new HttpsError('invalid-argument', 'Nombre de campaña requerido');
   await db.collection('loyaltyCampaigns').doc('current').set({
     ...campaign,
     updatedAt: FieldValue.serverTimestamp(),
-    updatedBy: auth.token.email || auth.uid
+    updatedBy: auth.token.email || auth.uid,
+    updatedByRole: role
   }, { merge: true });
   return { campaign };
 });
@@ -892,8 +1015,9 @@ function compactMetadata(value, depth = 0) {
   return null;
 }
 
-exports.trackLoyaltyEvent = onCall({ maxInstances: 10 }, async (request) => {
+exports.trackLoyaltyEvent = onCall(CALLABLE_OPTIONS, async (request) => {
   const auth = requireAuth(request);
+  assertKnownKeys(request.data, ['event', 'surface', 'metadata'], 'trackLoyaltyEvent');
   const allowedEvents = new Set(['earn_view', 'redeem_view', 'referral_view', 'earn_submit', 'redeem_success', 'birthday_claim_success', 'wallet_deposit_success', 'purchase_points_success']);
   const event = typeof request.data?.event === 'string' ? request.data.event.trim() : '';
   if (!allowedEvents.has(event)) throw new HttpsError('invalid-argument', 'Evento de loyalty invalido');
@@ -908,9 +1032,131 @@ exports.trackLoyaltyEvent = onCall({ maxInstances: 10 }, async (request) => {
   return { ok: true, eventId: eventRef.id };
 });
 
+async function calculateLedgerBalanceInTransaction(tx, userId) {
+  const snap = await tx.get(db.collection(LEDGER_COLLECTION).where('userId', '==', userId));
+  let balance = 0;
+  snap.forEach((doc) => {
+    balance += Number(doc.data().pointsDelta || 0);
+  });
+  return { balance, entries: snap.size };
+}
+
+exports.adminReconcileUserLoyalty = onCall(CALLABLE_OPTIONS, async (request) => {
+  const { auth, role } = await requireAdminRole(request, ['superadmin', 'admin']);
+  assertKnownKeys(request.data, ['userId', 'repair'], 'adminReconcileUserLoyalty');
+  const userId = assertUserId(request.data?.userId);
+  const repair = request.data?.repair === true;
+  const userRef = db.collection('users').doc(userId);
+  const reconciliationRef = db.collection(RECONCILIATION_COLLECTION).doc();
+  let result;
+
+  await db.runTransaction(async (tx) => {
+    const [userSnap, ledger] = await Promise.all([
+      tx.get(userRef),
+      calculateLedgerBalanceInTransaction(tx, userId)
+    ]);
+    if (!userSnap.exists) throw new HttpsError('not-found', 'Usuario no encontrado');
+
+    const user = userSnap.data();
+    const cachedPoints = Number(user.points || 0);
+    const delta = ledger.balance - cachedPoints;
+    const status = delta === 0 ? 'matched' : (repair ? 'repaired' : 'mismatch');
+
+    tx.set(reconciliationRef, {
+      userId,
+      cachedPoints,
+      ledgerBalance: ledger.balance,
+      ledgerEntries: ledger.entries,
+      delta,
+      status,
+      repaired: repair && delta !== 0,
+      requestedBy: auth.token.email || auth.uid,
+      requestedByUid: auth.uid,
+      requestedByRole: role,
+      createdAt: FieldValue.serverTimestamp()
+    });
+
+    if (repair && delta !== 0) {
+      tx.set(userRef, {
+        points: ledger.balance,
+        isVip: ledger.balance >= 100,
+        reconciliationStatus: 'repaired',
+        lastReconciledAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp()
+      }, { merge: true });
+      await writeAdminAudit(tx, auth, userRef, user, ledger.balance, user.stamps || 0, 'Reconciliación de saldo PADRE contra ledger', {
+        role,
+        action: 'admin_reconcile_loyalty_balance',
+        metadata: { cachedPoints, ledgerBalance: ledger.balance, delta, reconciliationId: reconciliationRef.id }
+      });
+    } else {
+      tx.set(userRef, {
+        reconciliationStatus: status,
+        lastReconciledAt: FieldValue.serverTimestamp()
+      }, { merge: true });
+    }
+
+    result = {
+      userId,
+      cachedPoints,
+      ledgerBalance: ledger.balance,
+      ledgerEntries: ledger.entries,
+      delta,
+      status,
+      repaired: repair && delta !== 0,
+      reconciliationId: reconciliationRef.id
+    };
+  });
+
+  logLoyalty('loyalty_balance_reconciled', result);
+  return result;
+});
+
+exports.reconcileLoyaltyBalances = onSchedule('every 6 hours', async () => {
+  const users = await db.collection('users').limit(200).get();
+  const batch = db.batch();
+  let checked = 0;
+  let mismatches = 0;
+
+  for (const doc of users.docs) {
+    checked += 1;
+    const user = doc.data();
+    const cachedPoints = Number(user.points || 0);
+    const ledger = await calculateLedgerBalance(db, doc.id);
+    const delta = ledger.balance - cachedPoints;
+    if (delta !== 0) {
+      mismatches += 1;
+      const reconciliationRef = db.collection(RECONCILIATION_COLLECTION).doc();
+      batch.set(reconciliationRef, {
+        userId: doc.id,
+        cachedPoints,
+        ledgerBalance: ledger.balance,
+        ledgerEntries: ledger.entries,
+        delta,
+        status: 'mismatch',
+        repaired: false,
+        detectedBy: 'scheduled_reconcileLoyaltyBalances',
+        createdAt: FieldValue.serverTimestamp()
+      });
+      batch.set(doc.ref, {
+        reconciliationStatus: 'mismatch',
+        lastReconciledAt: FieldValue.serverTimestamp()
+      }, { merge: true });
+    } else {
+      batch.set(doc.ref, {
+        reconciliationStatus: 'matched',
+        lastReconciledAt: FieldValue.serverTimestamp()
+      }, { merge: true });
+    }
+  }
+
+  await batch.commit();
+  logLoyalty('loyalty_reconciliation_batch', { checked, mismatches });
+});
+
 exports.expireLoyaltyPoints = onSchedule('every day 04:00', async () => {
   const now = Timestamp.now();
-  const due = await db.collection('users').where('pointsExpiresAt', '<=', now).limit(500).get();
+  const due = await db.collection('users').where('pointsExpiresAt', '<=', now).limit(150).get();
   const batch = db.batch();
   let expired = 0;
   due.forEach((doc) => {
@@ -918,20 +1164,29 @@ exports.expireLoyaltyPoints = onSchedule('every day 04:00', async () => {
     const points = user.points || 0;
     if (points <= 0) return;
     expired += 1;
+    const sourceId = `${doc.id}_${now.toMillis()}`;
+    const txRef = doc.ref.collection('transactions').doc(transactionDocId('points_expired', sourceId));
+    const entry = buildPointLedgerEntry({
+      userId: doc.id,
+      type: 'points_expired',
+      sourceId,
+      pointsDelta: -points,
+      reason: 'Expiración por inactividad',
+      balanceBefore: points,
+      balanceAfter: 0,
+      actor: { role: 'system' }
+    });
     batch.set(doc.ref, {
       points: 0,
       isVip: false,
       pointsExpiredAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp()
     }, { merge: true });
-    batch.set(doc.ref.collection('transactions').doc(`points_expired_${Date.now()}`), {
-      type: 'points_expired',
-      amount: -points,
-      pointsDelta: -points,
-      currency: 'PADRE',
-      reason: 'Expiración por inactividad',
-      timestamp: FieldValue.serverTimestamp(),
-      status: 'completed'
+    batch.set(txRef, entry);
+    batch.set(db.collection(LEDGER_COLLECTION).doc(ledgerDocId(doc.id, 'points_expired', sourceId)), {
+      ...entry,
+      transactionPath: txRef.path,
+      userPath: doc.ref.path
     });
   });
   await batch.commit();

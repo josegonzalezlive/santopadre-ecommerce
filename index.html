@@ -1187,6 +1187,27 @@
     .wishlist-empty .hint {
       font-size: 13px;
       opacity: 0.7;
+      margin-bottom: 24px;
+    }
+
+    .wishlist-login-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bone);
+      color: var(--ink);
+      border: none;
+      padding: 12px 22px;
+      font-size: 13px;
+      font-variation-settings: "wdth" 50, "wght" 700;
+      letter-spacing: 0.02em;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .wishlist-login-btn:hover {
+      transform: scale(1.03);
     }
 
     .thumb-slide {
@@ -3667,7 +3688,7 @@
       function loadUserProfile() {
         if (loaded) return;
         loaded = true;
-        import('./js/user-profile.js?v=1.49');
+        import('./js/user-profile.js?v=1.50');
       }
       ['pointerdown', 'touchstart', 'keydown', 'scroll', 'mousemove'].forEach(function (ev) {
         window.addEventListener(ev, loadUserProfile, { passive: true, once: true });

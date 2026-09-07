@@ -6,6 +6,7 @@ let authService, dbService, functionsService, googleProvider, isMock;
 let currentUser = null;
 let currentProfile = null;
 let pendingWishProductId = null;
+let redirectToRewardsAfterLogin = false;
 
 // Inicialización de servicios
 const services = getActiveServices();
@@ -75,6 +76,14 @@ function listenToAuthChanges() {
       // Cargar o crear perfil en la base de datos
       currentProfile = await getOrCreateUserProfile(user);
       updateProfileUI(true);
+
+      // Login iniciado desde la bandeja de favoritos: ir directo al
+      // Programa de Recompensas (pane-recompensas es el default de cuenta.html).
+      if (redirectToRewardsAfterLogin) {
+        redirectToRewardsAfterLogin = false;
+        window.location.href = 'cuenta.html';
+        return;
+      }
 
       // Lógica de "Deseo Pendiente" (CRO)
       if (pendingWishProductId) {
@@ -413,6 +422,16 @@ window.getWishlist = function() {
 
 window.loginWithGoogle = loginWithGoogle;
 
+// Boton "Iniciar sesion" dentro de la bandeja de favoritos: marca la intencion
+// de redirigir al Programa de Recompensas y dispara el mismo popup de Google
+// que usa el resto del sitio. El redirect real ocurre en listenToAuthChanges()
+// una vez Firebase confirma el login (loginWithGoogle() no distingue exito de
+// cancelacion en su valor de retorno).
+window.loginFromWishlistPanel = function() {
+  redirectToRewardsAfterLogin = true;
+  loginWithGoogle();
+};
+
 window.toggleWishlistItem = async function(productId) {
   if (!currentUser) {
     // Guardar deseo pendiente
@@ -488,6 +507,21 @@ window.syncWishlistVisuals = syncWishlistVisuals;
 window.updateWishlistUI = function() {
   const container = document.getElementById('wishlist-items');
   if (!container) return;
+
+  if (!window.isUserLoggedIn()) {
+    container.innerHTML = `
+      <div class="wishlist-empty">
+        <div class="emoji">🤍</div>
+        <p>Inicia sesión para guardar y ver tus favoritos.</p>
+        <p class="hint">También es tu acceso al Programa de Recompensas y tus $PADRE.</p>
+        <button class="wishlist-login-btn" onclick="window.loginFromWishlistPanel()">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#EA4335" d="M12 5.04c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.68 14.97.6 12 .6 7.7.6 3.99 3.07 2.18 6.67l3.66 2.84C6.71 6.97 9.14 5.04 12 5.04z"/><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#34A853" d="M12 23.4c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.93 7.7 23.4 12 23.4z"/></svg>
+          <span>Iniciar sesión con Google</span>
+        </button>
+      </div>
+    `;
+    return;
+  }
 
   const wishlist = window.getWishlist();
   if (!wishlist.length) {

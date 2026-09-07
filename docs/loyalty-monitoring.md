@@ -32,9 +32,14 @@ Eventos principales:
 - `comprobante_notification_sent`
 - `comprobante_notification_skipped`
 - `comprobante_notification_failed`
+- `comprobante_notification_retry_blocked`
+- `comprobante_notification_retry_completed`
+- `comprobante_notification_retry_failed`
 - `points_expired_batch`
 - `loyalty_reconciliation_batch`
 - `loyalty_balance_reconciled`
+- `loyalty_event_tracked`
+- `loyalty_daily_limit_exceeded` vía errores `resource-exhausted`
 
 ## Filtros Recomendados
 
@@ -54,8 +59,11 @@ Fallos de comprobantes:
 
 ```text
 resource.type="cloud_function"
-jsonPayload.component="loyalty_notifications"
-jsonPayload.message="comprobante_notification_failed"
+(
+  jsonPayload.component="loyalty_rewards" OR
+  jsonPayload.component="loyalty_notifications"
+)
+jsonPayload.message=~"comprobante_notification_(failed|retry_failed|retry_blocked)"
 ```
 
 ## Metricas con gcloud
@@ -67,7 +75,7 @@ gcloud logging metrics create loyalty_rewards_function_errors \
 
 gcloud logging metrics create loyalty_comprobante_failures \
   --description="Fallos al notificar comprobantes de deposito" \
-  --log-filter='resource.type="cloud_function" AND jsonPayload.component="loyalty_notifications" AND jsonPayload.message="comprobante_notification_failed"'
+  --log-filter='resource.type="cloud_function" AND (jsonPayload.component="loyalty_rewards" OR jsonPayload.component="loyalty_notifications") AND jsonPayload.message=~"comprobante_notification_(failed|retry_failed|retry_blocked)"'
 ```
 
 Crear alert policies en Cloud Monitoring sobre:
@@ -75,6 +83,17 @@ Crear alert policies en Cloud Monitoring sobre:
 - `logging.googleapis.com/user/loyalty_rewards_function_errors` > 0 durante 5 minutos.
 - `logging.googleapis.com/user/loyalty_comprobante_failures` > 0 durante 5 minutos.
 - `loyalty_reconciliation_batch` con `mismatches > 0` debe abrir revisión operativa.
+
+## Notificaciones fallidas
+
+`confirmSolanaDeposit` no revierte un depósito verificado si falla el comprobante por
+WhatsApp. En su lugar guarda `notificationFailures/{failureId}` con estado
+`pending_retry`. Si el deploy todavía no tiene secrets reales de WhatsApp, el reintento
+queda como `blocked_missing_whatsapp_config`.
+
+- Reintento manual: `adminRetryComprobanteNotification({ failureId })`.
+- Campos útiles para alertas: `failureId`, `userId`, `sourceId`, `status`, `attempts`,
+  `lastError`.
 
 ## Reconciliación
 

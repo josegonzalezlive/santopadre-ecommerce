@@ -2,12 +2,38 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Función auxiliar para verificar si el usuario es un administrador autorizado
-    function isAdmin() {
+    function adminDocPath() {
+      return /databases/$(database)/documents/admins/$(request.auth.token.email);
+    }
+
+    function isHardcodedSuperadmin() {
       return request.auth != null &&
         (request.auth.token.email == 'josegonzalez.private@gmail.com' ||
-         request.auth.token.email == 'santopadrevzla@gmail.com' ||
-         exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
+         request.auth.token.email == 'santopadrevzla@gmail.com');
+    }
+
+    function hasTokenRole(roles) {
+      return request.auth != null &&
+        ((request.auth.token.role in roles) ||
+         (request.auth.token.roles is list && request.auth.token.roles.hasAny(roles)));
+    }
+
+    function hasAdminDocRole(roles) {
+      return request.auth != null &&
+        exists(adminDocPath()) &&
+        (!('role' in get(adminDocPath()).data) || get(adminDocPath()).data.role in roles);
+    }
+
+    function hasAnyAdminRole(roles) {
+      return isHardcodedSuperadmin() || hasTokenRole(roles) || hasAdminDocRole(roles);
+    }
+
+    function isAdmin() {
+      return hasAnyAdminRole(['superadmin', 'admin', 'cashier', 'marketing']);
+    }
+
+    function canWriteAdminData() {
+      return hasAnyAdminRole(['superadmin', 'admin']);
     }
 
     // NOTA: la colección 'usuarios/{uid}' del feature de wallet no se usa en ningún
@@ -33,7 +59,8 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow read, write: if isAdmin();
+      allow read: if isAdmin();
+      allow write: if canWriteAdminData();
 
       // El saldo inicial lo otorga Auth onCreate/syncUserProfile con Admin SDK.
       allow create: if request.auth != null && request.auth.uid == userId &&
@@ -41,12 +68,12 @@ service cloud.firestore {
         !request.resource.data.keys().hasAny(protectedUserFields());
 
       // El usuario solo puede editar perfil/evidencia; saldos y recompensas son server-side.
-      allow update: if isAdmin() || (
+      allow update: if canWriteAdminData() || (
         request.auth != null && request.auth.uid == userId &&
         !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedUserFields())
       );
 
-      allow delete: if isAdmin();
+      allow delete: if canWriteAdminData();
 
       match /transactions/{txId} {
         allow read: if (request.auth != null && request.auth.uid == userId) || isAdmin();
@@ -56,29 +83,30 @@ service cloud.firestore {
 
     // Reglas para la colección de órdenes (pedidos/canjes)
     match /orders/{orderId} {
-      allow create: if isAdmin() || (
+      allow create: if canWriteAdminData() || hasAnyAdminRole(['cashier']) || (
         request.auth != null &&
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.status == 'pending_confirmation' &&
         request.resource.data.pointsEarned == 0
       );
       allow read: if (request.auth != null && resource.data.userId == request.auth.uid) || isAdmin();
-      allow update, delete: if isAdmin();
+      allow update: if canWriteAdminData() || hasAnyAdminRole(['cashier']);
+      allow delete: if canWriteAdminData();
     }
 
     // Reglas para la colección de auditoría
     match /audit_logs/{logId} {
-      allow read: if isAdmin();
+      allow read: if canWriteAdminData();
       allow write: if false;
     }
 
     match /referralClaims/{claimId} {
-      allow read: if isAdmin();
+      allow read: if canWriteAdminData();
       allow write: if false;
     }
 
     match /rateLimits/{limitId} {
-      allow read: if isAdmin();
+      allow read: if canWriteAdminData();
       allow write: if false;
     }
 
@@ -88,27 +116,37 @@ service cloud.firestore {
     }
 
     match /loyaltyCampaigns/{campaignId} {
-      allow read: if isAdmin();
+      allow read: if hasAnyAdminRole(['superadmin', 'admin', 'marketing']);
       allow write: if false;
     }
 
     match /loyalty_events/{eventId} {
-      allow read: if isAdmin();
+      allow read: if canWriteAdminData() || hasAnyAdminRole(['marketing']);
       allow write: if false;
     }
 
     match /loyaltyLedger/{entryId} {
-      allow read: if isAdmin();
+      allow read: if canWriteAdminData();
       allow write: if false;
     }
 
     match /loyaltyReconciliations/{entryId} {
-      allow read: if isAdmin();
+      allow read: if canWriteAdminData();
       allow write: if false;
     }
 
     match /loyaltyJobState/{jobId} {
-      allow read: if isAdmin();
+      allow read: if canWriteAdminData();
+      allow write: if false;
+    }
+
+    match /loyaltyDailyLimits/{limitId} {
+      allow read: if canWriteAdminData();
+      allow write: if false;
+    }
+
+    match /notificationFailures/{failureId} {
+      allow read: if canWriteAdminData();
       allow write: if false;
     }
 
@@ -116,7 +154,7 @@ service cloud.firestore {
     // n8n/Sheets que dashboard.js consulta). Solo un admin la edita desde admin.html.
     match /config/{docId} {
       allow read: if request.auth != null;
-      allow write: if isAdmin();
+      allow write: if canWriteAdminData() || hasAnyAdminRole(['marketing']);
     }
 
     // Lista extendida de administradores (admin.html -> checkIsAdmin lee esto para
@@ -125,7 +163,7 @@ service cloud.firestore {
     // agregado solo por esta colección.
     match /admins/{email} {
       allow read: if request.auth != null && request.auth.token.email == email;
-      allow write: if isAdmin();
+      allow write: if canWriteAdminData();
     }
   }
 }

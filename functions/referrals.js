@@ -3,38 +3,19 @@ const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestor
 const { nanoid } = require('nanoid');
 const { nextPointsExpiry } = require('./loyalty');
 const { buildPointLedgerEntry, writePointLedger } = require('./ledger');
+const {
+  getAdminRole,
+  isAdmin,
+  hasAdminRole
+} = require('./authz');
 
 const REFERRAL_BONUS_POINTS = 200;
 const REFERRAL_DOMAIN = 'https://www.santopadre.store';
 const CALLABLE_OPTIONS = { maxInstances: 10, ...(process.env.ENFORCE_APP_CHECK === 'true' ? { enforceAppCheck: true } : {}) };
 
-async function _isAdmin(request) {
-  return Boolean(await _getAdminRole(request));
-}
-
-async function _getAdminRole(request) {
-  const email = request.auth?.token?.email;
-  const tokenRole = request.auth?.token?.role;
-  const tokenRoles = Array.isArray(request.auth?.token?.roles) ? request.auth.token.roles : [];
-
-  if (tokenRole === 'superadmin' || tokenRoles.includes('superadmin')) return 'superadmin';
-  if (tokenRole === 'admin' || tokenRoles.includes('admin')) return 'admin';
-  if (tokenRole === 'cashier' || tokenRoles.includes('cashier')) return 'cashier';
-  if (tokenRole === 'marketing' || tokenRoles.includes('marketing')) return 'marketing';
-  if (!email) return null;
-  if (email === 'josegonzalez.private@gmail.com' || email === 'santopadrevzla@gmail.com') return 'superadmin';
-
-  const db = getFirestore();
-  const snap = await db.doc(`admins/${email}`).get();
-  if (!snap.exists) return null;
-  const role = snap.data()?.role;
-  return ['superadmin', 'admin', 'cashier', 'marketing'].includes(role) ? role : 'admin';
-}
-
-async function _hasAdminRole(request, allowedRoles = ['superadmin', 'admin']) {
-  const role = await _getAdminRole(request);
-  return role && allowedRoles.includes(role);
-}
+const _isAdmin = isAdmin;
+const _getAdminRole = getAdminRole;
+const _hasAdminRole = hasAdminRole;
 
 async function _claimReferralForUser(referredUid, codeOrUid) {
   if (!referredUid || !codeOrUid) return null;

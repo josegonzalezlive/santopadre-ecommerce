@@ -74,26 +74,26 @@ Rama: `feature-rewards-admin`
 
 ### Fase 2 - Seguridad y permisos
 
-- [ ] Codex: endurecer `firestore.rules` para roles granulares si se decide mantener lecturas/escrituras directas desde admin.
-- [ ] Codex: centralizar permisos de Functions en un helper único: `requireRole(['admin'])`, `requireRole(['cashier'])`, etc.
-- [ ] Codex: añadir auditoría obligatoria para cambios en `tierRewards`, `loyaltyCampaigns` y reparaciones de reconciliación.
-- [ ] Codex: añadir límites diarios por usuario para bonos, depósitos y confirmaciones de compra.
+- [x] Codex: endurecer `firestore.rules` para roles granulares si se decide mantener lecturas/escrituras directas desde admin.
+- [x] Codex: centralizar permisos de Functions en un helper único: `requireRole(['admin'])`, `requireRole(['cashier'])`, etc.
+- [x] Codex: añadir auditoría obligatoria para cambios en `tierRewards`, `loyaltyCampaigns` y reparaciones de reconciliación.
+- [x] Codex: añadir límites diarios por usuario para bonos, depósitos y confirmaciones de compra.
 - [ ] Claude Code: revisar que ninguna ruta cliente pueda volver a mutar `points`, `stamps` o transacciones.
 - [ ] Claude Code: validar que los roles del panel admin no muestren acciones que el backend va a rechazar.
 - [ ] Claude Code: preparar fixtures de usuarios `superadmin`, `admin`, `cashier`, `marketing` y usuario normal.
 
 ### Fase 3 - Observabilidad y operación
 
-- [ ] Codex: crear documento de métricas operativas exactas para Cloud Monitoring.
-- [ ] Codex: añadir logs estructurados con `eventId`, `uid`, `orderId`, `signature`, `ledgerId` y `reconciliationId`.
-- [ ] Codex: crear colección `failedJobs` o `notificationFailures` para reintentos manuales.
-- [ ] Codex: añadir callable admin para reintentar notificaciones WhatsApp fallidas.
+- [x] Codex: crear documento de métricas operativas exactas para Cloud Monitoring.
+- [x] Codex: añadir logs estructurados con `eventId`, `uid`, `orderId`, `signature`, `ledgerId` y `reconciliationId`.
+- [x] Codex: crear colección `failedJobs` o `notificationFailures` para reintentos manuales.
+- [x] Codex: añadir callable admin para reintentar notificaciones WhatsApp fallidas.
 - [ ] Claude Code: construir panel admin de salud backend: errores, mismatches, depósitos pendientes y notificaciones fallidas.
 - [ ] Claude Code: conectar el panel admin a `loyaltyReconciliations`, `loyaltyLedger` y logs operativos disponibles en Firestore.
 
 ### Fase 4 - Tests y CI
 
-- [ ] Codex: ampliar `npm test` con pruebas de helpers backend sin emulador.
+- [x] Codex: ampliar `npm test` con pruebas de helpers backend sin emulador.
 - [x] Codex: crear script `npm run test:all` que agrupe unit tests, rules tests y checks de sintaxis.
 - [x] Codex: documentar prerequisito Java para `npm run test:rules`.
 - [ ] Claude Code: instalar/configurar Java en el entorno donde corran los tests de reglas.

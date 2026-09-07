@@ -149,9 +149,11 @@ describe('internal loyalty collections', () => {
     await assertFails(setDoc(doc(adminDb, 'loyaltyLedger', 'entry1'), { userId: 'alice', pointsDelta: 100 }));
     await assertFails(setDoc(doc(adminDb, 'loyaltyReconciliations', 'entry1'), { userId: 'alice', delta: 100 }));
     await assertFails(setDoc(doc(adminDb, 'loyaltyJobState', 'backfillLoyaltyLedger'), { lastUserId: 'alice' }));
+    await assertFails(setDoc(doc(adminDb, 'loyaltyDailyLimits', 'alice_bonus_2026-09-07'), { count: 99 }));
+    await assertFails(setDoc(doc(adminDb, 'notificationFailures', 'failure1'), { status: 'sent' }));
   });
 
-  test('allows admins to read global ledger, reconciliation and job state records', async () => {
+  test('allows admins to read internal backend records', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       // OJO: context.firestore() tampoco es idempotente - llamarlo dos veces en el mismo
       // callback lanza "Firestore has already been started...". Se llama una sola vez.
@@ -159,6 +161,8 @@ describe('internal loyalty collections', () => {
       await setDoc(doc(seedDb, 'loyaltyLedger', 'entry1'), { userId: 'alice', pointsDelta: 100 });
       await setDoc(doc(seedDb, 'loyaltyReconciliations', 'entry1'), { userId: 'alice', delta: 0 });
       await setDoc(doc(seedDb, 'loyaltyJobState', 'backfillLoyaltyLedger'), { lastUserId: 'alice' });
+      await setDoc(doc(seedDb, 'loyaltyDailyLimits', 'alice_bonus_2026-09-07'), { count: 1 });
+      await setDoc(doc(seedDb, 'notificationFailures', 'failure1'), { status: 'pending_retry' });
     });
     const adminDb = authedDb('admin', 'josegonzalez.private@gmail.com');
     const userDb = authedDb('alice');
@@ -166,9 +170,13 @@ describe('internal loyalty collections', () => {
     await assertSucceeds(getDoc(doc(adminDb, 'loyaltyLedger', 'entry1')));
     await assertSucceeds(getDoc(doc(adminDb, 'loyaltyReconciliations', 'entry1')));
     await assertSucceeds(getDoc(doc(adminDb, 'loyaltyJobState', 'backfillLoyaltyLedger')));
+    await assertSucceeds(getDoc(doc(adminDb, 'loyaltyDailyLimits', 'alice_bonus_2026-09-07')));
+    await assertSucceeds(getDoc(doc(adminDb, 'notificationFailures', 'failure1')));
     await assertFails(getDoc(doc(userDb, 'loyaltyLedger', 'entry1')));
     await assertFails(getDoc(doc(userDb, 'loyaltyReconciliations', 'entry1')));
     await assertFails(getDoc(doc(userDb, 'loyaltyJobState', 'backfillLoyaltyLedger')));
+    await assertFails(getDoc(doc(userDb, 'loyaltyDailyLimits', 'alice_bonus_2026-09-07')));
+    await assertFails(getDoc(doc(userDb, 'notificationFailures', 'failure1')));
   });
 
   test('allows tier reads but blocks direct writes', async () => {

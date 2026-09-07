@@ -19,9 +19,11 @@ Objetivo: reducir fraude, replay, abuso operativo y fallos silenciosos.
 Estado: implementado a nivel codigo; requiere activar secrets/alertas en Google Cloud para produccion.
 
 - T12: rate limiting server-side para canjes, ascensos, ajustes admin y bonos.
+- Limites diarios server-side para confirmaciones de compra, depositos Solana y bonos.
 - T17: referidos bloquean auto-referido y reuso de codigo por cuenta mediante `referralClaims/{uid}`.
-- T19: logs estructurados y runbook de Cloud Monitoring en `docs/loyalty-monitoring.md`.
+- T19: logs estructurados, runbook de Cloud Monitoring y reintentos de comprobantes fallidos.
 - Reglas: balances, sellos, recompensas, ledger, rateLimits, referralClaims y analytics son server-side.
+- Roles: `superadmin`, `admin`, `cashier` y `marketing` centralizados en `functions/authz.js` y reflejados en `firestore.rules`.
 - Idempotencia: compras por `orderId`, depositos por `signature` y referidos por usuario referido.
 
 ## Fase 3 - Oportunidades

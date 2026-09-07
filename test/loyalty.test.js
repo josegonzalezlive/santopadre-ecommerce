@@ -25,6 +25,8 @@ const {
   _hasAdminRole
 } = require('../functions/referrals');
 const { assertKnownKeys } = require('../functions/validation');
+const { roleFromToken } = require('../functions/authz');
+const { dailyLimitDateKey, dailyLimitDocId } = require('../functions/limits');
 
 describe('loyalty config', () => {
   test('uses the server-side welcome bonus required by the program', () => {
@@ -71,6 +73,12 @@ describe('loyalty config', () => {
 });
 
 describe('admin role helpers', () => {
+  test('extracts roles from token claims', () => {
+    assert.equal(roleFromToken({ role: 'admin' }), 'admin');
+    assert.equal(roleFromToken({ roles: ['cashier'] }), 'cashier');
+    assert.equal(roleFromToken({ role: 'unknown' }), null);
+  });
+
   test('recognizes hardcoded superadmin emails', async () => {
     const role = await _getAdminRole({ auth: { token: { email: 'santopadrevzla@gmail.com' } } });
     assert.equal(role, 'superadmin');
@@ -85,6 +93,19 @@ describe('admin role helpers', () => {
     const request = { auth: { token: { role: 'cashier' } } };
     assert.equal(await _hasAdminRole(request, ['cashier', 'admin']), true);
     assert.equal(await _hasAdminRole(request, ['marketing']), false);
+  });
+});
+
+describe('daily limit helpers', () => {
+  test('uses UTC date keys for daily limits', () => {
+    assert.equal(dailyLimitDateKey(new Date('2026-09-07T23:30:00.000Z')), '2026-09-07');
+  });
+
+  test('sanitizes daily limit document ids', () => {
+    assert.equal(
+      dailyLimitDocId('user/1', 'solana deposit!', '2026-09-07'),
+      'user_1_solana_deposit__2026-09-07'
+    );
   });
 });
 

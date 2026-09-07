@@ -9,13 +9,13 @@ Repo local: `/Users/josegonzalez/Documents/Codex/2026-06-25/quiero-que-clones-es
 La rama remota ya tiene estos commits de Codex:
 
 ```text
+a3b9a69 feat(loyalty): add backend ledger backfill operations
 809cd51 feat(loyalty): ledger contable global, roles admin y reconciliacion
 cb6a288 feat(loyalty): implement Codex rewards backend tasks
 ```
 
-Después de `809cd51`, Codex inició una tercera pasada técnica basada en
-`docs/backend-loyalty-foda-checklist.md`. Esta pasada está en cambios locales hasta
-que se haga commit/push.
+Después de `a3b9a69`, Codex continuó una cuarta pasada técnica basada en
+`docs/backend-loyalty-foda-checklist.md`.
 
 ## Ya integrado
 
@@ -36,7 +36,7 @@ que se haga commit/push.
 - Roles admin en Functions: `superadmin`, `admin`, `cashier`, `marketing`.
 - App Check preparado con `ENFORCE_APP_CHECK=true`.
 
-## Tercera pasada técnica en progreso
+## Tercera pasada técnica integrada
 
 - `adminBackfillLoyaltyLedger({ userId?, txLimit?, afterTxId? })`: callable admin
   idempotente para migrar transacciones históricas de `users/{uid}/transactions` a
@@ -55,6 +55,23 @@ que se haga commit/push.
 - `docs/backend-loyalty-foda-checklist.md`: FODA y checklist dividido entre Codex,
   Claude Code y humano.
 
+## Cuarta pasada técnica de Codex
+
+- `functions/authz.js`: helper centralizado para `requireAuth`, `requireRole`,
+  `isAdmin` y lectura de roles por custom claims o `admins/{email}`.
+- `functions/limits.js`: helper para llaves diarias de límites por usuario/acción.
+- `firestore.rules`: roles granulares para `superadmin`, `admin`, `cashier` y
+  `marketing`; nuevas colecciones internas `loyaltyDailyLimits` y
+  `notificationFailures` protegidas contra writes directos.
+- `functions/rewards.js`: límites diarios server-side para bonos, depósitos Solana y
+  confirmaciones de compra; auditoría transaccional para `tierRewards` y
+  `loyaltyCampaigns`; logs con `eventId`, `ledgerId` y `failureId`.
+- `adminRetryComprobanteNotification({ failureId })`: callable admin para reintentar
+  comprobantes WhatsApp fallidos o dejarlos bloqueados si las credenciales reales no
+  están disponibles.
+- `docs/loyalty-cloud-monitoring-metrics.md`: guía exacta de métricas basadas en logs
+  para Cloud Monitoring.
+
 ## Validaciones corridas por Codex
 
 Pasaron:
@@ -70,13 +87,14 @@ npx firebase-tools deploy --only functions --dry-run
 Resultado actual de `npm test`:
 
 ```text
-21 tests, 21 pass, 0 fail
+26 tests, 26 pass, 0 fail
 ```
 
 No pasó por dependencia de entorno:
 
 ```bash
 npm run test:rules
+npm run test:flows
 ```
 
 Motivo:
@@ -99,8 +117,8 @@ Unable to locate a Java Runtime.
    - consumo de recompensa con evento global `pointsDelta: 0`
 3. Revisar si conviene mover la lógica nueva de `functions/rewards.js` a servicios
    pequeños antes de crecer más.
-4. Endurecer roles también en `firestore.rules` y UI admin si se quiere separación
-   real entre caja, marketing y admin.
+4. Validar que la UI admin respete la separación real entre `cashier`, `marketing`,
+   `admin` y `superadmin`.
 5. Revisar upgrade de `firebase-functions >=5.1.0` y runtime posterior a Node.js 20.
 
 ## Pendiente sin intervención humana

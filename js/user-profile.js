@@ -481,3 +481,54 @@ function syncWishlistVisuals() {
   });
 }
 window.syncWishlistVisuals = syncWishlistVisuals;
+
+// Renderiza la bandeja de favoritos (misma mecanica de apertura que el carrito,
+// ver window.toggleWishlistPanel). window.CATALOG y window.handleAddToCart los
+// expone js/app.js como script clasico, por eso son accesibles desde este modulo.
+window.updateWishlistUI = function() {
+  const container = document.getElementById('wishlist-items');
+  if (!container) return;
+
+  const wishlist = window.getWishlist();
+  if (!wishlist.length) {
+    container.innerHTML = `
+      <div class="wishlist-empty">
+        <div class="emoji">🤍</div>
+        <p>Tu lista de favoritos está vacía.</p>
+        <p class="hint">Toca el corazón en cualquier producto para guardarlo aquí.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const catalog = window.CATALOG;
+  const removeIconSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+
+  container.innerHTML = wishlist.map(productId => {
+    let found = null;
+    for (const cat of (catalog?.categories || [])) {
+      const item = cat.items.find(i => i.id === productId);
+      if (item) { found = { item, catId: cat.id }; break; }
+    }
+    if (!found) return '';
+
+    const { item, catId } = found;
+    const priceText = item.price
+      ? `$${item.price.toFixed(2)}`
+      : (item.variants && item.variants.length ? `Desde $${item.variants[0].price.toFixed(2)}` : '—');
+
+    return `
+      <div class="cart-item">
+        <img src="${item.image || 'assets/menu/flauta-cochinita.avif'}" alt="${item.name}">
+        <div class="item-info">
+          <h4>${item.name}</h4>
+          <div class="item-price">${priceText}</div>
+          <div class="wishlist-item-actions">
+            <button class="wishlist-add-btn" onclick="window.toggleWishlistPanel(); window.handleAddToCart('${item.id}', '${catId}')">Agregar +</button>
+            <button class="wishlist-remove-btn" aria-label="Quitar de favoritos" onclick="window.toggleWishlistItem('${item.id}')">${removeIconSvg}</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+};

@@ -1418,6 +1418,7 @@ function deleteFromCart(uniqueId) {
 }
 
 function toggleCart() {
+  document.getElementById('wishlist-panel')?.classList.remove('active');
   document.getElementById('cart-panel').classList.toggle('active');
   document.getElementById('overlay').classList.toggle('active');
 }
@@ -1425,6 +1426,7 @@ function toggleCart() {
 
 function closeAll() {
   document.getElementById('cart-panel').classList.remove('active');
+  document.getElementById('wishlist-panel')?.classList.remove('active');
   document.getElementById('variant-modal').classList.remove('open');
   document.getElementById('mobile-menu').classList.remove('active');
   document.getElementById('overlay').classList.remove('active');
@@ -1456,7 +1458,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const closeBtn = document.getElementById('close-cart');
   if (closeBtn) closeBtn.addEventListener('click', toggleCart);
-  
+
+  const closeWishlistBtn = document.getElementById('close-wishlist');
+  if (closeWishlistBtn) closeWishlistBtn.addEventListener('click', () => window.toggleWishlistPanel?.());
+
   const checkoutBtn = document.getElementById('checkout-btn');
   if (checkoutBtn) checkoutBtn.addEventListener('click', goToCheckout);
 });
@@ -1534,3 +1539,4 @@ function sendToWhatsApp() {
 
   window.open(`https://wa.me/${CATALOG.info.whatsapp}?text=${encodeURIComponent(message)}`, '_blank');
 }
+

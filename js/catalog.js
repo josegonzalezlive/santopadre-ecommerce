@@ -423,3 +423,9 @@ const CATALOG = {
     tagline: "Limpia tu conciencia, la mancha de grasa es permanente."
   }
 };
+
+// catalog.js es un script clasico: `const CATALOG` NO se adjunta a `window`
+// automaticamente (solo `var`/funciones lo hacen). Los modulos ES (user-profile.js,
+// dashboard.js) solo pueden ver globals via `window`, asi que se expone explicitamente
+// aqui - sin esto, `window.CATALOG` es `undefined` para cualquier modulo que lo use.
+window.CATALOG = CATALOG;

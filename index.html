@@ -1124,6 +1124,71 @@
       fill: currentColor;
     }
 
+    .wishlist-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .wishlist-add-btn {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: var(--bone);
+      padding: 8px 16px;
+      font-size: 12px;
+      text-transform: uppercase;
+      font-variation-settings: "wdth" 50, "wght" 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .wishlist-add-btn:hover {
+      background: var(--accent-dark);
+      border-color: var(--accent-dark);
+    }
+
+    .wishlist-remove-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--line);
+      background: none;
+      color: var(--accent);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+
+    .wishlist-remove-btn:hover {
+      opacity: 0.7;
+    }
+
+    .wishlist-empty {
+      text-align: center;
+      padding: 60px 20px;
+      opacity: 0.85;
+    }
+
+    .wishlist-empty .emoji {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .wishlist-empty p {
+      margin: 0 0 8px;
+    }
+
+    .wishlist-empty .hint {
+      font-size: 13px;
+      opacity: 0.7;
+    }
+
     .thumb-slide {
       position: absolute;
       inset: 0;
@@ -3189,6 +3254,17 @@
     </div>
   </aside>
 
+  <aside class="cart-panel" id="wishlist-panel">
+    <div class="cart-header">
+      <h2>Favoritos</h2>
+      <button class="close-cart" id="close-wishlist">✕</button>
+    </div>
+
+    <div class="cart-items" id="wishlist-items">
+      <!-- Injected by JS -->
+    </div>
+  </aside>
+
   <div class="modal" id="variant-modal">
     <!-- Modal content injected -->
   </div>
@@ -3580,8 +3656,8 @@
     <link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@50..125,300..900&family=Space+Grotesk:wght@300..700&family=Gilda+Display&display=swap">
   </noscript>
-  <script src="js/catalog.min.js?v=1.73"></script>
-  <script src="js/app.min.js?v=1.60"></script>
+  <script src="js/catalog.min.js?v=1.74"></script>
+  <script src="js/app.min.js?v=1.61"></script>
   <script>
     // Firebase Auth/Firestore (via user-profile.js) is only needed once the
     // visitor actually engages with the page, so it's imported on first real
@@ -3591,7 +3667,7 @@
       function loadUserProfile() {
         if (loaded) return;
         loaded = true;
-        import('./js/user-profile.js?v=1.48');
+        import('./js/user-profile.js?v=1.49');
       }
       ['pointerdown', 'touchstart', 'keydown', 'scroll', 'mousemove'].forEach(function (ev) {
         window.addEventListener(ev, loadUserProfile, { passive: true, once: true });

@@ -1,65 +1,32 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Función auxiliar para verificar si el usuario es un administrador autorizado
     function isAdmin() {
-      return request.auth != null && 
-        (request.auth.token.email == 'josegonzalez.private@gmail.com' || 
+      return request.auth != null &&
+        (request.auth.token.email == 'josegonzalez.private@gmail.com' ||
          request.auth.token.email == 'santopadrevzla@gmail.com' ||
          exists(/databases/$(database)/documents/admins/$(request.auth.token.email)));
     }
-    
-    // Reglas para la colección de usuarios
+
+    // NOTA: la colección 'usuarios/{uid}' del feature de wallet no se usa en ningún
+    // lugar del código (js/modules/wallet.js, functions/rewards.js y functions/referrals.js
+    // leen y escriben todos en 'users/{uid}'). Se elimina para no dejar una colección
+    // abierta sin protección. Ver checklist T01b para la validación granular pendiente
+    // de 'users/{userId}' (delta de points/stamps/isVip/activeRewards).
     match /users/{userId} {
-      allow read: if (request.auth != null && request.auth.uid == userId) || isAdmin();
-      
-      // Impedir que un usuario común cree un perfil con puntos o sellos modificados arbitrariamente
-      allow create: if request.auth != null && request.auth.uid == userId &&
-        request.resource.data.points == 10 &&
-        (!request.resource.data.keys().hasAll(['stamps']) || request.resource.data.stamps == 0) &&
-        request.resource.data.isVip == false;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isAdmin();
 
-      // Impedir que un usuario común se auto-acredite puntos o sellos de forma libre
-      allow update: if isAdmin() || (
-        request.auth != null && request.auth.uid == userId &&
-        (
-          // Opción A: No se modifican los campos de saldo protegidos (puntos, sellos, estado VIP, estado de referido)
-          (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['points', 'stamps', 'isVip', 'referralStatus'])) ||
-          
-          // Opción B: Si cambian, debe ser mediante transacciones con incrementos/decrementos validados
-          (
-            // 1. Sumar puntos por compra estándar (límite de 500 puntos por orden)
-            (request.resource.data.points > resource.data.points && request.resource.data.points - resource.data.points <= 500) ||
-            
-            // 2. Canjear recompensa (los puntos disminuyen, y la lista de premios activos aumenta en exactamente 1)
-            (request.resource.data.points < resource.data.points && 
-             request.resource.data.activeRewards.size() == resource.data.activeRewards.size() + 1) ||
-            
-            // 3. Completar misiones de redes sociales (+150 PTS cada una, validando transiciones de falsos/inexistentes a verdaderos)
-            (request.resource.data.points == resource.data.points + 150 && 
-             ((request.resource.data.instagramClaimed == true && (!('instagramClaimed' in resource.data) || resource.data.instagramClaimed == false)) ||
-              (request.resource.data.googleReviewClaimed == true && (!('googleReviewClaimed' in resource.data) || resource.data.googleReviewClaimed == false)) ||
-              (request.resource.data.tiktokClaimed == true && (!('tiktokClaimed' in resource.data) || resource.data.tiktokClaimed == false)))) ||
-            
-            // 4. Compartir por WhatsApp (+50 PTS)
-            (request.resource.data.points == resource.data.points + 50 && 
-             (request.resource.data.whatsappShared == true && (!('whatsappShared' in resource.data) || resource.data.whatsappShared == false))) ||
-            
-            // 5. Completar cumpleaños (+100 PTS)
-            (request.resource.data.points == resource.data.points + 100 && 
-             (request.resource.data.birthdayClaimed == true && (!('birthdayClaimed' in resource.data) || resource.data.birthdayClaimed == false)))
-          )
-        )
-      );
-
-      // Los usuarios normales no pueden borrar sus cuentas arbitrariamente
-      allow delete: if isAdmin();
+      match /transactions/{txId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isAdmin();
+      }
     }
-    
+
     // Reglas para la colección de órdenes (pedidos/canjes)
     match /orders/{orderId} {
-      // Un usuario puede crear una orden si le pertenece, y los administradores pueden hacer cualquier cambio
       allow create: if (request.auth != null && request.resource.data.userId == request.auth.uid) || isAdmin();
       allow read: if (request.auth != null && resource.data.userId == request.auth.uid) || isAdmin();
       allow update, delete: if isAdmin();
@@ -67,7 +34,6 @@ service cloud.firestore {
 
     // Reglas para la colección de auditoría
     match /audit_logs/{logId} {
-      // Solo los administradores autorizados pueden leer o escribir en el registro de auditoría
       allow read, write: if isAdmin();
     }
   }

@@ -4,7 +4,9 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { getApps, initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
-const { sendComprobanteWhatsapp, waToken, waPhoneId } = require('./notifications');
+// TEMPORAL: ver notas de deploy - no requerir './notifications' evita que defineSecret()
+// bloquee el analisis de deploy sin WHATSAPP_TOKEN/WHATSAPP_PHONE_NUMBER_ID en Secret Manager.
+const sendComprobanteWhatsapp = null, waToken = null, waPhoneId = null;
 const { _claimReferralForUser, _completeReferralForPurchase, _isAdmin } = require('./referrals');
 const {
   WELCOME_POINTS,
@@ -275,7 +277,7 @@ exports.initializeUserRewards = functions.auth.user().onCreate(async (user) => {
   logLoyalty('welcome_bonus_initialized', { userId: user.uid, pointsAwarded: WELCOME_POINTS });
 });
 
-exports.syncUserProfile = onCall(async (request) => {
+exports.syncUserProfile = onCall({ maxInstances: 10 }, async (request) => {
   const auth = requireAuth(request);
   const profile = publicProfileFromAuth(auth, request.data || {});
   const userRef = db.collection('users').doc(auth.uid);
@@ -323,7 +325,7 @@ exports.syncUserProfile = onCall(async (request) => {
   return { profile: snap.data(), referral };
 });
 
-exports.confirmPurchaseAndAwardPoints = onCall(async (request) => {
+exports.confirmPurchaseAndAwardPoints = onCall({ maxInstances: 5 }, async (request) => {
   const auth = requireAuth(request);
   const orderId = typeof request.data?.orderId === 'string' ? request.data.orderId.trim() : '';
   if (!orderId) throw new HttpsError('invalid-argument', 'orderId es requerido');
@@ -378,7 +380,7 @@ exports.confirmPurchaseAndAwardPoints = onCall(async (request) => {
   return { ...result, success: true, orderId, pointsAwarded: result.pointsDelta || points, referral };
 });
 
-exports.confirmSolanaDeposit = onCall({ secrets: [waToken, waPhoneId] }, async (request) => {
+exports.confirmSolanaDeposit = onCall({ maxInstances: 5 }, async (request) => {
   const auth = requireAuth(request);
   const amountUsd = assertPositiveAmount(request.data?.amountUsd, 'Monto');
   const verification = await verifySolanaTransfer({
@@ -422,7 +424,7 @@ exports.confirmSolanaDeposit = onCall({ secrets: [waToken, waPhoneId] }, async (
   return { ...result, success: true, amountUsd, pointsAwarded: points, solana: verification, notification };
 });
 
-exports.redeemReward = onCall(async (request) => {
+exports.redeemReward = onCall({ maxInstances: 10 }, async (request) => {
   const auth = requireAuth(request);
   const rewardId = request.data?.rewardId;
   const catalogEntry = REWARD_CATALOG[rewardId];
@@ -483,7 +485,7 @@ exports.redeemReward = onCall(async (request) => {
   return { success: true, rewardName: catalogEntry.name, couponCode, cost: catalogEntry.cost, reward: result.reward, newPoints: result.newPoints };
 });
 
-exports.claimTierReward = onCall(async (request) => {
+exports.claimTierReward = onCall({ maxInstances: 10 }, async (request) => {
   const auth = requireAuth(request);
   const uid = auth.uid;
   const userRef = db.doc(`users/${uid}`);
@@ -553,7 +555,7 @@ async function writeAdminAudit(tx, auth, userRef, user, newPoints, newStamps, re
   return auditRef.id;
 }
 
-exports.adminQuickAddStamp = onCall(async (request) => {
+exports.adminQuickAddStamp = onCall({ maxInstances: 10 }, async (request) => {
   const auth = await requireAdmin(request);
   const userId = assertUserId(request.data?.userId);
   const userRef = db.doc(`users/${userId}`);
@@ -591,7 +593,7 @@ exports.adminQuickAddStamp = onCall(async (request) => {
   return result;
 });
 
-exports.adminAdjustUserLoyalty = onCall(async (request) => {
+exports.adminAdjustUserLoyalty = onCall({ maxInstances: 10 }, async (request) => {
   const auth = await requireAdmin(request);
   const userId = assertUserId(request.data?.userId);
   const newPoints = assertIntegerInRange(request.data?.points, 'points', 0, 100000);
@@ -633,7 +635,7 @@ exports.adminAdjustUserLoyalty = onCall(async (request) => {
   return result;
 });
 
-exports.adminApproveSocialQuest = onCall(async (request) => {
+exports.adminApproveSocialQuest = onCall({ maxInstances: 10 }, async (request) => {
   const auth = await requireAdmin(request);
   const userId = assertUserId(request.data?.userId);
   const quest = SOCIAL_QUESTS[request.data?.questType];
@@ -675,7 +677,7 @@ exports.adminApproveSocialQuest = onCall(async (request) => {
   return result;
 });
 
-exports.adminRejectSocialQuest = onCall(async (request) => {
+exports.adminRejectSocialQuest = onCall({ maxInstances: 10 }, async (request) => {
   const auth = await requireAdmin(request);
   const userId = assertUserId(request.data?.userId);
   const quest = SOCIAL_QUESTS[request.data?.questType];
@@ -695,7 +697,7 @@ exports.adminRejectSocialQuest = onCall(async (request) => {
   return result;
 });
 
-exports.adminConsumeReward = onCall(async (request) => {
+exports.adminConsumeReward = onCall({ maxInstances: 10 }, async (request) => {
   const auth = await requireAdmin(request);
   const userId = assertUserId(request.data?.userId);
   const rewardId = typeof request.data?.rewardId === 'string' ? request.data.rewardId.trim() : '';
@@ -732,7 +734,7 @@ exports.adminConsumeReward = onCall(async (request) => {
   return result;
 });
 
-exports.adminCreateManualUser = onCall(async (request) => {
+exports.adminCreateManualUser = onCall({ maxInstances: 10 }, async (request) => {
   const auth = await requireAdmin(request);
   const name = String(request.data?.name || '').trim().slice(0, 120);
   const email = String(request.data?.email || '').trim().toLowerCase();
@@ -776,7 +778,7 @@ exports.adminCreateManualUser = onCall(async (request) => {
   return { userId, profile };
 });
 
-exports.claimBirthdayBonus = onCall(async (request) => {
+exports.claimBirthdayBonus = onCall({ maxInstances: 10 }, async (request) => {
   const auth = requireAuth(request);
   const birthday = typeof request.data?.birthday === 'string' ? request.data.birthday.trim() : '';
   if (!/^\d{2}-\d{2}-\d{4}$/.test(birthday)) throw new HttpsError('invalid-argument', 'Fecha de cumpleaños invalida');
@@ -791,7 +793,7 @@ exports.claimBirthdayBonus = onCall(async (request) => {
   return { ...result, success: true };
 });
 
-exports.claimInstagramFollowBonus = onCall(async (request) => {
+exports.claimInstagramFollowBonus = onCall({ maxInstances: 10 }, async (request) => {
   const auth = requireAuth(request);
   const userRef = db.doc(`users/${auth.uid}`);
   let result;
@@ -829,12 +831,12 @@ exports.claimInstagramFollowBonus = onCall(async (request) => {
   return result;
 });
 
-exports.getTierRewards = onCall(async (request) => {
+exports.getTierRewards = onCall({ maxInstances: 10 }, async (request) => {
   requireAuth(request);
   return { tiers: await getConfiguredTierRewards() };
 });
 
-exports.adminSaveTierReward = onCall(async (request) => {
+exports.adminSaveTierReward = onCall({ maxInstances: 10 }, async (request) => {
   const auth = await requireAdmin(request);
   const level = assertIntegerInRange(request.data?.level, 'level', 1, DEFAULT_TIER_REWARDS.length);
   let tier;
@@ -851,18 +853,18 @@ exports.adminSaveTierReward = onCall(async (request) => {
   return { tier };
 });
 
-exports.getLoyaltyCampaignSettings = onCall(async (request) => {
+exports.getLoyaltyCampaignSettings = onCall({ maxInstances: 10 }, async (request) => {
   await requireAdmin(request);
   return { campaign: await getCurrentCampaign() };
 });
 
-exports.getActiveLoyaltyCampaigns = onCall(async (request) => {
+exports.getActiveLoyaltyCampaigns = onCall({ maxInstances: 10 }, async (request) => {
   requireAuth(request);
   const campaign = await getActiveCampaign();
   return { campaigns: campaign ? [campaign] : [] };
 });
 
-exports.adminSaveLoyaltyCampaign = onCall(async (request) => {
+exports.adminSaveLoyaltyCampaign = onCall({ maxInstances: 10 }, async (request) => {
   const auth = await requireAdmin(request);
   const campaign = normalizeLoyaltyCampaign(request.data || {});
   if (campaign.active && !campaign.name) throw new HttpsError('invalid-argument', 'Nombre de campaña requerido');
@@ -890,7 +892,7 @@ function compactMetadata(value, depth = 0) {
   return null;
 }
 
-exports.trackLoyaltyEvent = onCall(async (request) => {
+exports.trackLoyaltyEvent = onCall({ maxInstances: 10 }, async (request) => {
   const auth = requireAuth(request);
   const allowedEvents = new Set(['earn_view', 'redeem_view', 'referral_view', 'earn_submit', 'redeem_success', 'birthday_claim_success', 'wallet_deposit_success', 'purchase_points_success']);
   const event = typeof request.data?.event === 'string' ? request.data.event.trim() : '';

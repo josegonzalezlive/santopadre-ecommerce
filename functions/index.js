@@ -227,6 +227,8 @@ exports.generateApplePass = functions.https.onRequest((req, res) => {
 Object.assign(exports, require('./rewards'));
 Object.assign(exports, {
   generateReferralLink: require('./referrals').generateReferralLink,
-  claimReferral: require('./referrals').claimReferral,
-  sendComprobanteNotification: require('./notifications').sendComprobanteNotification
+  claimReferral: require('./referrals').claimReferral
+  // TEMPORAL: ver notas de deploy en rewards.js - sendComprobanteNotification excluida
+  // hasta que WHATSAPP_TOKEN/WHATSAPP_PHONE_NUMBER_ID existan en Secret Manager.
+  // sendComprobanteNotification: require('./notifications').sendComprobanteNotification
 });

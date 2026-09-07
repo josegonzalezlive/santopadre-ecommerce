@@ -111,7 +111,7 @@ async function _completeReferralForPurchase(referredUid, orderId) {
   return { completed: true, referrerId: claim.referrerId, pointsAwarded: REFERRAL_BONUS_POINTS };
 }
 
-exports.generateReferralLink = onCall(async (request) => {
+exports.generateReferralLink = onCall({ maxInstances: 10 }, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Login required');
 
   const uid = request.auth.uid;
@@ -129,7 +129,7 @@ exports.generateReferralLink = onCall(async (request) => {
   return { code, url: `${REFERRAL_DOMAIN}/ref?id=${code}` };
 });
 
-exports.claimReferral = onCall(async (request) => {
+exports.claimReferral = onCall({ maxInstances: 10 }, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Login required');
   return _claimReferralForUser(request.auth.uid, request.data?.code || request.data?.referrerId);
 });

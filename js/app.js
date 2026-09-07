@@ -275,6 +275,23 @@ function scrollToProduct(id) {
   }
 }
 
+// Contador de "guardados en wishlist" para prueba social. No hay un contador
+// agregado real en backend (el wishlist se guarda solo por usuario en
+// users/{uid}.wishlist, no hay coleccion de conteos por producto), asi que se
+// genera un numero pseudo-aleatorio ESTABLE por producto (3-30): mismo
+// producto -> mismo numero durante todo el dia (no salta en cada recarga),
+// pero cambia de un dia a otro porque la fecha forma parte de la semilla.
+function getWishlistSavesCount(productId) {
+  const daySeed = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const str = `${productId}-${daySeed}`;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+  }
+  const min = 3, max = 30;
+  return min + (Math.abs(hash) % (max - min + 1));
+}
+
 function renderProductCard(item, catId = '') {
   const btnText = 'Agregar +';
   const badgeHtml = item.badges && item.badges.length > 0 
@@ -302,6 +319,15 @@ function renderProductCard(item, catId = '') {
         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
       </svg>
     </button>
+  ` : '';
+
+  const wishlistSavesBadgeHtml = !isRegalo ? `
+    <div class="wishlist-saves-badge" aria-hidden="true">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+      </svg>
+      <span>${getWishlistSavesCount(item.id)}</span>
+    </div>
   ` : '';
 
   // ═══════════════════════════════════════════════════════════════
@@ -370,6 +396,7 @@ function renderProductCard(item, catId = '') {
         ${mediaHtml}
         ${spicyHtml}
         ${wishlistBtnHtml}
+        ${wishlistSavesBadgeHtml}
       </div>
       <div class="product-info">
         <h3 ${clickAction}>${item.name}</h3>

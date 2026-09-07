@@ -1162,6 +1162,31 @@
       fill: currentColor;
     }
 
+    .wishlist-saves-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(4, 28, 20, 0.55);
+      border: 1px solid rgba(244, 244, 242, 0.2);
+      color: var(--bone);
+      backdrop-filter: blur(4px);
+      font-size: 11px;
+      font-variation-settings: "wdth" 50, "wght" 700;
+      letter-spacing: 0.02em;
+      pointer-events: none;
+    }
+
+    .wishlist-saves-badge svg {
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
     .wishlist-item-actions {
       display: flex;
       align-items: center;
@@ -3716,7 +3741,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@50..125,300..900&family=Space+Grotesk:wght@300..700&family=Gilda+Display&display=swap">
   </noscript>
   <script src="js/catalog.min.js?v=1.74"></script>
-  <script src="js/app.min.js?v=1.61"></script>
+  <script src="js/app.min.js?v=1.62"></script>
   <script>
     // Firebase Auth/Firestore (via user-profile.js) is only needed once the
     // visitor actually engages with the page, so it's imported on first real

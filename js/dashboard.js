@@ -4,6 +4,13 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "http
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { subscribeToBalance, subscribeToTransactions, processRecarga, processCanje } from "./modules/wallet.js";
 import { showLoadingState } from "./modules/ui.js";
+import { initFirebase } from "./modules/firebase.js";
+
+// js/modules/wallet.js depende de getDB()/getAuth_() de modules/firebase.js, que solo
+// se llenan tras llamar initFirebase() explícitamente (nadie lo hacía: toda recarga,
+// canje e historial de saldo vía wallet.js fallaba con "Expected first argument to
+// collection() ..." porque getDB() devolvía undefined).
+await initFirebase();
 
 // Expose wallet functions for bindings and utils
 window.processRecarga = processRecarga;

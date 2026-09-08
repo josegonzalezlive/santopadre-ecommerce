@@ -178,4 +178,5 @@ levantan emuladores de Firebase.
   reestructurar cómo se guardan los referidos, ej. una colección `referrals/{code}`
   separada). Falla con `permission-denied`, capturado y logueado, no rompe la página.
 - Activar `ENFORCE_APP_CHECK=true` queda pendiente hasta configurar Firebase App Check
-  en consola y cliente.
+  en consola (el cliente ya está listo: `js/firebase-config.js` solo necesita el site
+  key real de reCAPTCHA v3 en `RECAPTCHA_V3_SITE_KEY`).

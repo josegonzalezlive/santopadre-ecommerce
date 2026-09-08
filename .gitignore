@@ -4,3 +4,6 @@ node_modules/
 .antigravity/
 node_modules/
 functions/google-wallet-key.json
+test-results/
+playwright-report/
+blob-report/

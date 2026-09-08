@@ -330,3 +330,76 @@ describe('acciones de admin sobre sellos y ajustes manuales', () => {
     assert.equal(auditSnap.data().action, 'admin_adjust_loyalty');
   });
 });
+
+// El trigger de Firestore onUserWishlistChanged corre async tras el write, sin senal
+// directa al cliente - se espera con polling en vez de un sleep fijo para no ser fragil.
+async function waitForProductStat(productId, predicate, timeoutMs = 8000) {
+  const start = Date.now();
+  let last = null;
+  while (Date.now() - start < timeoutMs) {
+    const snap = await adminDb.collection('productStats').doc(productId).get();
+    last = snap.exists ? snap.data() : null;
+    if (predicate(last)) return last;
+    await sleep(200);
+  }
+  throw new Error(`Timed out waiting for productStats/${productId}: ultimo valor visto = ${JSON.stringify(last)}`);
+}
+
+describe('onUserWishlistChanged (trigger de Firestore)', () => {
+  test('incrementa y decrementa productStats al agregar/quitar del wishlist', async () => {
+    const uid = 'wishlist_trigger_user_1';
+    const productId = `agua_${Date.now()}`; // id unico para no chocar con otras corridas
+    await seedUser(uid, { wishlist: [] });
+
+    // Agregar al wishlist -> el trigger debe crear/incrementar el contador
+    await adminDb.collection('users').doc(uid).set({ wishlist: [productId] }, { merge: true });
+    const afterAdd = await waitForProductStat(productId, (data) => data?.wishlistCount === 1);
+    assert.equal(afterAdd.wishlistCount, 1);
+
+    // Un segundo usuario tambien lo guarda -> suma
+    const uid2 = 'wishlist_trigger_user_2';
+    await seedUser(uid2, { wishlist: [productId] });
+    await waitForProductStat(productId, (data) => data?.wishlistCount === 2);
+
+    // El primer usuario lo quita -> resta, pero no toca el otro
+    await adminDb.collection('users').doc(uid).set({ wishlist: [] }, { merge: true });
+    const afterRemove = await waitForProductStat(productId, (data) => data?.wishlistCount === 1);
+    assert.equal(afterRemove.wishlistCount, 1);
+  });
+
+  test('no toca productStats si el write no cambio el wishlist', async () => {
+    const uid = 'wishlist_trigger_user_3';
+    const productId = `cerveza_${Date.now()}`;
+    await seedUser(uid, { wishlist: [productId] });
+    await waitForProductStat(productId, (data) => data?.wishlistCount === 1);
+
+    // Escritura no relacionada (ej. lo que hace adminAdjustUserLoyalty) - el wishlist
+    // no cambia, el contador tampoco deberia moverse.
+    await adminDb.collection('users').doc(uid).set({ points: 999 }, { merge: true });
+    await sleep(1500);
+    const snap = await adminDb.collection('productStats').doc(productId).get();
+    assert.equal(snap.data().wishlistCount, 1);
+  });
+});
+
+describe('adminBackfillProductStats', () => {
+  test('recalcula productStats desde users/*.wishlist y requiere rol admin', async () => {
+    const productId = `quesadilla_${Date.now()}`;
+    await seedUser('backfill_user_1', { wishlist: [productId] });
+    await seedUser('backfill_user_2', { wishlist: [productId] });
+    await seedUser('backfill_user_3', { wishlist: [] });
+
+    await signInAs('backfill_cashier_1', { role: 'cashier' });
+    await assert.rejects(call('adminBackfillProductStats', {}), (err) => {
+      assert.equal(err.code, 'functions/permission-denied');
+      return true;
+    });
+
+    await signInAs('backfill_admin_1', { role: 'admin' });
+    const result = await call('adminBackfillProductStats', {});
+    assert.ok(result.data.usersScanned >= 3);
+
+    const snap = await adminDb.collection('productStats').doc(productId).get();
+    assert.equal(snap.data().wishlistCount, 2);
+  });
+});

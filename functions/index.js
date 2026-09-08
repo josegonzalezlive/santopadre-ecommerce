@@ -239,3 +239,7 @@ Object.assign(exports, {
   // hasta que WHATSAPP_TOKEN/WHATSAPP_PHONE_NUMBER_ID existan en Secret Manager.
   // sendComprobanteNotification: require('./notifications').sendComprobanteNotification
 });
+Object.assign(exports, {
+  onUserWishlistChanged: require('./wishlistStats').onUserWishlistChanged,
+  adminBackfillProductStats: require('./wishlistStats').adminBackfillProductStats
+});

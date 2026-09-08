@@ -179,6 +179,19 @@ describe('internal loyalty collections', () => {
     await assertFails(getDoc(doc(userDb, 'notificationFailures', 'failure1')));
   });
 
+  test('allows anyone (even without login) to read product wishlist stats but never write', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'productStats', 'agua'), { wishlistCount: 12 });
+    });
+    const anonDb = testEnv.unauthenticatedContext().firestore();
+    const userDb = authedDb('alice');
+
+    await assertSucceeds(getDoc(doc(anonDb, 'productStats', 'agua')));
+    await assertSucceeds(getDoc(doc(userDb, 'productStats', 'agua')));
+    await assertFails(setDoc(doc(anonDb, 'productStats', 'agua'), { wishlistCount: 9999 }));
+    await assertFails(setDoc(doc(userDb, 'productStats', 'agua'), { wishlistCount: 9999 }));
+  });
+
   test('allows tier reads but blocks direct writes', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await setDoc(doc(context.firestore(), 'tierRewards', '1'), { level: 1, reward: 'Bebida' });

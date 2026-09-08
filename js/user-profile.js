@@ -71,7 +71,7 @@ googleProvider = services.googleProvider;
 isMock = services.isMock;
 
 // Imports dinámicos para Firebase real
-let doc, getDoc, setDoc, collection, addDoc, query, where, orderBy, getDocs, httpsCallable;
+let doc, getDoc, setDoc, collection, addDoc, query, where, orderBy, getDocs, onSnapshot, httpsCallable;
 if (!isMock) {
   try {
     const firestoreModule = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
@@ -85,6 +85,7 @@ if (!isMock) {
     where = firestoreModule.where;
     orderBy = firestoreModule.orderBy;
     getDocs = firestoreModule.getDocs;
+    onSnapshot = firestoreModule.onSnapshot;
     httpsCallable = functionsModule.httpsCallable;
   } catch (err) {
     console.error("Error cargando módulos de Firestore, forzando modo simulación:", err);
@@ -102,9 +103,39 @@ async function callFunction(name, payload = {}) {
 }
 
 // Inicialización de la UI y listeners
+// Conteo REAL de "guardados en wishlist" por producto (functions/wishlistStats.js
+// mantiene productStats/{productId}.wishlistCount via un trigger de Firestore cada vez
+// que cambia users/{uid}.wishlist). Lectura publica por regla, asi que funciona incluso
+// sin sesion iniciada. onSnapshot la mantiene en vivo: si otro visitante guarda o quita
+// el mismo producto ahora mismo, el badge en pantalla se actualiza solo, sin recargar.
+// window.wishlistSavesRealCounts es el piso de verdad; js/app.js decide ahi mismo si
+// usar el numero real o el ficticio de respaldo (ver getWishlistSavesCount en app.js).
+window.wishlistSavesRealCounts = {};
+
+function listenToProductStats() {
+  if (isMock || !collection || !onSnapshot) return;
+  try {
+    onSnapshot(collection(dbService, 'productStats'), (snap) => {
+      snap.docChanges().forEach((change) => {
+        if (change.type === 'removed') {
+          delete window.wishlistSavesRealCounts[change.doc.id];
+        } else {
+          window.wishlistSavesRealCounts[change.doc.id] = change.doc.data().wishlistCount;
+        }
+      });
+      if (window.refreshWishlistSavesBadges) window.refreshWishlistSavesBadges();
+    }, (err) => {
+      console.error("Error escuchando productStats:", err);
+    });
+  } catch (err) {
+    console.error("Error iniciando listener de productStats:", err);
+  }
+}
+
 function init() {
   setupProfileButton();
   listenToAuthChanges();
+  listenToProductStats();
 
   // Refresca el badge del corazon cada 20s para que la actividad simulada
   // se sienta en vivo mientras el visitante sigue en la pagina (ver

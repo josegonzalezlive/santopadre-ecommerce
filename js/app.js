@@ -275,13 +275,17 @@ function scrollToProduct(id) {
   }
 }
 
-// Contador de "guardados en wishlist" para prueba social. No hay un contador
-// agregado real en backend (el wishlist se guarda solo por usuario en
-// users/{uid}.wishlist, no hay coleccion de conteos por producto), asi que se
-// genera un numero pseudo-aleatorio ESTABLE por producto (3-30): mismo
-// producto -> mismo numero durante todo el dia (no salta en cada recarga),
-// pero cambia de un dia a otro porque la fecha forma parte de la semilla.
-function getWishlistSavesCount(productId) {
+// Contador de "guardados en wishlist" para prueba social, esquina superior derecha de
+// cada card. Backend real: functions/wishlistStats.js mantiene productStats/{id}.wishlistCount
+// via un trigger de Firestore, y js/user-profile.js lo escucha en vivo con onSnapshot y lo
+// deja en window.wishlistSavesRealCounts (lectura publica, funciona sin sesion). Como ese
+// listener carga lazy (recien en la primera interaccion del visitante, ver index.html), el
+// catalogo ya esta pintado para entonces - por eso el numero ficticio de respaldo sigue
+// existiendo: es lo que se ve mientras el listener real todavia no conecto, y para
+// cualquier producto que genuinamente aun no tiene ni un guardado real (0 se ve vacio/
+// desangelado, asi que ahi tambien gana el ficticio). Estable por producto por dia
+// (no salta en cada recarga), cambia lento de un dia a otro.
+function getWishlistSavesFallbackCount(productId) {
   const daySeed = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const str = `${productId}-${daySeed}`;
   let hash = 0;
@@ -291,6 +295,22 @@ function getWishlistSavesCount(productId) {
   const min = 3, max = 30;
   return min + (Math.abs(hash) % (max - min + 1));
 }
+
+function getWishlistSavesDisplayCount(productId) {
+  const real = window.wishlistSavesRealCounts?.[productId];
+  if (typeof real === 'number' && real > 0) return real;
+  return getWishlistSavesFallbackCount(productId);
+}
+
+// Llamado por js/user-profile.js cada vez que el listener en vivo de productStats trae
+// datos nuevos, para que los badges ya pintados en pantalla se actualicen sin recargar.
+window.refreshWishlistSavesBadges = function() {
+  document.querySelectorAll('.wishlist-saves-badge[data-product-id]').forEach((badge) => {
+    const productId = badge.getAttribute('data-product-id');
+    const span = badge.querySelector('span');
+    if (span) span.textContent = getWishlistSavesDisplayCount(productId);
+  });
+};
 
 function renderProductCard(item, catId = '') {
   const btnText = 'Agregar +';
@@ -322,11 +342,11 @@ function renderProductCard(item, catId = '') {
   ` : '';
 
   const wishlistSavesBadgeHtml = !isRegalo ? `
-    <div class="wishlist-saves-badge" aria-hidden="true">
+    <div class="wishlist-saves-badge" data-product-id="${item.id}" aria-hidden="true">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none">
         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
       </svg>
-      <span>${getWishlistSavesCount(item.id)}</span>
+      <span>${getWishlistSavesDisplayCount(item.id)}</span>
     </div>
   ` : '';
 

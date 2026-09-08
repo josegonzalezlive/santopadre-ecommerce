@@ -34,6 +34,7 @@ const {
   findTreasuryTransfer,
   verifySolanaTransfer
 } = require('../functions/solana');
+const { diffWishlistArrays, PRODUCT_STATS_COLLECTION } = require('../functions/wishlistStats');
 
 describe('loyalty config', () => {
   test('uses the server-side welcome bonus required by the program', () => {
@@ -301,5 +302,34 @@ describe('ledger helpers', () => {
       type: 'manual',
       pointsDelta: 'abc'
     }), /Invalid ledger points delta/);
+  });
+});
+
+describe('wishlist stats', () => {
+  test('detects added and removed product ids', () => {
+    const { added, removed } = diffWishlistArrays(['agua', 'cerveza'], ['agua', 'coca-cola']);
+    assert.deepEqual(added, ['coca-cola']);
+    assert.deepEqual(removed, ['cerveza']);
+  });
+
+  test('no-op when the wishlist did not change', () => {
+    const { added, removed } = diffWishlistArrays(['agua', 'cerveza'], ['agua', 'cerveza']);
+    assert.deepEqual(added, []);
+    assert.deepEqual(removed, []);
+  });
+
+  test('handles missing before/after arrays', () => {
+    assert.deepEqual(diffWishlistArrays(undefined, ['agua']), { added: ['agua'], removed: [] });
+    assert.deepEqual(diffWishlistArrays(['agua'], undefined), { added: [], removed: ['agua'] });
+  });
+
+  test('ignores reorders - same items in a different order is not a change', () => {
+    const { added, removed } = diffWishlistArrays(['agua', 'cerveza'], ['cerveza', 'agua']);
+    assert.deepEqual(added, []);
+    assert.deepEqual(removed, []);
+  });
+
+  test('exposes the collection name used for the aggregate counters', () => {
+    assert.equal(PRODUCT_STATS_COLLECTION, 'productStats');
   });
 });

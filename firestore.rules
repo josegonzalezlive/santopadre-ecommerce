@@ -150,6 +150,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Conteo agregado de "guardados en wishlist" por producto (prueba social
+    // en las cards de index.html). Es lectura publica a proposito: se muestra
+    // a visitantes anonimos que ni siquiera iniciaron sesion, y no expone nada
+    // sensible (solo un numero por producto). La escritura es exclusivamente
+    // server-side via el trigger onUserWishlistChanged / adminBackfillProductStats.
+    match /productStats/{productId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Configuración pública de solo-lectura (ej. config/marketing: URL del webhook de
     // n8n/Sheets que dashboard.js consulta). Solo un admin la edita desde admin.html.
     match /config/{docId} {

@@ -742,44 +742,6 @@
       color: var(--accent);
     }
 
-    header .icon-btn.wishlist-trigger {
-      position: relative;
-    }
-
-    .wishlist-count-badge {
-      position: absolute;
-      top: 2px;
-      right: 4px;
-      min-width: 17px;
-      height: 17px;
-      padding: 0 4px;
-      border-radius: 999px;
-      background: var(--accent);
-      color: var(--bone);
-      font-size: 10px;
-      font-variation-settings: "wdth" 50, "wght" 800;
-      line-height: 17px;
-      text-align: center;
-      letter-spacing: normal;
-      text-transform: none;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 0 2px var(--ink);
-      animation: wishlistBadgePulse 2.4s ease-in-out infinite;
-    }
-
-    .wishlist-count-badge.is-real-count {
-      background: var(--bone);
-      color: var(--ink);
-      animation: none;
-    }
-
-    @keyframes wishlistBadgePulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.18); }
-    }
-
     header .burger {
       display: inline-flex;
       flex-direction: column;
@@ -3751,7 +3713,7 @@
       function loadUserProfile() {
         if (loaded) return;
         loaded = true;
-        import('./js/user-profile.js?v=1.52');
+        import('./js/user-profile.js?v=1.53');
       }
       ['pointerdown', 'touchstart', 'keydown', 'scroll', 'mousemove'].forEach(function (ev) {
         window.addEventListener(ev, loadUserProfile, { passive: true, once: true });

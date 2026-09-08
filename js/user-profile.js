@@ -8,60 +8,6 @@ let currentProfile = null;
 let pendingWishProductId = null;
 let redirectToRewardsAfterLogin = false;
 
-// --- CONTADOR DE ACTIVIDAD SIMULADO PARA EL BADGE DE WISHLIST ---
-// No hay backend que cuente guardados agregados de todos los visitantes; este
-// numero es prueba social simulada (rango fijo 3-30, nunca 0) para que el
-// badge del corazon del header nunca se vea vacio. Se persiste en localStorage
-// para que no cambie bruscamente entre recargas, y se mueve un poco cada
-// cierto tiempo para dar sensacion de actividad en vivo.
-const WISHLIST_ACTIVITY_KEY = 'santopadre_wishlist_activity';
-const WISHLIST_ACTIVITY_MIN = 3;
-const WISHLIST_ACTIVITY_MAX = 30;
-
-function readWishlistActivity() {
-  try {
-    const raw = localStorage.getItem(WISHLIST_ACTIVITY_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (typeof parsed.count === 'number' && typeof parsed.updatedAt === 'number') {
-        return parsed;
-      }
-    }
-  } catch (e) { /* localStorage no disponible o dato corrupto: se regenera abajo */ }
-  const initial = {
-    count: Math.floor(Math.random() * (WISHLIST_ACTIVITY_MAX - WISHLIST_ACTIVITY_MIN + 1)) + WISHLIST_ACTIVITY_MIN,
-    updatedAt: Date.now()
-  };
-  writeWishlistActivity(initial);
-  return initial;
-}
-
-function writeWishlistActivity(state) {
-  try {
-    localStorage.setItem(WISHLIST_ACTIVITY_KEY, JSON.stringify(state));
-  } catch (e) { /* modo privado / storage lleno: seguimos solo en memoria */ }
-}
-
-// Da un pequeño empujon aleatorio (+/-1 o +/-2) sin salir nunca del rango 3-30.
-function nudgeWishlistActivity() {
-  const state = readWishlistActivity();
-  const delta = Math.floor(Math.random() * 5) - 2; // -2..+2
-  const next = Math.min(WISHLIST_ACTIVITY_MAX, Math.max(WISHLIST_ACTIVITY_MIN, state.count + delta));
-  const updated = { count: next, updatedAt: Date.now() };
-  writeWishlistActivity(updated);
-  return updated;
-}
-
-function getWishlistActivityCount() {
-  const state = readWishlistActivity();
-  // Si pasaron mas de 20s desde el ultimo cambio, movemos el numero para que
-  // se sienta "en vivo" en vez de fijo.
-  if (Date.now() - state.updatedAt > 20000) {
-    return nudgeWishlistActivity().count;
-  }
-  return state.count;
-}
-
 // Inicialización de servicios
 const services = getActiveServices();
 authService = services.auth;
@@ -136,12 +82,6 @@ function init() {
   setupProfileButton();
   listenToAuthChanges();
   listenToProductStats();
-
-  // Refresca el badge del corazon cada 20s para que la actividad simulada
-  // se sienta en vivo mientras el visitante sigue en la pagina (ver
-  // getWishlistActivityCount). No hace nada si el usuario ya tiene guardados
-  // reales, porque syncWishlistVisuals() prioriza siempre el conteo real.
-  setInterval(() => { if (window.syncWishlistVisuals) window.syncWishlistVisuals(); }, 20000);
 
   // Bind login button in wishlist modal
   const wishlistLoginBtn = document.getElementById("wishlist-google-login-btn");
@@ -428,7 +368,6 @@ function setupProfileButton() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
     </svg>
-    <span class="wishlist-count-badge" id="wishlist-count-badge" style="display:none;">0</span>
   `;
   wishlistBtn.addEventListener("click", () => {
     window.toggleWishlistPanel();
@@ -567,17 +506,6 @@ window.toggleWishlistItem = async function(productId) {
 
 function syncWishlistVisuals() {
   const wishlist = (currentProfile && currentProfile.wishlist) || [];
-  
-  // Actualizar contador del header. Si el usuario tiene guardados reales se
-  // muestra ese numero real; si no, se rellena con la actividad simulada para
-  // que el badge nunca se vea en 0.
-  const badge = document.getElementById("wishlist-count-badge");
-  if (badge) {
-    const count = wishlist.length > 0 ? wishlist.length : getWishlistActivityCount();
-    badge.innerText = count;
-    badge.style.display = "flex";
-    badge.classList.toggle("is-real-count", wishlist.length > 0);
-  }
 
   // Actualizar botones de corazón en las tarjetas de productos
   const buttons = document.querySelectorAll(".wishlist-btn");

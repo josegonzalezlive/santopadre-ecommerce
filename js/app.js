@@ -285,21 +285,33 @@ function scrollToProduct(id) {
 // cualquier producto que genuinamente aun no tiene ni un guardado real (0 se ve vacio/
 // desangelado, asi que ahi tambien gana el ficticio). Estable por producto por dia
 // (no salta en cada recarga), cambia lento de un dia a otro.
-function getWishlistSavesFallbackCount(productId) {
+//
+// El rango depende de la demanda real del producto: los items marcados como populares
+// en el catalogo (EL MAS VENDIDO, FAVORITO, TOP DEL MES, TOP TEMPORADA...) usan un rango
+// mas alto que el resto, para que el numero ficticio no contradiga lo que el propio menu
+// ya dice sobre que se vende mas.
+const WISHLIST_SAVES_POPULAR_BADGES = new Set([
+  'EL MÁS VENDIDO', 'FAVORITO', 'TOP DEL MES', 'TOP TEMPORADA LLUVIA'
+]);
+const WISHLIST_SAVES_POPULAR_RANGE = [18, 30];
+const WISHLIST_SAVES_BASELINE_RANGE = [3, 15];
+
+function getWishlistSavesFallbackCount(item) {
   const daySeed = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-  const str = `${productId}-${daySeed}`;
+  const str = `${item.id}-${daySeed}`;
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
   }
-  const min = 3, max = 30;
+  const isPopular = (item.badges || []).some((b) => WISHLIST_SAVES_POPULAR_BADGES.has(b));
+  const [min, max] = isPopular ? WISHLIST_SAVES_POPULAR_RANGE : WISHLIST_SAVES_BASELINE_RANGE;
   return min + (Math.abs(hash) % (max - min + 1));
 }
 
-function getWishlistSavesDisplayCount(productId) {
-  const real = window.wishlistSavesRealCounts?.[productId];
+function getWishlistSavesDisplayCount(item) {
+  const real = window.wishlistSavesRealCounts?.[item.id];
   if (typeof real === 'number' && real > 0) return real;
-  return getWishlistSavesFallbackCount(productId);
+  return getWishlistSavesFallbackCount(item);
 }
 
 // Llamado por js/user-profile.js cada vez que el listener en vivo de productStats trae
@@ -308,7 +320,8 @@ window.refreshWishlistSavesBadges = function() {
   document.querySelectorAll('.wishlist-saves-badge[data-product-id]').forEach((badge) => {
     const productId = badge.getAttribute('data-product-id');
     const span = badge.querySelector('span');
-    if (span) span.textContent = getWishlistSavesDisplayCount(productId);
+    const item = span && findProduct(productId);
+    if (item) span.textContent = getWishlistSavesDisplayCount(item);
   });
 };
 
@@ -346,7 +359,7 @@ function renderProductCard(item, catId = '') {
       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none">
         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
       </svg>
-      <span>${getWishlistSavesDisplayCount(item.id)}</span>
+      <span>${getWishlistSavesDisplayCount(item)}</span>
     </div>
   ` : '';
 
@@ -414,12 +427,11 @@ function renderProductCard(item, catId = '') {
     <div class="product-card reveal" id="product-${item.id}">
       <div class="media-container" ${!isRegalo ? clickAction : ''}>
         ${mediaHtml}
-        ${spicyHtml}
         ${wishlistBtnHtml}
         ${wishlistSavesBadgeHtml}
       </div>
       <div class="product-info">
-        <h3 ${clickAction}>${item.name}</h3>
+        <h3 ${clickAction}>${item.name}${spicyHtml}</h3>
         ${item.tags ? `<div class="product-tags">${item.tags.map(tag => `<span>${tag}</span>`).join('')}</div>` : ''}
         <p class="desc" ${clickAction}>${item.description || ''}</p>
         ${chefNoteHtml}

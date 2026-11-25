@@ -59,7 +59,7 @@ const CATALOG = {
       items: [
         {
           id: "tacos-pastor",
-          name: "Tacos al Pastor",
+          name: "Tacos al Pastor (1U)",
           description: "Cerdo marinado al pastor, cebolla, cilantro y piña asada. El equilibrio sagrado.",
           allergens: "Ninguno (100% Maíz)",
           image: "assets/menu/tacos-pastor.avif",
@@ -70,7 +70,7 @@ const CATALOG = {
         },
         {
           id: "tacos-carne",
-          name: "Tacos de Carne",
+          name: "Tacos de Carne (1U)",
           description: "Punta trasera marinada de la buena, cebolla y cilantro. Simple, directo, perfecto.",
           allergens: "Ninguno",
           image: "assets/menu/tacos-de-carne.webp?v=6",
@@ -82,7 +82,7 @@ const CATALOG = {
         },
         {
           id: "tacos-pollo",
-          name: "Tacos de Pollo",
+          name: "Tacos de Pollo (1U)",
           description: "Pollo marinado con nuestra receta secreta, cebolla y cilantro.",
           allergens: "Ninguno",
           image: "assets/menu/tacos-de-pollo.webp?v=6",
@@ -94,7 +94,7 @@ const CATALOG = {
         },
         {
           id: "tacos-tinga",
-          name: "Tacos de Tinga de Pollo",
+          name: "Tacos de Tinga de Pollo (1U)",
           description: "Tinga de pollo desmechada, cebolla y cilantro sobre tortilla de maíz.",
           allergens: "Ninguno",
           image: "assets/menu/tacos-de-pollo.webp?v=6",
@@ -105,7 +105,7 @@ const CATALOG = {
         },
         {
           id: "tacos-birria",
-          name: "Tacos de Birria",
+          name: "Tacos de Birria (1U)",
           description: "Queso fundido, carne de res adobada hecha a fuego lento, cebolla y cilantro. Incluye consomé.",
           allergens: "Lácteos",
           image: "assets/menu/tacos-birria.avif",
@@ -116,7 +116,7 @@ const CATALOG = {
         },
         {
           id: "tacos-cochinita",
-          name: "Tacos de Cochinita",
+          name: "Tacos de Cochinita (1U)",
           description: "Cerdo marinado hecho a fuego lento, cebollas moradas encurtidas y cilantro. Una oda a Yucatán.",
           allergens: "Sulfitos",
           video: "https://res.cloudinary.com/dxishpwhl/video/upload/w_720,q_auto,f_auto,ac_none/Tacos_de_cochinita_h7kdms.mp4",

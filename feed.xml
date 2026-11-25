@@ -43,7 +43,7 @@
     </item>
     <item>
       <g:id>tacos-pastor</g:id>
-      <g:title>Tacos al Pastor</g:title>
+      <g:title>Tacos al Pastor (1U)</g:title>
       <g:description>Cerdo marinado al pastor, cebolla, cilantro y piña asada. El equilibrio sagrado.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
       <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>
@@ -55,7 +55,7 @@
     </item>
     <item>
       <g:id>tacos-carne</g:id>
-      <g:title>Tacos de Carne</g:title>
+      <g:title>Tacos de Carne (1U)</g:title>
       <g:description>Punta trasera marinada de la buena, cebolla y cilantro. Simple, directo, perfecto.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
       <g:image_link>https://santopadre.store/assets/menu/tacos-carne.avif</g:image_link>
@@ -67,7 +67,7 @@
     </item>
     <item>
       <g:id>tacos-pollo</g:id>
-      <g:title>Tacos de Pollo</g:title>
+      <g:title>Tacos de Pollo (1U)</g:title>
       <g:description>Pollo marinado con nuestra receta secreta, cebolla y cilantro.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
       <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>
@@ -79,7 +79,7 @@
     </item>
     <item>
       <g:id>tacos-tinga</g:id>
-      <g:title>Tacos de Tinga de Pollo</g:title>
+      <g:title>Tacos de Tinga de Pollo (1U)</g:title>
       <g:description>Tinga de pollo desmechada, cebolla y cilantro sobre tortilla de maíz.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
       <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>
@@ -91,7 +91,7 @@
     </item>
     <item>
       <g:id>tacos-birria</g:id>
-      <g:title>Tacos de Birria</g:title>
+      <g:title>Tacos de Birria (1U)</g:title>
       <g:description>Queso fundido, carne de res adobada hecha a fuego lento, cebolla y cilantro. Incluye consomé.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
       <g:image_link>https://santopadre.store/assets/menu/tacos-birria.avif</g:image_link>
@@ -103,7 +103,7 @@
     </item>
     <item>
       <g:id>tacos-cochinita</g:id>
-      <g:title>Tacos de Cochinita</g:title>
+      <g:title>Tacos de Cochinita (1U)</g:title>
       <g:description>Cerdo marinado hecho a fuego lento, cebollas moradas encurtidas y cilantro. Una oda a Yucatán.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
       <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>

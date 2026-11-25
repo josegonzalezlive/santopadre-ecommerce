@@ -18,7 +18,7 @@
         {
           "id": "tacos-pastor",
           "name": "Tacos al Pastor",
-          "price": 11.50,
+          "price": 3.20,
           "description": "Cerdo marinado con piña asada. 100% Maíz.",
           "tags": ["Gluten Free", "Top Seller"],
           "direct_order_link": "https://santopadre.store/?add=tacos-pastor"
@@ -26,7 +26,7 @@
         {
           "id": "tacos-birria",
           "name": "Tacos de Birria",
-          "price": 12.50,
+          "price": 3.99,
           "description": "Res adobada a fuego lento con consomé.",
           "tags": ["Gourmet", "Authentic"],
           "direct_order_link": "https://santopadre.store/?add=tacos-birria"
@@ -47,7 +47,7 @@
         {
           "id": "burritos",
           "name": "Burritos XXL",
-          "price": 17.00,
+          "price": 11.00,
           "description": "Formato de 1kg con proteína a elección.",
           "tags": ["XXL Size", "Protein Rich"],
           "direct_order_link": "https://santopadre.store/?add=burritos"

@@ -684,7 +684,7 @@ window.showLoadingState = showLoadingState;
       { level: 1, name: "El Iniciado", reward: "Bebida Premium Gratis", emoji: "🥤", color: "var(--lime)", textColor: "var(--ink)", cogs: 0.75 },
       { level: 2, name: "El Fiel", reward: "Postre Sorpresa del Chef", emoji: "🍰", color: "#ff9900", textColor: "var(--bone)", cogs: 1.20 },
       { level: 3, name: "El Discípulo", reward: "Nachos PEQ + Bebida Gratis", emoji: "🏔️", color: "#00ccff", textColor: "var(--bone)", cogs: 2.93 },
-      { level: 4, name: "El Profeta", reward: "Tacos (3U) + Bebida Gratis", emoji: "🌮", color: "#cc33ff", textColor: "var(--bone)", cogs: 4.20 },
+      { level: 4, name: "El Profeta", reward: "Taco (1U)", emoji: "🌮", color: "#cc33ff", textColor: "var(--bone)", cogs: 4.20 },
       { level: 5, name: "El Santo", reward: "Cena Secreta para 2 + 2 Bebidas", emoji: "👑", color: "#ffcc00", textColor: "var(--ink)", cogs: 3.00 }
     ];
     window.TIER_REWARDS = [...DEFAULT_TIER_REWARDS];

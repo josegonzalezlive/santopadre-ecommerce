@@ -9,16 +9,11 @@ const CATALOG = {
       items: [
         {
           id: "flauta-cochinita",
-          name: "Flauta de Cochinita (6U)",
+          name: "Flauta de Cochinita",
           description: "Tortilla de maíz frita rellena de cochinita pibil al horno, queso fundido, crema y cilantro. Crujen tanto que tus vecinos de mesa sabrán exactamente qué estás comiendo.",
           allergens: "Lácteos, Glúten (trazas)",
           image: "assets/menu/flauta-cochinita.avif",
-          hasVariants: true,
-          variants: [
-            { id: "v1", name: "Ración 6 Unidades", price: 12.00 },
-            { id: "v2", name: "Ración 12 Unidades", price: 21.00, recommended: true, recommendedLabel: "Ideal para compartir" },
-            { id: "v3", name: "Bandeja Fiesta 24U", price: 38.00, recommendedLabel: "Mejor Valor" }
-          ],
+          price: 4.00,
           badges: ["NUEVO"],
           tags: ["💎 PREMIUM", "🔥 CRUNCH EXTRA", "🐷 COCCIÓN LENTA"],
 
@@ -31,12 +26,7 @@ const CATALOG = {
           description: "Pollo desmechado sin dramas, queso amarillo, crema y cilantro sobre tortilla de maíz frita. El clásico infalible.",
           allergens: "Lácteos, Glúten (trazas)",
           image: "assets/menu/flauta-pollo.avif",
-          hasVariants: true,
-          variants: [
-            { id: "v1", name: "Ración 6 Unidades", price: 10.50 },
-            { id: "v2", name: "Ración 12 Unidades", price: 18.00, recommended: true, recommendedLabel: "Upsell Sugerido" },
-            { id: "v3", name: "Bandeja Fiesta 24U", price: 34.00, recommendedLabel: "Mejor Valor" }
-          ],
+          price: 3.50,
           badges: [],
           tags: ["⭐ EL CLÁSICO", "✅ OPCIÓN SEGURA", "🧀 QUESO FUNDIDO"],
 
@@ -52,7 +42,7 @@ const CATALOG = {
           image: "assets/menu/nachos.avif",
           hasVariants: true,
           variants: [
-            { id: "v1", name: "Tamaño Pequeño (PEQ)", price: 7.25 },
+            { id: "v1", name: "Tamaño Pequeño (PEQ)", price: 7.50 },
             { id: "v2", name: "Tamaño Grande (GDE)", price: 14.50, recommended: true, recommendedLabel: "Recomendado 2+ personas" }
           ],
           badges: [],
@@ -65,61 +55,72 @@ const CATALOG = {
       id: "taqueria",
       name: "Taquería",
       emoji: "🌮",
-      subtitle: "La base de nuestra fe. Tres unidades por orden. 100% Maíz.",
+      subtitle: "La base de nuestra fe. Precio por unidad. 100% Maíz.",
       items: [
         {
           id: "tacos-pastor",
-          name: "Tacos al Pastor (3U)",
+          name: "Tacos al Pastor",
           description: "Cerdo marinado al pastor, cebolla, cilantro y piña asada. El equilibrio sagrado.",
           allergens: "Ninguno (100% Maíz)",
           image: "assets/menu/tacos-pastor.avif",
-          price: 11.50,
+          price: 3.20,
           badges: ["EL MÁS VENDIDO"],
           tags: ["👑 EL REY", "🍍 TOQUE ASADO", "🌽 100% MAÍZ"],
           hasExtras: true
         },
         {
           id: "tacos-carne",
-          name: "Tacos de Carne (3U)",
+          name: "Tacos de Carne",
           description: "Punta trasera marinada de la buena, cebolla y cilantro. Simple, directo, perfecto.",
           allergens: "Ninguno",
           image: "assets/menu/tacos-de-carne.webp?v=6",
           video: "assets/video/tacos-de-carne.mov?v=6",
-          price: 12.50,
+          price: 3.20,
           badges: [],
           tags: ["🥩 CORTE PREMIUM", "💪 PROTEÍNA TOP", "🔥 SABOR A BRASA"],
           hasExtras: true
         },
         {
           id: "tacos-pollo",
-          name: "Tacos de Pollo (3U)",
+          name: "Tacos de Pollo",
           description: "Pollo marinado con nuestra receta secreta, cebolla y cilantro.",
           allergens: "Ninguno",
           image: "assets/menu/tacos-de-pollo.webp?v=6",
           video: "assets/video/tacos-de-pollo.mov?v=6",
-          price: 11.00,
+          price: 3.00,
           badges: [],
           tags: ["🌿 LIGERO", "🍗 RECETA SECRETA", "📉 OPCIÓN ECONÓMICA"],
           hasExtras: true
         },
         {
+          id: "tacos-tinga",
+          name: "Tacos de Tinga de Pollo",
+          description: "Tinga de pollo desmechada, cebolla y cilantro sobre tortilla de maíz.",
+          allergens: "Ninguno",
+          image: "assets/menu/tacos-de-pollo.webp?v=6",
+          price: 3.00,
+          badges: ["NUEVO"],
+          tags: ["🌽 100% MAÍZ", "🍗 TINGA DE POLLO"],
+          hasExtras: true
+        },
+        {
           id: "tacos-birria",
-          name: "Tacos de Birria (3U)",
+          name: "Tacos de Birria",
           description: "Queso fundido, carne de res adobada hecha a fuego lento, cebolla y cilantro. Incluye consomé.",
           allergens: "Lácteos",
           image: "assets/menu/tacos-birria.avif",
-          price: 12.50,
+          price: 3.99,
           badges: ["FAVORITO"],
           tags: ["🥘 ARTESANAL", "🧀 EXTRA QUESO", "✨ RECOMENDACIÓN DEL CHEF"],
           hasExtras: true
         },
         {
           id: "tacos-cochinita",
-          name: "Tacos de Cochinita (3U)",
+          name: "Tacos de Cochinita",
           description: "Cerdo marinado hecho a fuego lento, cebollas moradas encurtidas y cilantro. Una oda a Yucatán.",
           allergens: "Sulfitos",
           video: "https://res.cloudinary.com/dxishpwhl/video/upload/w_720,q_auto,f_auto,ac_none/Tacos_de_cochinita_h7kdms.mp4",
-          price: 11.50,
+          price: 3.00,
           badges: ["TOP DEL MES"],
           tags: ["🔥 TENDENCIA", "🧅 ACIDITO PERFECTO", "🧪 SABOR INTENSO"],
           hasExtras: true
@@ -162,15 +163,16 @@ const CATALOG = {
           description: "Tortilla de trigo de 1kg (aprox) rellena de arroz, pico, frijoles, guacamole y queso. Elige tu proteína.",
           allergens: "Glúten, Lácteos",
           video: "https://res.cloudinary.com/dxishpwhl/video/upload/w_720,q_auto,f_auto,ac_none/Burritos_jnqglx.mp4",
-          price: 14.50,
+          price: 11.00,
           hasVariants: true,
           variants: [
-            { id: "v1", name: "Proteína: Punta Trasera", price: 18.00 },
-            { id: "v2", name: "Proteína: Cerdo al Pastor", price: 14.50 },
-            { id: "v3", name: "Proteína: Carne Chilli", price: 14.50 },
-            { id: "v4", name: "Proteína: Pollo", price: 14.50 },
-            { id: "v5", name: "Proteína: Birria", price: 18.00 },
-            { id: "v6", name: "Proteína: Cochinita", price: 14.50 }
+            { id: "v1", name: "Proteína: Punta Trasera", price: 11.50 },
+            { id: "v2", name: "Proteína: Cerdo al Pastor", price: 11.50 },
+            { id: "v3", name: "Proteína: Carne Chilli", price: 11.00 },
+            { id: "v4", name: "Proteína: Pollo", price: 11.00 },
+            { id: "v5", name: "Proteína: Birria", price: 12.00 },
+            { id: "v6", name: "Proteína: Cochinita", price: 11.50 },
+            { id: "v7", name: "Proteína: Tinga de Pollo", price: 11.00 }
           ],
           tags: ["🌯 FORMATO XXL", "🔋 ENERGÍA PURA", "🌯 TODO TERRENO"],
           hasExtras: true
@@ -360,7 +362,7 @@ const CATALOG = {
     { id: "coca-cola", label: "¿Le añades una Coca Cola?", price: 2.50, image: "assets/menu/coca-cola.avif" },
     { id: "lipton", label: "¿Un Lipton frío?", price: 3.00, image: "assets/menu/lipton.avif" },
     { id: "gatorade", label: "¿Gatorade para reponer?", price: 3.20, image: "assets/menu/gatorade.avif" },
-    { id: "nachos", label: "¿Y unos Nachos para acompañar?", price: 7.25, image: "assets/menu/nachos.avif" }
+    { id: "nachos", label: "¿Y unos Nachos para acompañar?", price: 7.50, image: "assets/menu/nachos.avif" }
   ],
   reviews: [
     { quote: "Es el mejor delivery de Araure. La comida llega caliente y las flautas de cochinita son increíblemente crujientes. Comida mexicana auténtica.", author: "Daniela", productId: "flauta-cochinita", rating: 5 },
@@ -404,7 +406,7 @@ const CATALOG = {
         { tier: 1, name: "El Iniciado", reward: "Bebida Premium Gratis", cogs: 0.75 },
         { tier: 2, name: "El Fiel", reward: "Postre Sorpresa del Chef", cogs: 1.20 },
         { tier: 3, name: "El Discípulo", reward: "Nachos PEQ + Bebida Gratis", cogs: 2.93 },
-        { tier: 4, name: "El Profeta", reward: "Tacos (3U) + Bebida Gratis", cogs: 4.20 },
+        { tier: 4, name: "El Profeta", reward: "Taco (1U)", cogs: 4.20 },
         { tier: 5, name: "El Santo", reward: "Cena Secreta para 2 + 2 Bebidas", cogs: 3.00 }
       ]
     },

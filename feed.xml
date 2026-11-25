@@ -7,12 +7,12 @@
 
     <item>
       <g:id>flauta-cochinita</g:id>
-      <g:title>Flauta de Cochinita (6U)</g:title>
+      <g:title>Flauta de Cochinita</g:title>
       <g:description>Tortilla de maíz frita rellena de cochinita pibil al horno, queso fundido, crema y cilantro. Crujen tanto que tus vecinos de mesa sabrán exactamente qué estás comiendo.</g:description>
       <g:link>https://santopadre.store/#section-entrantes</g:link>
       <g:image_link>https://santopadre.store/assets/menu/flauta-cochinita.avif</g:image_link>
       <g:availability>in_stock</g:availability>
-      <g:price>12.00 USD</g:price>
+      <g:price>4.00 USD</g:price>
       <g:condition>new</g:condition>
       <g:product_type>Alimentos y Bebidas &gt; Comidas Preparadas</g:product_type>
       <g:brand>SantoPadre</g:brand>
@@ -24,7 +24,7 @@
       <g:link>https://santopadre.store/#section-entrantes</g:link>
       <g:image_link>https://santopadre.store/assets/menu/flauta-pollo.avif</g:image_link>
       <g:availability>in_stock</g:availability>
-      <g:price>10.50 USD</g:price>
+      <g:price>3.50 USD</g:price>
       <g:condition>new</g:condition>
       <g:product_type>Alimentos y Bebidas &gt; Comidas Preparadas</g:product_type>
       <g:brand>SantoPadre</g:brand>
@@ -36,67 +36,79 @@
       <g:link>https://santopadre.store/#section-entrantes</g:link>
       <g:image_link>https://santopadre.store/assets/menu/nachos.avif</g:image_link>
       <g:availability>in_stock</g:availability>
-      <g:price>7.25 USD</g:price>
+      <g:price>7.50 USD</g:price>
       <g:condition>new</g:condition>
       <g:product_type>Alimentos y Bebidas &gt; Comidas Preparadas</g:product_type>
       <g:brand>SantoPadre</g:brand>
     </item>
     <item>
       <g:id>tacos-pastor</g:id>
-      <g:title>Tacos al Pastor (3U)</g:title>
+      <g:title>Tacos al Pastor</g:title>
       <g:description>Cerdo marinado al pastor, cebolla, cilantro y piña asada. El equilibrio sagrado.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
       <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>
       <g:availability>in_stock</g:availability>
-      <g:price>11.50 USD</g:price>
+      <g:price>3.20 USD</g:price>
       <g:condition>new</g:condition>
       <g:product_type>Alimentos y Bebidas &gt; Comidas Preparadas</g:product_type>
       <g:brand>SantoPadre</g:brand>
     </item>
     <item>
       <g:id>tacos-carne</g:id>
-      <g:title>Tacos de Carne (3U)</g:title>
+      <g:title>Tacos de Carne</g:title>
       <g:description>Punta trasera marinada de la buena, cebolla y cilantro. Simple, directo, perfecto.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
       <g:image_link>https://santopadre.store/assets/menu/tacos-carne.avif</g:image_link>
       <g:availability>in_stock</g:availability>
-      <g:price>12.50 USD</g:price>
+      <g:price>3.20 USD</g:price>
       <g:condition>new</g:condition>
       <g:product_type>Alimentos y Bebidas &gt; Comidas Preparadas</g:product_type>
       <g:brand>SantoPadre</g:brand>
     </item>
     <item>
       <g:id>tacos-pollo</g:id>
-      <g:title>Tacos de Pollo (3U)</g:title>
+      <g:title>Tacos de Pollo</g:title>
       <g:description>Pollo marinado con nuestra receta secreta, cebolla y cilantro.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
       <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>
       <g:availability>in_stock</g:availability>
-      <g:price>11.00 USD</g:price>
+      <g:price>3.00 USD</g:price>
+      <g:condition>new</g:condition>
+      <g:product_type>Alimentos y Bebidas &gt; Comidas Preparadas</g:product_type>
+      <g:brand>SantoPadre</g:brand>
+    </item>
+    <item>
+      <g:id>tacos-tinga</g:id>
+      <g:title>Tacos de Tinga de Pollo</g:title>
+      <g:description>Tinga de pollo desmechada, cebolla y cilantro sobre tortilla de maíz.</g:description>
+      <g:link>https://santopadre.store/#section-taqueria</g:link>
+      <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>3.00 USD</g:price>
       <g:condition>new</g:condition>
       <g:product_type>Alimentos y Bebidas &gt; Comidas Preparadas</g:product_type>
       <g:brand>SantoPadre</g:brand>
     </item>
     <item>
       <g:id>tacos-birria</g:id>
-      <g:title>Tacos de Birria (3U)</g:title>
+      <g:title>Tacos de Birria</g:title>
       <g:description>Queso fundido, carne de res adobada hecha a fuego lento, cebolla y cilantro. Incluye consomé.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
       <g:image_link>https://santopadre.store/assets/menu/tacos-birria.avif</g:image_link>
       <g:availability>in_stock</g:availability>
-      <g:price>12.50 USD</g:price>
+      <g:price>3.99 USD</g:price>
       <g:condition>new</g:condition>
       <g:product_type>Alimentos y Bebidas &gt; Comidas Preparadas</g:product_type>
       <g:brand>SantoPadre</g:brand>
     </item>
     <item>
       <g:id>tacos-cochinita</g:id>
-      <g:title>Tacos de Cochinita (3U)</g:title>
+      <g:title>Tacos de Cochinita</g:title>
       <g:description>Cerdo marinado hecho a fuego lento, cebollas moradas encurtidas y cilantro. Una oda a Yucatán.</g:description>
       <g:link>https://santopadre.store/#section-taqueria</g:link>
       <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>
       <g:availability>in_stock</g:availability>
-      <g:price>11.50 USD</g:price>
+      <g:price>3.00 USD</g:price>
       <g:condition>new</g:condition>
       <g:product_type>Alimentos y Bebidas &gt; Comidas Preparadas</g:product_type>
       <g:brand>SantoPadre</g:brand>
@@ -132,7 +144,7 @@
       <g:link>https://santopadre.store/#section-especialidades</g:link>
       <g:image_link>https://santopadre.store/assets/menu/tacos-pastor.avif</g:image_link>
       <g:availability>in_stock</g:availability>
-      <g:price>17.00 USD</g:price>
+      <g:price>11.50 USD</g:price>
       <g:condition>new</g:condition>
       <g:product_type>Alimentos y Bebidas &gt; Comidas Preparadas</g:product_type>
       <g:brand>SantoPadre</g:brand>

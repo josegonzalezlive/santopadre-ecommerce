@@ -22,7 +22,7 @@ test.describe('Layout crítico (desktop)', () => {
     await expect(footer).toHaveScreenshot('footer.png');
   });
 
-  test('tarjeta de producto — Quesadilla de Chistorra (badge de picante + guardados)', async ({ page }) => {
+  test('tarjeta de producto — Quesadilla (selector de proteína + guardados)', async ({ page }) => {
     await preparePage(page);
     const card = page.locator('#product-quesadilla-chistorra');
     await card.scrollIntoViewIfNeeded();

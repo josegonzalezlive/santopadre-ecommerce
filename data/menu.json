@@ -38,10 +38,10 @@
       "items": [
         {
           "id": "quesadilla-chistorra",
-          "name": "Quesadilla de Chistorra",
-          "price": 14.00,
-          "description": "Tortilla de harina rellena de chistorra jugosa y queso fundido, bañada en mermelada casera de mango y jalapeño.",
-          "tags": ["Dulce y picante", "Queso fundido", "Chistorra"],
+          "name": "Quesadilla",
+          "price": 9.00,
+          "description": "Tortilla de harina rellena de queso fundido y la proteína que elijas. La de chistorra va bañada en mermelada casera de mango y jalapeño. Proteína a elección.",
+          "tags": ["Queso fundido", "Proteína a elección"],
           "direct_order_link": "https://santopadre.store/?add=quesadilla-chistorra"
         },
         {

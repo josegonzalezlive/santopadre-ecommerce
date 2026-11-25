@@ -135,14 +135,24 @@ const CATALOG = {
       items: [
         {
           id: "quesadilla-chistorra",
-          name: "Quesadilla de Chistorra",
-          description: "Tortilla de harina rellena de chistorra jugosa y queso fundido, bañada en mermelada casera de mango y jalapeño. El choque perfecto entre dulce, picante y pecaminoso.",
+          name: "Quesadilla",
+          description: "Tortilla de harina rellena de queso fundido y la proteína que elijas. La de chistorra va bañada en mermelada casera de mango y jalapeño.",
           allergens: "Glúten, Lácteos",
           video: "assets/video/quesadilla-de-chistorra.mp4?v=2",
-          price: 14.00,
+          price: 9.00,
+          hasVariants: true,
+          variants: [
+            { id: "v1", name: "Proteína: Pollo", price: 9.00 },
+            { id: "v2", name: "Proteína: Tinga de Pollo", price: 9.50 },
+            { id: "v3", name: "Proteína: Cerdo al Pastor", price: 10.00 },
+            { id: "v4", name: "Proteína: Carne Chilli", price: 11.00 },
+            { id: "v5", name: "Proteína: Punta Trasera", price: 11.50 },
+            { id: "v6", name: "Proteína: Cochinita", price: 12.00 },
+            { id: "v7", name: "Proteína: Birria", price: 12.50 },
+            { id: "v8", name: "Proteína: Chistorra (con mermelada de mango y jalapeño)", price: 14.00 }
+          ],
           badges: ["NUEVO"],
-          tags: ["🌶️ DULCE Y PICANTE", "🧀 QUESO FUNDIDO", "🇪🇸 CHISTORRA"],
-          spicyLevel: 1,
+          tags: ["🧀 QUESO FUNDIDO", "🍗 ELIGE TU PROTEÍNA"],
           hasExtras: true
         },
         {
